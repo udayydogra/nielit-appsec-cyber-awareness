@@ -1,0 +1,114 @@
+{
+  "id": "idor",
+  "module": "appsec",
+  "executionTier": 2,
+  "category": "broken-access-control",
+  "title": { "en": "IDOR — Insecure Direct Object Reference", "hi": "IDOR — असुरक्षित प्रत्यक्ष ऑब्जेक्ट संदर्भ" },
+  "summary": {
+    "en": "You're logged in as 'you' and can see invoice #1001. Change the id and read invoices that were never meant for you — because the server forgot to check ownership.",
+    "hi": "आप 'you' के रूप में लॉग-इन हैं और चालान #1001 देख सकते हैं। id बदलें और वे चालान पढ़ें जो आपके लिए नहीं थे — क्योंकि सर्वर ने स्वामित्व जाँचना भूल गया।"
+  },
+  "difficultyTiers": ["beginner", "intermediate", "advanced"],
+  "owasp": ["A01:2021 – Broken Access Control", "API1:2023 – Broken Object Level Authorization"],
+  "mitre": ["T1190 Exploit Public-Facing Application"],
+  "cves": ["CVE-2021-22911 (Rocket.Chat IDOR)", "CVE-2019-5715 (IDOR data exposure)"],
+  "target": {
+    "kind": "shared-multitenant",
+    "resetRoute": "/labs/idor/reset",
+    "queryRoute": "/labs/idor/invoice/:invoiceId"
+  },
+  "lifecycle": [
+    {
+      "id": "intro",
+      "type": "content",
+      "title": { "en": "Introduction", "hi": "परिचय" },
+      "body": {
+        "en": "An invoice viewer takes an id in the URL: GET /labs/idor/invoice/1001. It confirms you are logged in — but never checks the invoice is yours. Authentication is not authorization. This is Tier 2: one shared app, your sandbox is your own rows, and Reset restores them.",
+        "hi": "एक चालान व्यूअर URL में id लेता है: GET /labs/idor/invoice/1001। यह पुष्टि करता है कि आप लॉग-इन हैं — पर यह नहीं जाँचता कि चालान आपका है। प्रमाणीकरण, प्राधिकरण नहीं है।"
+      }
+    },
+    {
+      "id": "objectives",
+      "type": "objectives",
+      "title": { "en": "Learning Objectives", "hi": "सीखने के उद्देश्य" },
+      "items": [
+        { "en": "Enumerate sequential object ids (1001 → 1002 → 1003).", "hi": "क्रमिक ऑब्जेक्ट id की गणना करें (1001 → 1002 → 1003)।" },
+        { "en": "Read another persona's invoice and its secret.", "hi": "किसी अन्य पर्सोना का चालान और उसका रहस्य पढ़ें।" },
+        { "en": "Explain why the fix is a server-side ownership check, not obscure ids.", "hi": "समझाएँ कि फिक्स सर्वर-साइड स्वामित्व जाँच है, अस्पष्ट id नहीं।" }
+      ]
+    },
+    {
+      "id": "attack-surface",
+      "type": "content",
+      "title": { "en": "Attack Surface", "hi": "अटैक सरफेस" },
+      "anim": "idor-dataflow",
+      "body": {
+        "en": "The endpoint GET /labs/idor/invoice/:id runs: SELECT ... FROM invoices WHERE invoice_id = :id — with NO clause tying the row to the logged-in persona. The id is a direct, guessable reference to the object.",
+        "hi": "एंडपॉइंट GET /labs/idor/invoice/:id चलाता है: SELECT ... WHERE invoice_id = :id — बिना किसी क्लॉज के जो पंक्ति को लॉग-इन पर्सोना से बाँधे।"
+      }
+    },
+    {
+      "id": "exploitation",
+      "type": "interactive",
+      "widget": "idor-console",
+      "title": { "en": "Exploitation", "hi": "शोषण" },
+      "hints": [
+        { "en": "Your invoice is #1001. Try fetching #1002.", "hi": "आपका चालान #1001 है। #1002 लाने का प्रयास करें।" },
+        { "en": "Keep incrementing — #1003 belongs to 'admin' and holds the flag.", "hi": "बढ़ाते रहें — #1003 'admin' का है और उसमें फ्लैग है।" }
+      ]
+    },
+    {
+      "id": "root-cause",
+      "type": "content",
+      "title": { "en": "Root Cause Analysis", "hi": "मूल कारण विश्लेषण" },
+      "body": {
+        "en": "The handler authenticates the session but performs no per-object authorization. Because ids are direct and sequential, any authenticated user can walk the whole collection. Hiding or randomizing the id (a UUID) is not a fix — it only slows enumeration; the missing ownership check is the defect.",
+        "hi": "हैंडलर सत्र को प्रमाणित करता है पर प्रति-ऑब्जेक्ट प्राधिकरण नहीं करता। id सीधे और क्रमिक होने से कोई भी प्रमाणित उपयोगकर्ता पूरा संग्रह पढ़ सकता है। id छिपाना समाधान नहीं है।"
+      }
+    },
+    {
+      "id": "secure-fix",
+      "type": "code",
+      "title": { "en": "Secure Fix", "hi": "सुरक्षित फिक्स" },
+      "language": "javascript",
+      "insecure": "app.get('/invoice/:id', requireLogin, async (req, res) => {\n  // authenticated, but no ownership check\n  const inv = await db.getInvoice(req.params.id);\n  res.json(inv);\n});",
+      "secure": "app.get('/invoice/:id', requireLogin, async (req, res) => {\n  const inv = await db.getInvoice(req.params.id);\n  // authorize the OBJECT against the caller's identity\n  if (!inv || inv.ownerId !== req.user.id) return res.sendStatus(404);\n  res.json(inv);\n});"
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "Why can you read invoice #1003 while logged in as 'you'?", "hi": "'you' के रूप में लॉग-इन रहते हुए आप चालान #1003 क्यों पढ़ सकते हैं?" },
+      "choices": [
+        { "id": "a", "label": { "en": "The password was weak", "hi": "पासवर्ड कमज़ोर था" } },
+        { "id": "b", "label": { "en": "The id was encrypted", "hi": "id एन्क्रिप्टेड थी" } },
+        { "id": "c", "label": { "en": "The server never checks the invoice belongs to you", "hi": "सर्वर कभी नहीं जाँचता कि चालान आपका है" } },
+        { "id": "d", "label": { "en": "The connection was not HTTPS", "hi": "कनेक्शन HTTPS नहीं था" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "This vulnerability class is best described as:", "hi": "इस भेद्यता वर्ग का सबसे अच्छा वर्णन है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "SQL Injection", "hi": "SQL इंजेक्शन" } },
+        { "id": "b", "label": { "en": "Broken Object Level Authorization (IDOR)", "hi": "ब्रोकन ऑब्जेक्ट लेवल ऑथराइज़ेशन (IDOR)" } },
+        { "id": "c", "label": { "en": "Cross-Site Scripting", "hi": "क्रॉस-साइट स्क्रिप्टिंग" } },
+        { "id": "d", "label": { "en": "Server-Side Request Forgery", "hi": "सर्वर-साइड रिक्वेस्ट फोर्जरी" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "The correct primary fix is to:", "hi": "सही प्राथमिक फिक्स है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Use random UUIDs instead of sequential ids", "hi": "क्रमिक id की जगह रैंडम UUID उपयोग करें" } },
+        { "id": "b", "label": { "en": "Rate-limit the endpoint", "hi": "एंडपॉइंट को रेट-लिमिट करें" } },
+        { "id": "c", "label": { "en": "Hide the id in a POST body", "hi": "id को POST बॉडी में छिपाएँ" } },
+        { "id": "d", "label": { "en": "Check the object's owner against the session identity on every access", "hi": "हर पहुँच पर ऑब्जेक्ट के स्वामी को सत्र पहचान से जाँचें" } }
+      ]
+    }
+  ],
+  "interviewQuestions": [
+    { "en": "Why is 'unguessable ids' security through obscurity, not access control?", "hi": "'अनुमान न लगने वाली id' पहुँच नियंत्रण क्यों नहीं है?" },
+    { "en": "How does your platform's cohortScope resolver prevent this exact bug?", "hi": "आपके प्लेटफ़ॉर्म का cohortScope रिज़ॉल्वर इस बग को कैसे रोकता है?" }
+  ]
+}

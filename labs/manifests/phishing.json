@@ -1,0 +1,97 @@
+{
+  "id": "phishing",
+  "module": "awareness",
+  "executionTier": 0,
+  "category": "credential-theft",
+  "title": { "en": "Phishing — Email, SMS & WhatsApp", "hi": "फ़िशिंग — ईमेल, SMS और WhatsApp" },
+  "summary": {
+    "en": "A message says your account is suspended and links you to a login page. Learn to read the sender and the URL before you ever type a password.",
+    "hi": "एक संदेश कहता है आपका खाता निलंबित है और लॉगिन पेज पर ले जाता है। पासवर्ड डालने से पहले प्रेषक और URL पढ़ना सीखें।"
+  },
+  "start": "n1",
+  "reportingResources": [
+    { "label": { "en": "Cyber Crime Helpline", "hi": "साइबर क्राइम हेल्पलाइन" }, "value": "1930" },
+    { "label": { "en": "National Portal", "hi": "राष्ट्रीय पोर्टल" }, "value": "cybercrime.gov.in" }
+  ],
+  "nodes": {
+    "n1": {
+      "type": "narration", "channel": "email", "anim": "sms-slide-in",
+      "content": {
+        "en": "Email from 'security@netfl1x-support.com': 'Your account is on hold due to a billing error. Verify within 24 hours or it will be deleted: https://netfl1x-support.com/login'",
+        "hi": "'security@netfl1x-support.com' से ईमेल: 'बिलिंग त्रुटि के कारण आपका खाता होल्ड पर है। 24 घंटे में सत्यापित करें वरना हट जाएगा: https://netfl1x-support.com/login'"
+      },
+      "next": "n2"
+    },
+    "n2": {
+      "type": "decision",
+      "prompt": { "en": "What do you do?", "hi": "आप क्या करेंगे?" },
+      "choices": [
+        { "label": { "en": "Click the link and log in to save my account", "hi": "खाता बचाने को लिंक पर क्लिक कर लॉगिन करें" }, "goto": "trap1" },
+        { "label": { "en": "Open the app/site myself by typing the real address", "hi": "असली पता खुद टाइप कर ऐप/साइट खोलें" }, "goto": "safe1" }
+      ]
+    },
+    "trap1": {
+      "type": "consequence", "outcome": "negative", "anim": "shake",
+      "content": {
+        "en": "The page looked identical to the real login, but the domain 'netfl1x-support.com' (with a '1' for 'i') was a fake. Your email and password went straight to the attacker, who reused them on your bank and email.",
+        "hi": "पेज असली लॉगिन जैसी दिखी, पर डोमेन 'netfl1x-support.com' (जहाँ 'i' की जगह '1') नकली थी। आपका ईमेल-पासवर्ड सीधे हमलावर के पास गया, जिसने उन्हें बैंक-ईमेल पर आज़माया।"
+      },
+      "technique": {
+        "en": "Lookalike domain + urgency + a pixel-perfect fake login. Because people reuse passwords, one phish unlocks many accounts.",
+        "hi": "मिलती-जुलती डोमेन + तात्कालिकता + हूबहू नकली लॉगिन। पासवर्ड दोहराने से एक फ़िश कई खाते खोल देती है।"
+      },
+      "next": "feedback"
+    },
+    "safe1": {
+      "type": "consequence", "outcome": "positive", "anim": "check-pop",
+      "content": {
+        "en": "Correct. You never trust the link in the message — you open the service by typing its real address (or from a saved bookmark/app). There was no hold on your account.",
+        "hi": "सही। आप संदेश के लिंक पर कभी भरोसा नहीं करते — असली पता टाइप कर (या सेव बुकमार्क/ऐप से) सेवा खोलते हैं। आपके खाते पर कोई होल्ड नहीं था।"
+      },
+      "next": "feedback"
+    },
+    "feedback": {
+      "type": "checklist",
+      "title": { "en": "Prevention Checklist", "hi": "रोकथाम चेकलिस्ट" },
+      "items": [
+        { "en": "Read the sender address and URL letter-by-letter (netfl1x ≠ netflix).", "hi": "प्रेषक पता और URL अक्षर-दर-अक्षर पढ़ें (netfl1x ≠ netflix)।" },
+        { "en": "Urgency + a login link = treat as phishing until proven otherwise.", "hi": "तात्कालिकता + लॉगिन लिंक = तब तक फ़िशिंग मानें जब तक सिद्ध न हो।" },
+        { "en": "Open services by typing the address yourself, not via the link.", "hi": "सेवाएँ खुद पता टाइप कर खोलें, लिंक से नहीं।" },
+        { "en": "Use unique passwords + MFA so one phish can't unlock everything.", "hi": "अनोखे पासवर्ड + MFA उपयोग करें ताकि एक फ़िश सब न खोले।" }
+      ],
+      "next": "quiz"
+    }
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "'netfl1x-support.com' is dangerous because:", "hi": "'netfl1x-support.com' खतरनाक है क्योंकि:" },
+      "choices": [
+        { "id": "a", "label": { "en": "It is a paid domain", "hi": "यह भुगतान वाली डोमेन है" } },
+        { "id": "b", "label": { "en": "It loads slowly", "hi": "यह धीरे लोड होती है" } },
+        { "id": "c", "label": { "en": "It is a lookalike of the real domain to steal logins", "hi": "यह लॉगिन चुराने को असली डोमेन की नकल है" } },
+        { "id": "d", "label": { "en": "It has a long name", "hi": "इसका नाम लंबा है" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "The safest way to reach a login page is to:", "hi": "लॉगिन पेज तक पहुँचने का सबसे सुरक्षित तरीका है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Click the link in the message", "hi": "संदेश के लिंक पर क्लिक करें" } },
+        { "id": "b", "label": { "en": "Type the real address yourself or use the app", "hi": "असली पता खुद टाइप करें या ऐप उपयोग करें" } },
+        { "id": "c", "label": { "en": "Reply asking if it's genuine", "hi": "जवाब दें कि क्या असली है" } },
+        { "id": "d", "label": { "en": "Forward it to friends first", "hi": "पहले दोस्तों को फॉरवर्ड करें" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "Why does reusing passwords make phishing worse?", "hi": "पासवर्ड दोहराना फ़िशिंग को बदतर क्यों करता है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "One stolen password unlocks many accounts", "hi": "एक चोरी पासवर्ड कई खाते खोल देता है" } },
+        { "id": "b", "label": { "en": "It slows down the login", "hi": "यह लॉगिन धीमा करता है" } },
+        { "id": "c", "label": { "en": "It uses more storage", "hi": "यह ज़्यादा स्टोरेज लेता है" } },
+        { "id": "d", "label": { "en": "It has no effect", "hi": "इसका कोई असर नहीं" } }
+      ]
+    }
+  ]
+}

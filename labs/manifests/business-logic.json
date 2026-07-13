@@ -1,0 +1,109 @@
+{
+  "id": "business-logic",
+  "module": "appsec",
+  "executionTier": 2,
+  "category": "business-logic",
+  "title": { "en": "Business Logic Flaws", "hi": "बिज़नेस लॉजिक खामियाँ" },
+  "summary": {
+    "en": "The checkout trusts your quantity and coupons and never enforces the rules. Use a negative quantity or stacked coupons to make the store pay YOU.",
+    "hi": "चेकआउट आपकी मात्रा और कूपन पर भरोसा करता है और नियम लागू नहीं करता। नेगेटिव मात्रा या स्टैक्ड कूपन से स्टोर को आपको भुगतान कराएँ।"
+  },
+  "difficultyTiers": ["beginner", "intermediate", "advanced"],
+  "owasp": ["A04:2021 – Insecure Design"],
+  "mitre": ["T1565 Data Manipulation"],
+  "cves": [],
+  "target": { "kind": "shared-multitenant", "queryRoute": "/labs/business-logic/checkout" },
+  "lifecycle": [
+    {
+      "id": "intro",
+      "type": "content",
+      "title": { "en": "Introduction", "hi": "परिचय" },
+      "body": {
+        "en": "Business-logic flaws aren't about breaking the code — the code runs exactly as written. The bug is that the RULES weren't enforced. Here each item is ₹1000, and the server computes total = ₹1000 × quantity − coupons, but never checks quantity > 0, never limits a single-use coupon, and never floors the total at zero.",
+        "hi": "बिज़नेस-लॉजिक खामियाँ कोड तोड़ने की नहीं — कोड ठीक वैसे ही चलता है। बग यह है कि नियम लागू नहीं हुए। यहाँ हर वस्तु ₹1000 है, और सर्वर total = ₹1000 × मात्रा − कूपन गणना करता है, पर मात्रा > 0, एकल-उपयोग कूपन, या शून्य-न्यूनतम कभी नहीं जाँचता।"
+      }
+    },
+    {
+      "id": "objectives",
+      "type": "objectives",
+      "title": { "en": "Learning Objectives", "hi": "सीखने के उद्देश्य" },
+      "items": [
+        { "en": "Drive the total negative with a negative quantity.", "hi": "नेगेटिव मात्रा से कुल राशि ऋणात्मक करें।" },
+        { "en": "Stack a 'single-use' coupon to exceed the price.", "hi": "'एकल-उपयोग' कूपन स्टैक कर मूल्य से अधिक छूट पाएँ।" },
+        { "en": "Explain server-side invariant validation as the fix.", "hi": "फिक्स के रूप में सर्वर-साइड इनवेरिएंट सत्यापन समझाएँ।" }
+      ]
+    },
+    {
+      "id": "attack-surface",
+      "type": "content",
+      "title": { "en": "Attack Surface", "hi": "अटैक सरफेस" },
+      "body": {
+        "en": "POST /labs/business-logic/checkout {quantity, coupons[]} returns total = 1000×quantity − Σ coupon values. Coupons FLAT500 (₹500) and SAVE200 (₹200) are meant single-use; the server enforces none of that.",
+        "hi": "POST /labs/business-logic/checkout {quantity, coupons[]} total = 1000×मात्रा − Σ कूपन लौटाता है। कूपन FLAT500 (₹500) और SAVE200 (₹200) एकल-उपयोग के लिए हैं; सर्वर कुछ लागू नहीं करता।"
+      }
+    },
+    {
+      "id": "exploitation",
+      "type": "interactive",
+      "widget": "bizlogic-console",
+      "title": { "en": "Exploitation", "hi": "शोषण" },
+      "hints": [
+        { "en": "Set quantity = -3 and check out — the total goes negative.", "hi": "मात्रा = -3 सेट कर चेकआउट करें — कुल राशि ऋणात्मक हो जाती है।" },
+        { "en": "Or quantity = 1 with FLAT500 added twice → total ₹0.", "hi": "या मात्रा = 1 और FLAT500 दो बार → कुल ₹0।" }
+      ]
+    },
+    {
+      "id": "root-cause",
+      "type": "content",
+      "title": { "en": "Root Cause Analysis", "hi": "मूल कारण विश्लेषण" },
+      "body": {
+        "en": "The server treats client-supplied values as trusted and never asserts the domain invariants that a human cashier would enforce automatically: quantity must be a positive integer, each coupon applies once, and a total can't be negative. Validate every invariant server-side; never rely on the client (or the UI) to keep the rules.",
+        "hi": "सर्वर क्लाइंट-आपूर्ति मानों को विश्वसनीय मानता है और वे इनवेरिएंट कभी नहीं जाँचता जो कोई कैशियर स्वतः लागू करता: मात्रा धनात्मक पूर्णांक हो, हर कूपन एक बार लगे, कुल ऋणात्मक न हो। हर इनवेरिएंट सर्वर-साइड सत्यापित करें।"
+      }
+    },
+    {
+      "id": "secure-fix",
+      "type": "code",
+      "title": { "en": "Secure Fix", "hi": "सुरक्षित फिक्स" },
+      "language": "javascript",
+      "insecure": "const total = 1000 * quantity - coupons.reduce(sum);\nreturn { total };",
+      "secure": "if (!Number.isInteger(quantity) || quantity < 1) throw new Error('bad quantity');\nconst applied = dedupeAndValidate(coupons);        // single-use, exists, not expired\nconst total = Math.max(0, 1000 * quantity - discountOf(applied));\nawait markCouponsUsed(user, applied);              // persist usage\nreturn { total };"
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "Why can the total become negative?", "hi": "कुल राशि ऋणात्मक क्यों हो सकती है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "A database error", "hi": "डेटाबेस त्रुटि" } },
+        { "id": "b", "label": { "en": "The server trusts client quantity/coupons without enforcing the rules", "hi": "सर्वर नियम लागू किए बिना क्लाइंट मात्रा/कूपन पर भरोसा करता है" } },
+        { "id": "c", "label": { "en": "The network was slow", "hi": "नेटवर्क धीमा था" } },
+        { "id": "d", "label": { "en": "The price was wrong", "hi": "मूल्य गलत था" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "A 'single-use' coupon must be enforced:", "hi": "'एकल-उपयोग' कूपन लागू होना चाहिए:" },
+      "choices": [
+        { "id": "a", "label": { "en": "In the client UI only", "hi": "केवल क्लाइंट UI में" } },
+        { "id": "b", "label": { "en": "By hiding the coupon field", "hi": "कूपन फ़ील्ड छिपाकर" } },
+        { "id": "c", "label": { "en": "Server-side, by tracking that it was already used", "hi": "सर्वर-साइड, यह ट्रैक कर कि यह पहले उपयोग हो चुका" } },
+        { "id": "d", "label": { "en": "By making it longer", "hi": "इसे लंबा बनाकर" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "The general fix for business-logic flaws is to:", "hi": "बिज़नेस-लॉजिक खामियों का सामान्य फिक्स है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Validate every domain invariant server-side (qty>0, coupon usage, total≥0)", "hi": "हर डोमेन इनवेरिएंट सर्वर-साइड सत्यापित करें (मात्रा>0, कूपन उपयोग, कुल≥0)" } },
+        { "id": "b", "label": { "en": "Trust the frontend validation", "hi": "फ्रंटएंड सत्यापन पर भरोसा करें" } },
+        { "id": "c", "label": { "en": "Encrypt the request", "hi": "अनुरोध एन्क्रिप्ट करें" } },
+        { "id": "d", "label": { "en": "Use a faster server", "hi": "तेज़ सर्वर उपयोग करें" } }
+      ]
+    }
+  ],
+  "interviewQuestions": [
+    { "en": "How would you find business-logic flaws that a scanner misses?", "hi": "स्कैनर जो चूक जाए, वे बिज़नेस-लॉजिक खामियाँ आप कैसे खोजेंगे?" },
+    { "en": "Where should invariants live in a layered architecture?", "hi": "स्तरित आर्किटेक्चर में इनवेरिएंट कहाँ होने चाहिए?" }
+  ]
+}

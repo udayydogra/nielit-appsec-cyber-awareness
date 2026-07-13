@@ -1,0 +1,97 @@
+{
+  "id": "fake-job-offer",
+  "module": "awareness",
+  "executionTier": 0,
+  "category": "advance-fee-fraud",
+  "title": { "en": "Fake Job Offer & Task Scam", "hi": "नकली नौकरी ऑफ़र और टास्क धोखाधड़ी" },
+  "summary": {
+    "en": "A 'HR' offers a work-from-home job but asks for a registration fee first. Learn why a real employer never charges you to hire you.",
+    "hi": "एक 'HR' वर्क-फ्रॉम-होम नौकरी देता है पर पहले रजिस्ट्रेशन फीस माँगता है। जानें असली नियोक्ता कभी नौकरी देने के लिए पैसे क्यों नहीं लेता।"
+  },
+  "start": "n1",
+  "reportingResources": [
+    { "label": { "en": "Cyber Crime Helpline", "hi": "साइबर क्राइम हेल्पलाइन" }, "value": "1930" },
+    { "label": { "en": "National Portal", "hi": "राष्ट्रीय पोर्टल" }, "value": "cybercrime.gov.in" }
+  ],
+  "nodes": {
+    "n1": {
+      "type": "narration", "channel": "chat", "anim": "sms-slide-in",
+      "content": {
+        "en": "WhatsApp from 'HR - Amazon Recruitment': 'Congratulations! You are shortlisted for a ₹35,000/month work-from-home job. Pay a refundable ₹1,999 registration + kit fee to confirm your seat today.'",
+        "hi": "'HR - Amazon Recruitment' से WhatsApp: 'बधाई! आप ₹35,000/माह वर्क-फ्रॉम-होम नौकरी के लिए शॉर्टलिस्ट हैं। सीट पक्की करने के लिए आज ₹1,999 रिफंडेबल रजिस्ट्रेशन + किट फीस भरें।'"
+      },
+      "next": "n2"
+    },
+    "n2": {
+      "type": "decision",
+      "prompt": { "en": "What do you do?", "hi": "आप क्या करेंगे?" },
+      "choices": [
+        { "label": { "en": "Pay ₹1,999 to secure this great opportunity", "hi": "इस बढ़िया अवसर के लिए ₹1,999 भरें" }, "goto": "trap1" },
+        { "label": { "en": "Refuse — a real job never asks YOU to pay", "hi": "मना करें — असली नौकरी कभी आपसे पैसे नहीं माँगती" }, "goto": "safe1" }
+      ]
+    },
+    "trap1": {
+      "type": "consequence", "outcome": "negative", "anim": "shake",
+      "content": {
+        "en": "After you paid, they asked for 'training fees', then 'security deposit', each 'refundable'. There is no job. Legitimate employers pay YOU; they never collect registration, kit, or deposit fees to hire you.",
+        "hi": "भुगतान के बाद उन्होंने 'ट्रेनिंग फीस', फिर 'सिक्योरिटी डिपॉज़िट' माँगी, हर एक 'रिफंडेबल'। कोई नौकरी नहीं है। वैध नियोक्ता आपको भुगतान करते हैं, नियुक्ति के लिए फीस नहीं लेते।"
+      },
+      "technique": {
+        "en": "A famous brand name + urgency + a small 'refundable' fee that escalates. The first payment is bait to justify the next.",
+        "hi": "प्रसिद्ध ब्रांड + तात्कालिकता + छोटी 'रिफंडेबल' फीस जो बढ़ती जाती है। पहला भुगतान अगले को सही ठहराने का चारा है।"
+      },
+      "next": "feedback"
+    },
+    "safe1": {
+      "type": "consequence", "outcome": "positive", "anim": "check-pop",
+      "content": {
+        "en": "Correct. You declined and checked the company's official careers page — no such offer existed and the WhatsApp number was not theirs. Real hiring never starts with you paying.",
+        "hi": "सही। आपने मना करके कंपनी के आधिकारिक करियर पेज पर जाँचा — ऐसा कोई ऑफ़र नहीं था। असली भर्ती कभी आपके भुगतान से शुरू नहीं होती।"
+      },
+      "next": "feedback"
+    },
+    "feedback": {
+      "type": "checklist",
+      "title": { "en": "Prevention Checklist", "hi": "रोकथाम चेकलिस्ट" },
+      "items": [
+        { "en": "A real employer NEVER asks you to pay a fee to be hired.", "hi": "असली नियोक्ता नौकरी के लिए कभी फीस नहीं माँगता।" },
+        { "en": "'Refundable' fees that keep escalating are the scam pattern.", "hi": "बार-बार बढ़ती 'रिफंडेबल' फीस ही ठगी का पैटर्न है।" },
+        { "en": "Verify offers on the company's official careers site, not WhatsApp.", "hi": "ऑफ़र कंपनी के आधिकारिक करियर साइट पर सत्यापित करें, WhatsApp पर नहीं।" },
+        { "en": "Report job-fraud numbers to 1930 / cybercrime.gov.in.", "hi": "नौकरी-धोखाधड़ी नंबर 1930 / cybercrime.gov.in पर रिपोर्ट करें।" }
+      ],
+      "next": "quiz"
+    }
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "A genuine employer asking for a registration/kit fee to hire you is:", "hi": "नियुक्ति के लिए रजिस्ट्रेशन/किट फीस माँगने वाला नियोक्ता है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Normal for work-from-home jobs", "hi": "वर्क-फ्रॉम-होम के लिए सामान्य" } },
+        { "id": "b", "label": { "en": "A scam — employers never charge to hire", "hi": "एक ठगी — नियोक्ता नियुक्ति के लिए शुल्क नहीं लेते" } },
+        { "id": "c", "label": { "en": "Fine if it's refundable", "hi": "ठीक अगर रिफंडेबल है" } },
+        { "id": "d", "label": { "en": "Required by law", "hi": "कानून द्वारा आवश्यक" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "How should you verify a surprising job offer?", "hi": "अप्रत्याशित नौकरी ऑफ़र को कैसे सत्यापित करें?" },
+      "choices": [
+        { "id": "a", "label": { "en": "Check the company's official careers page/HR", "hi": "कंपनी के आधिकारिक करियर पेज/HR से जाँचें" } },
+        { "id": "b", "label": { "en": "Trust the WhatsApp display name", "hi": "WhatsApp डिस्प्ले नाम पर भरोसा करें" } },
+        { "id": "c", "label": { "en": "Pay a small fee to test it", "hi": "जाँचने को छोटी फीस भरें" } },
+        { "id": "d", "label": { "en": "Ask friends to apply too", "hi": "दोस्तों को भी आवेदन कराएँ" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "The escalating 'refundable' fees show that:", "hi": "बढ़ती 'रिफंडेबल' फीस दर्शाती है कि:" },
+      "choices": [
+        { "id": "a", "label": { "en": "The job is premium", "hi": "नौकरी प्रीमियम है" } },
+        { "id": "b", "label": { "en": "You will be reimbursed later", "hi": "आपको बाद में वापस मिलेगा" } },
+        { "id": "c", "label": { "en": "It is a fraud designed to keep extracting money", "hi": "यह पैसे निकालते रहने की धोखाधड़ी है" } },
+        { "id": "d", "label": { "en": "The HR is very thorough", "hi": "HR बहुत सावधान है" } }
+      ]
+    }
+  ]
+}

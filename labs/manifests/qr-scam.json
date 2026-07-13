@@ -1,0 +1,97 @@
+{
+  "id": "qr-scam",
+  "module": "awareness",
+  "executionTier": 0,
+  "category": "payment-fraud",
+  "title": { "en": "QR Code Scam", "hi": "क्यूआर कोड धोखाधड़ी" },
+  "summary": {
+    "en": "A 'buyer' sends you a QR code to 'receive' your payment. Learn why scanning a QR only ever PAYS money out.",
+    "hi": "एक 'खरीदार' आपको भुगतान 'प्राप्त' करने के लिए QR कोड भेजता है। जानें कि QR स्कैन करना केवल पैसे बाहर भेजता है।"
+  },
+  "start": "n1",
+  "reportingResources": [
+    { "label": { "en": "Cyber Crime Helpline", "hi": "साइबर क्राइम हेल्पलाइन" }, "value": "1930" },
+    { "label": { "en": "National Portal", "hi": "राष्ट्रीय पोर्टल" }, "value": "cybercrime.gov.in" }
+  ],
+  "nodes": {
+    "n1": {
+      "type": "narration", "channel": "chat", "anim": "sms-slide-in",
+      "content": {
+        "en": "A buyer for your old phone (₹6,000) says: 'I'll pay by QR. I'm sending a QR — just scan it with your UPI app and you'll get the money instantly.'",
+        "hi": "आपके पुराने फ़ोन (₹6,000) का खरीदार कहता है: 'मैं QR से भुगतान करूँगा। एक QR भेज रहा हूँ — बस अपने UPI ऐप से स्कैन करें और पैसे तुरंत मिल जाएँगे।'"
+      },
+      "next": "n2"
+    },
+    "n2": {
+      "type": "decision",
+      "prompt": { "en": "What do you do?", "hi": "आप क्या करेंगे?" },
+      "choices": [
+        { "label": { "en": "Scan his QR code to receive the ₹6,000", "hi": "₹6,000 पाने के लिए उसका QR स्कैन करें" }, "goto": "trap1" },
+        { "label": { "en": "Refuse — you never scan a QR to RECEIVE money", "hi": "मना करें — पैसे पाने के लिए QR स्कैन नहीं करते" }, "goto": "safe1" }
+      ]
+    },
+    "trap1": {
+      "type": "consequence", "outcome": "negative", "anim": "shake",
+      "content": {
+        "en": "Your app opened a PAYMENT screen and ₹6,000 left your account. A QR code encodes a PAY action — scanning it sends money to the scammer, never to you. Receiving needs no scan at all.",
+        "hi": "आपके ऐप ने भुगतान स्क्रीन खोली और ₹6,000 खाते से चले गए। QR कोड एक 'पे' क्रिया को एनकोड करता है — इसे स्कैन करना ठग को पैसे भेजता है, आपको नहीं।"
+      },
+      "technique": {
+        "en": "QR codes always initiate a payment FROM the scanner. 'Scan to receive' is a contradiction the scam relies on you not noticing.",
+        "hi": "QR कोड हमेशा स्कैन करने वाले से भुगतान शुरू करता है। 'प्राप्त करने के लिए स्कैन करें' एक विरोधाभास है जिस पर ठगी टिकी है।"
+      },
+      "next": "feedback"
+    },
+    "safe1": {
+      "type": "consequence", "outcome": "positive", "anim": "check-pop",
+      "content": {
+        "en": "Correct. To receive money you only share your UPI ID or phone number. Any 'buyer' who insists you scan a QR or approve a request to be paid is a scammer.",
+        "hi": "सही। पैसे पाने के लिए आप केवल अपनी UPI ID या फ़ोन नंबर साझा करते हैं। जो 'खरीदार' आपको QR स्कैन या रिक्वेस्ट अप्रूव करने पर ज़ोर दे, वह ठग है।"
+      },
+      "next": "feedback"
+    },
+    "feedback": {
+      "type": "checklist",
+      "title": { "en": "Prevention Checklist", "hi": "रोकथाम चेकलिस्ट" },
+      "items": [
+        { "en": "Scanning a QR or entering your PIN always sends money OUT.", "hi": "QR स्कैन करना या PIN डालना हमेशा पैसे बाहर भेजता है।" },
+        { "en": "To RECEIVE, share only your UPI ID/number — no scan, no PIN, no approval.", "hi": "प्राप्त करने के लिए केवल UPI ID/नंबर साझा करें — कोई स्कैन/PIN/अप्रूवल नहीं।" },
+        { "en": "Read your own app screen: does it say 'Paying' or 'Receiving'?", "hi": "अपनी ऐप स्क्रीन पढ़ें: 'भुगतान' या 'प्राप्ति'?" },
+        { "en": "If debited, call your bank and report to 1930 / cybercrime.gov.in.", "hi": "डेबिट होने पर बैंक को कॉल करें और 1930 / cybercrime.gov.in पर रिपोर्ट करें।" }
+      ],
+      "next": "quiz"
+    }
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "Scanning someone's QR code with your UPI app:", "hi": "किसी के QR कोड को अपने UPI ऐप से स्कैन करना:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Credits money to you", "hi": "आपको पैसे जमा करता है" } },
+        { "id": "b", "label": { "en": "Starts a payment FROM your account", "hi": "आपके खाते से भुगतान शुरू करता है" } },
+        { "id": "c", "label": { "en": "Only shares your name", "hi": "केवल आपका नाम साझा करता है" } },
+        { "id": "d", "label": { "en": "Verifies the other person", "hi": "दूसरे व्यक्ति को सत्यापित करता है" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "To RECEIVE money on UPI you should:", "hi": "UPI पर पैसे प्राप्त करने के लिए आपको चाहिए:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Share your UPI ID or number", "hi": "अपनी UPI ID या नंबर साझा करें" } },
+        { "id": "b", "label": { "en": "Scan the sender's QR", "hi": "भेजने वाले का QR स्कैन करें" } },
+        { "id": "c", "label": { "en": "Enter your UPI PIN", "hi": "अपना UPI PIN डालें" } },
+        { "id": "d", "label": { "en": "Approve a collect request", "hi": "कलेक्ट रिक्वेस्ट अप्रूव करें" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "A buyer who insists you scan their QR to be paid is:", "hi": "जो खरीदार भुगतान पाने के लिए आपको QR स्कैन करने पर ज़ोर दे:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Being helpful", "hi": "मदद कर रहा है" } },
+        { "id": "b", "label": { "en": "Using a new bank feature", "hi": "बैंक की नई सुविधा उपयोग कर रहा है" } },
+        { "id": "c", "label": { "en": "A scammer", "hi": "एक ठग" } },
+        { "id": "d", "label": { "en": "Following RBI rules", "hi": "RBI नियमों का पालन कर रहा है" } }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+{
+  "id": "upi-fraud",
+  "module": "awareness",
+  "executionTier": 0,
+  "category": "payment-fraud",
+  "title": { "en": "UPI Payment Fraud — Collect Request", "hi": "यूपीआई भुगतान धोखाधड़ी — कलेक्ट रिक्वेस्ट" },
+  "summary": {
+    "en": "A 'buyer' for your marketplace listing sends you a UPI request to 'confirm you can receive money'. Learn why approving it debits YOU.",
+    "hi": "आपकी लिस्टिंग का एक 'खरीदार' आपको 'पैसे प्राप्त करने की पुष्टि' के लिए यूपीआई रिक्वेस्ट भेजता है। जानें कि इसे स्वीकार करना आपको क्यों डेबिट करता है।"
+  },
+  "start": "n1",
+  "reportingResources": [
+    { "label": { "en": "Cyber Crime Helpline", "hi": "साइबर क्राइम हेल्पलाइन" }, "value": "1930" },
+    { "label": { "en": "National Portal", "hi": "राष्ट्रीय पोर्टल" }, "value": "cybercrime.gov.in" }
+  ],
+  "nodes": {
+    "n1": {
+      "type": "narration",
+      "channel": "chat",
+      "anim": "sms-slide-in",
+      "content": {
+        "en": "You listed a sofa on OLX for ₹8,000. A buyer messages on WhatsApp: 'Sir I want it, I'll pay on UPI now. Sending you a request — just approve to confirm your UPI can receive the ₹8,000.'",
+        "hi": "आपने OLX पर ₹8,000 में सोफा लिस्ट किया। एक खरीदार WhatsApp पर लिखता है: 'सर मुझे चाहिए, मैं अभी UPI पर पैसे भेजता हूँ। एक रिक्वेस्ट भेज रहा हूँ — बस अप्रूव कर दें ताकि पुष्टि हो कि आपका UPI ₹8,000 प्राप्त कर सकता है।'"
+      },
+      "next": "n2"
+    },
+    "n2": {
+      "type": "narration",
+      "channel": "payment",
+      "anim": "slideInUp",
+      "content": {
+        "en": "Your UPI app buzzes: 'COLLECT REQUEST — Rahul Kumar is requesting ₹8,000. Enter UPI PIN to PAY.'",
+        "hi": "आपका UPI ऐप बजता है: 'कलेक्ट रिक्वेस्ट — राहुल कुमार ₹8,000 माँग रहा है। भुगतान के लिए UPI PIN डालें।'"
+      },
+      "next": "n3"
+    },
+    "n3": {
+      "type": "decision",
+      "prompt": { "en": "What do you do?", "hi": "आप क्या करेंगे?" },
+      "choices": [
+        { "label": { "en": "Approve and enter my UPI PIN to 'receive' the money", "hi": "पैसे 'प्राप्त' करने के लिए अप्रूव करें और UPI PIN डालें" }, "goto": "trap1" },
+        { "label": { "en": "Decline — you NEVER enter a PIN to receive money", "hi": "अस्वीकार करें — पैसे पाने के लिए कभी PIN नहीं डालते" }, "goto": "safe1" }
+      ]
+    },
+    "trap1": {
+      "type": "consequence",
+      "outcome": "negative",
+      "anim": "shake",
+      "content": {
+        "en": "₹8,000 was DEBITED from your account. A collect request is a PULL — approving it and entering your PIN sends money OUT, never in. The 'buyer' vanishes. Receiving money on UPI never requires your PIN.",
+        "hi": "आपके खाते से ₹8,000 डेबिट हो गए। कलेक्ट रिक्वेस्ट एक PULL है — इसे अप्रूव करके PIN डालना पैसे बाहर भेजता है, अंदर नहीं। 'खरीदार' गायब। UPI पर पैसे पाने के लिए कभी PIN नहीं चाहिए।"
+      },
+      "technique": {
+        "en": "The scam inverts the flow: a 'collect/request money' transaction is dressed up as 'confirm you can receive'. The UPI PIN authorises a DEBIT, always.",
+        "hi": "ठगी प्रवाह को उलट देती है: 'पैसे माँगने' का लेनदेन 'प्राप्ति की पुष्टि' के रूप में दिखाया जाता है। UPI PIN हमेशा डेबिट को अधिकृत करता है।"
+      },
+      "next": "feedback"
+    },
+    "safe1": {
+      "type": "consequence",
+      "outcome": "positive",
+      "anim": "check-pop",
+      "content": {
+        "en": "You declined. Correct — to RECEIVE money you only share your UPI ID or scan nothing at all; you never approve a request or enter a PIN. The PIN authorises money leaving your account.",
+        "hi": "आपने अस्वीकार किया। सही — पैसे प्राप्त करने के लिए आप केवल अपनी UPI ID साझा करते हैं; कभी रिक्वेस्ट अप्रूव या PIN नहीं डालते। PIN पैसे बाहर जाने को अधिकृत करता है।"
+      },
+      "next": "feedback"
+    },
+    "feedback": {
+      "type": "checklist",
+      "title": { "en": "Prevention Checklist", "hi": "रोकथाम चेकलिस्ट" },
+      "items": [
+        { "en": "Receiving money NEVER needs your UPI PIN — entering it always pays OUT.", "hi": "पैसे प्राप्त करने के लिए UPI PIN की ज़रूरत नहीं — डालने पर पैसे बाहर जाते हैं।" },
+        { "en": "A 'collect request' asks money FROM you; read the app screen, not the buyer.", "hi": "'कलेक्ट रिक्वेस्ट' आपसे पैसे माँगती है; ऐप स्क्रीन पढ़ें, खरीदार को नहीं।" },
+        { "en": "Marketplace 'buyers' who insist on UPI requests / QR scans to pay you are scammers.", "hi": "जो 'खरीदार' आपको भुगतान के लिए UPI रिक्वेस्ट / QR स्कैन पर ज़ोर दें, वे ठग हैं।" },
+        { "en": "If debited, call your bank and report to 1930 / cybercrime.gov.in immediately.", "hi": "डेबिट होने पर तुरंत बैंक को कॉल करें और 1930 / cybercrime.gov.in पर रिपोर्ट करें।" }
+      ],
+      "next": "quiz"
+    }
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "To RECEIVE money on UPI, you need to:", "hi": "UPI पर पैसे प्राप्त करने के लिए आपको चाहिए:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Enter your UPI PIN", "hi": "अपना UPI PIN डालें" } },
+        { "id": "b", "label": { "en": "Share your UPI ID — no PIN, no approval", "hi": "अपनी UPI ID साझा करें — कोई PIN या अप्रूवल नहीं" } },
+        { "id": "c", "label": { "en": "Approve the sender's collect request", "hi": "भेजने वाले की कलेक्ट रिक्वेस्ट अप्रूव करें" } },
+        { "id": "d", "label": { "en": "Scan the sender's QR code", "hi": "भेजने वाले का QR कोड स्कैन करें" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "A 'collect request' in your UPI app is:", "hi": "आपके UPI ऐप में 'कलेक्ट रिक्वेस्ट' है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Money being sent TO you automatically", "hi": "आपको स्वतः भेजे जा रहे पैसे" } },
+        { "id": "b", "label": { "en": "A receipt for a completed payment", "hi": "पूर्ण भुगतान की रसीद" } },
+        { "id": "c", "label": { "en": "A request for you to PAY someone", "hi": "आपसे किसी को भुगतान करने की माँग" } },
+        { "id": "d", "label": { "en": "A bank security check", "hi": "बैंक सुरक्षा जाँच" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "Entering your UPI PIN always:", "hi": "UPI PIN डालना हमेशा:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Authorises money LEAVING your account", "hi": "आपके खाते से पैसे निकलने को अधिकृत करता है" } },
+        { "id": "b", "label": { "en": "Confirms you can receive money", "hi": "पुष्टि करता है कि आप पैसे प्राप्त कर सकते हैं" } },
+        { "id": "c", "label": { "en": "Verifies the other person's identity", "hi": "दूसरे की पहचान सत्यापित करता है" } },
+        { "id": "d", "label": { "en": "Is required to view your balance", "hi": "बैलेंस देखने के लिए आवश्यक है" } }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,97 @@
+{
+  "id": "social-media-safety",
+  "module": "awareness",
+  "executionTier": 0,
+  "category": "social-engineering",
+  "title": { "en": "Social Media Safety — Impersonation & Romance Scams", "hi": "सोशल मीडिया सुरक्षा — प्रतिरूपण और रोमांस धोखाधड़ी" },
+  "summary": {
+    "en": "A 'friend' messages from a new account asking for urgent money. Learn to verify identity before you ever send anything.",
+    "hi": "एक 'दोस्त' नए अकाउंट से तुरंत पैसे माँगता है। कुछ भी भेजने से पहले पहचान सत्यापित करना सीखें।"
+  },
+  "start": "n1",
+  "reportingResources": [
+    { "label": { "en": "Cyber Crime Helpline", "hi": "साइबर क्राइम हेल्पलाइन" }, "value": "1930" },
+    { "label": { "en": "National Portal", "hi": "राष्ट्रीय पोर्टल" }, "value": "cybercrime.gov.in" }
+  ],
+  "nodes": {
+    "n1": {
+      "type": "narration", "channel": "chat", "anim": "sms-slide-in",
+      "content": {
+        "en": "A Facebook message from an account with your friend Neha's photo: 'Hey! I lost my phone and made a new account. I'm stuck and need ₹10,000 urgently — I'll return it tomorrow. Please send to this UPI.'",
+        "hi": "आपकी दोस्त नेहा की फ़ोटो वाले अकाउंट से Facebook संदेश: 'हे! मेरा फ़ोन खो गया, नया अकाउंट बनाया। मैं फँसी हूँ और ₹10,000 तुरंत चाहिए — कल लौटा दूँगी। इस UPI पर भेजो।'"
+      },
+      "next": "n2"
+    },
+    "n2": {
+      "type": "decision",
+      "prompt": { "en": "What do you do?", "hi": "आप क्या करेंगे?" },
+      "choices": [
+        { "label": { "en": "Send ₹10,000 — my friend is in trouble", "hi": "₹10,000 भेजें — मेरी दोस्त मुसीबत में है" }, "goto": "trap1" },
+        { "label": { "en": "Call Neha on her real number to verify first", "hi": "पहले नेहा के असली नंबर पर कॉल कर सत्यापित करें" }, "goto": "safe1" }
+      ]
+    },
+    "trap1": {
+      "type": "consequence", "outcome": "negative", "anim": "shake",
+      "content": {
+        "en": "The account was a clone using Neha's public photos. The real Neha never messaged you. Impersonation + a familiar face + urgency + 'I'll pay you back' is the classic script — the money is gone.",
+        "hi": "अकाउंट नेहा की सार्वजनिक फ़ोटो वाला क्लोन था। असली नेहा ने कभी संदेश नहीं किया। प्रतिरूपण + परिचित चेहरा + तात्कालिकता + 'लौटा दूँगी' क्लासिक स्क्रिप्ट है — पैसे गए।"
+      },
+      "technique": {
+        "en": "Cloned/hacked profiles exploit trust in a known face. Urgency stops you from doing the one thing that breaks it: verifying on a separate channel.",
+        "hi": "क्लोन/हैक प्रोफ़ाइल परिचित चेहरे के भरोसे का फ़ायदा उठाती हैं। तात्कालिकता आपको वही रोकती है जो इसे तोड़ता है: अलग चैनल पर सत्यापन।"
+      },
+      "next": "feedback"
+    },
+    "safe1": {
+      "type": "consequence", "outcome": "positive", "anim": "check-pop",
+      "content": {
+        "en": "Correct. You called Neha directly — she was fine and never sent that message. Verifying on a separate channel instantly exposes an impersonator.",
+        "hi": "सही। आपने नेहा को सीधे कॉल किया — वह ठीक थी और उसने वह संदेश नहीं भेजा। अलग चैनल पर सत्यापन प्रतिरूपक को तुरंत उजागर करता है।"
+      },
+      "next": "feedback"
+    },
+    "feedback": {
+      "type": "checklist",
+      "title": { "en": "Prevention Checklist", "hi": "रोकथाम चेकलिस्ट" },
+      "items": [
+        { "en": "Any urgent money request 'from a friend' — verify on a call first.", "hi": "'दोस्त' से कोई भी तुरंत पैसे का अनुरोध — पहले कॉल पर सत्यापित करें।" },
+        { "en": "A new/duplicate account with a familiar photo is a clone red flag.", "hi": "परिचित फ़ोटो वाला नया/डुप्लिकेट अकाउंट क्लोन का रेड फ्लैग है।" },
+        { "en": "Keep profiles private; public photos are what impersonators harvest.", "hi": "प्रोफ़ाइल निजी रखें; सार्वजनिक फ़ोटो ही प्रतिरूपक जुटाते हैं।" },
+        { "en": "Report the fake profile and warn the real friend.", "hi": "नकली प्रोफ़ाइल रिपोर्ट करें और असली दोस्त को सचेत करें।" }
+      ],
+      "next": "quiz"
+    }
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "A friend's 'new account' urgently asking for money should be:", "hi": "दोस्त का 'नया अकाउंट' तुरंत पैसे माँगे तो करना चाहिए:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Trusted because the photo matches", "hi": "भरोसा करें क्योंकि फ़ोटो मिलती है" } },
+        { "id": "b", "label": { "en": "Verified by calling them on their known number first", "hi": "पहले उनके ज्ञात नंबर पर कॉल कर सत्यापित करें" } },
+        { "id": "c", "label": { "en": "Paid immediately to help", "hi": "मदद को तुरंत भुगतान करें" } },
+        { "id": "d", "label": { "en": "Ignored forever with no check", "hi": "बिना जाँचे हमेशा अनदेखा करें" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "Impersonation scams work mainly by exploiting:", "hi": "प्रतिरूपण धोखाधड़ी मुख्यतः किसका फ़ायदा उठाती है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Your trust in a familiar face + urgency", "hi": "परिचित चेहरे पर भरोसा + तात्कालिकता" } },
+        { "id": "b", "label": { "en": "Weak phone signal", "hi": "कमज़ोर फ़ोन सिग्नल" } },
+        { "id": "c", "label": { "en": "Slow internet", "hi": "धीमा इंटरनेट" } },
+        { "id": "d", "label": { "en": "Old phone models", "hi": "पुराने फ़ोन मॉडल" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "A good way to reduce impersonation risk is to:", "hi": "प्रतिरूपण जोखिम कम करने का अच्छा तरीका है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Post more photos publicly", "hi": "अधिक फ़ोटो सार्वजनिक करें" } },
+        { "id": "b", "label": { "en": "Accept all friend requests", "hi": "सभी फ्रेंड रिक्वेस्ट स्वीकार करें" } },
+        { "id": "c", "label": { "en": "Keep your profile private and limit public photos", "hi": "प्रोफ़ाइल निजी रखें और सार्वजनिक फ़ोटो सीमित करें" } },
+        { "id": "d", "label": { "en": "Share your location openly", "hi": "अपना स्थान खुलेआम साझा करें" } }
+      ]
+    }
+  ]
+}

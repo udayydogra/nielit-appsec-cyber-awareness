@@ -1,0 +1,89 @@
+{
+  "id": "incident-response",
+  "module": "appsec",
+  "executionTier": 0,
+  "category": "blue-team",
+  "title": { "en": "Incident Response", "hi": "इंसिडेंट रिस्पॉन्स" },
+  "summary": {
+    "en": "Work a breach the way a responder does: follow the lifecycle, read logs, build a timeline, identify IOCs, and write the report. Tier 0 — no backend.",
+    "hi": "एक रिस्पॉन्डर की तरह सेंध पर काम करें: लाइफ़साइकल का पालन करें, लॉग पढ़ें, टाइमलाइन बनाएँ, IOC पहचानें, और रिपोर्ट लिखें। टियर 0।"
+  },
+  "difficultyTiers": ["beginner", "intermediate", "advanced"],
+  "owasp": ["A09:2021 – Security Logging and Monitoring Failures"],
+  "mitre": ["TA0005 Defense Evasion", "TA0010 Exfiltration"],
+  "cves": [],
+  "lifecycle": [
+    {
+      "id": "intro",
+      "type": "content",
+      "title": { "en": "Introduction", "hi": "परिचय" },
+      "body": {
+        "en": "Incident response is a disciplined process, not panic. The NIST lifecycle is: Preparation → Detection & Analysis → Containment → Eradication → Recovery → Post-incident (lessons learned). Each phase has a clear goal and hand-off.",
+        "hi": "इंसिडेंट रिस्पॉन्स एक अनुशासित प्रक्रिया है, घबराहट नहीं। NIST लाइफ़साइकल: तैयारी → पहचान और विश्लेषण → रोकथाम → उन्मूलन → रिकवरी → घटना-पश्चात (सीख)।"
+      }
+    },
+    {
+      "id": "objectives",
+      "type": "objectives",
+      "title": { "en": "Learning Objectives", "hi": "सीखने के उद्देश्य" },
+      "items": [
+        { "en": "Order the phases of the incident-response lifecycle.", "hi": "इंसिडेंट रिस्पॉन्स लाइफ़साइकल के चरण क्रम में रखें।" },
+        { "en": "Read authentication logs and reconstruct a timeline.", "hi": "प्रमाणीकरण लॉग पढ़ें और टाइमलाइन बनाएँ।" },
+        { "en": "Distinguish containment from eradication, and identify IOCs.", "hi": "रोकथाम और उन्मूलन में अंतर करें, और IOC पहचानें।" }
+      ]
+    },
+    {
+      "id": "logs",
+      "type": "code",
+      "title": { "en": "Log Analysis — an auth log", "hi": "लॉग विश्लेषण — एक auth लॉग" },
+      "language": "text",
+      "insecure": "10:02  login FAIL  user=admin ip=45.9.x.x\n10:02  login FAIL  user=admin ip=45.9.x.x   (x200, seconds)\n10:05  login OK    user=admin ip=45.9.x.x\n10:06  role change user=guest -> admin  by=admin\n10:09  export  table=customers rows=48211",
+      "secure": "Reading it:\n  200 fails then success = brute force / credential stuffing\n  immediate role change  = privilege escalation\n  bulk export            = data exfiltration\nIOCs: ip 45.9.x.x, admin login 10:05, mass export 10:09"
+    },
+    {
+      "id": "containment",
+      "type": "content",
+      "title": { "en": "Containment vs Eradication", "hi": "रोकथाम बनाम उन्मूलन" },
+      "body": {
+        "en": "Containment stops the bleeding NOW (disable the account, block the IP, isolate the host) while preserving evidence. Eradication removes the root cause (revoke keys, patch the flaw, rebuild). Recovery restores service and monitors for recurrence.",
+        "hi": "रोकथाम अभी रक्तस्राव रोकती है (खाता निष्क्रिय करें, IP ब्लॉक करें, होस्ट अलग करें) साक्ष्य सुरक्षित रखते हुए। उन्मूलन मूल कारण हटाता है (कुंजी रद्द करें, खामी पैच करें, फिर से बनाएँ)।"
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "Which is the correct order of two adjacent IR phases?", "hi": "दो निकटवर्ती IR चरणों का सही क्रम कौन सा है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "Containment → Eradication → Recovery", "hi": "रोकथाम → उन्मूलन → रिकवरी" } },
+        { "id": "b", "label": { "en": "Recovery → Detection → Preparation", "hi": "रिकवरी → पहचान → तैयारी" } },
+        { "id": "c", "label": { "en": "Eradication → Detection → Containment", "hi": "उन्मूलन → पहचान → रोकथाम" } },
+        { "id": "d", "label": { "en": "Recovery → Containment → Detection", "hi": "रिकवरी → रोकथाम → पहचान" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "200 failed logins then a success most likely indicates:", "hi": "200 विफल लॉगिन फिर सफलता सबसे संभवतः दर्शाता है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "A slow network", "hi": "धीमा नेटवर्क" } },
+        { "id": "b", "label": { "en": "A brute-force / credential-stuffing attack", "hi": "ब्रूट-फोर्स / क्रेडेंशियल-स्टफ़िंग हमला" } },
+        { "id": "c", "label": { "en": "A forgotten password by a real user only", "hi": "केवल असली उपयोगकर्ता का भूला पासवर्ड" } },
+        { "id": "d", "label": { "en": "A software update", "hi": "एक सॉफ़्टवेयर अपडेट" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "Disabling the compromised account to stop damage is:", "hi": "नुकसान रोकने को समझौता किए खाते को निष्क्रिय करना है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Recovery", "hi": "रिकवरी" } },
+        { "id": "b", "label": { "en": "Preparation", "hi": "तैयारी" } },
+        { "id": "c", "label": { "en": "Containment", "hi": "रोकथाम" } },
+        { "id": "d", "label": { "en": "A post-incident review", "hi": "घटना-पश्चात समीक्षा" } }
+      ]
+    }
+  ],
+  "interviewQuestions": [
+    { "en": "Why preserve evidence before eradicating in most cases?", "hi": "अधिकांश मामलों में उन्मूलन से पहले साक्ष्य क्यों सुरक्षित रखें?" },
+    { "en": "What IOCs would you pull from the log above?", "hi": "ऊपर के लॉग से आप कौन से IOC निकालेंगे?" }
+  ]
+}

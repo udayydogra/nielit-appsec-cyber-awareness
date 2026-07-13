@@ -1,0 +1,97 @@
+{
+  "id": "cyber-hygiene",
+  "module": "awareness",
+  "executionTier": 0,
+  "category": "cyber-hygiene",
+  "title": { "en": "Cyber Hygiene — Updates, Backups & Reporting", "hi": "साइबर स्वच्छता — अपडेट, बैकअप और रिपोर्टिंग" },
+  "summary": {
+    "en": "Your phone nags you to update and back up, and you keep postponing. Learn why these habits decide whether an incident is a shrug or a disaster.",
+    "hi": "आपका फ़ोन अपडेट और बैकअप के लिए कहता है, और आप टालते रहते हैं। जानें ये आदतें क्यों तय करती हैं कि घटना मामूली है या आपदा।"
+  },
+  "start": "n1",
+  "reportingResources": [
+    { "label": { "en": "Cyber Crime Helpline", "hi": "साइबर क्राइम हेल्पलाइन" }, "value": "1930" },
+    { "label": { "en": "National Portal", "hi": "राष्ट्रीय पोर्टल" }, "value": "cybercrime.gov.in" }
+  ],
+  "nodes": {
+    "n1": {
+      "type": "narration", "channel": "chat", "anim": "sms-slide-in",
+      "content": {
+        "en": "For weeks your phone has shown 'Security update available' and 'Back up your photos'. You've hit 'Later' every time. Today an app you installed starts behaving strangely.",
+        "hi": "हफ़्तों से आपका फ़ोन 'सुरक्षा अपडेट उपलब्ध' और 'अपनी फ़ोटो बैकअप करें' दिखा रहा है। आपने हर बार 'बाद में' दबाया। आज एक इंस्टॉल किया ऐप अजीब व्यवहार करने लगता है।"
+      },
+      "next": "n2"
+    },
+    "n2": {
+      "type": "decision",
+      "prompt": { "en": "Going forward, what's the right habit?", "hi": "आगे के लिए सही आदत क्या है?" },
+      "choices": [
+        { "label": { "en": "Keep postponing updates and backups — they're annoying", "hi": "अपडेट और बैकअप टालते रहें — ये परेशान करते हैं" }, "goto": "trap1" },
+        { "label": { "en": "Install updates promptly and keep automatic backups on", "hi": "अपडेट तुरंत इंस्टॉल करें और ऑटो-बैकअप चालू रखें" }, "goto": "safe1" }
+      ]
+    },
+    "trap1": {
+      "type": "consequence", "outcome": "negative", "anim": "shake",
+      "content": {
+        "en": "The strange app exploited an old, unpatched flaw and locked your files. With no backup, your photos and documents are gone. Skipped updates leave known holes open; no backup turns any incident into permanent loss.",
+        "hi": "अजीब ऐप ने पुरानी, बिना-पैच खामी का फ़ायदा उठाकर आपकी फ़ाइलें लॉक कर दीं। बैकअप न होने से फ़ोटो-दस्तावेज़ चले गए। छूटे अपडेट ज्ञात छेद खुले छोड़ते हैं; बैकअप न होना घटना को स्थायी नुकसान बनाता है।"
+      },
+      "technique": {
+        "en": "Attackers weaponise known, already-patched vulnerabilities in devices that skipped updates. Backups are what make recovery possible.",
+        "hi": "हमलावर उन उपकरणों की ज्ञात, पहले से पैच की गई खामियों का फ़ायदा उठाते हैं जिन्होंने अपडेट छोड़े। बैकअप ही रिकवरी संभव बनाते हैं।"
+      },
+      "next": "feedback"
+    },
+    "safe1": {
+      "type": "consequence", "outcome": "positive", "anim": "check-pop",
+      "content": {
+        "en": "Correct. Prompt updates close known holes, and automatic backups mean even a lost or infected phone costs you nothing important. Good hygiene turns a crisis into an inconvenience.",
+        "hi": "सही। तुरंत अपडेट ज्ञात छेद बंद करते हैं, और ऑटो-बैकअप का मतलब खोया या संक्रमित फ़ोन भी कुछ महत्वपूर्ण नहीं खोता। अच्छी स्वच्छता संकट को असुविधा बना देती है।"
+      },
+      "next": "feedback"
+    },
+    "feedback": {
+      "type": "checklist",
+      "title": { "en": "Prevention Checklist", "hi": "रोकथाम चेकलिस्ट" },
+      "items": [
+        { "en": "Install OS and app security updates promptly — they patch known holes.", "hi": "OS और ऐप सुरक्षा अपडेट तुरंत इंस्टॉल करें — ये ज्ञात छेद पैच करते हैं।" },
+        { "en": "Keep automatic backups of photos and important files.", "hi": "फ़ोटो और ज़रूरी फ़ाइलों का ऑटो-बैकअप रखें।" },
+        { "en": "Use reputable security software; remove apps you don't recognise.", "hi": "प्रतिष्ठित सुरक्षा सॉफ़्टवेयर उपयोग करें; अनजान ऐप हटाएँ।" },
+        { "en": "Know how to report cybercrime: call 1930 or use cybercrime.gov.in.", "hi": "साइबर अपराध रिपोर्ट करना जानें: 1930 या cybercrime.gov.in।" }
+      ],
+      "next": "quiz"
+    }
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "Why do security updates matter?", "hi": "सुरक्षा अपडेट क्यों मायने रखते हैं?" },
+      "choices": [
+        { "id": "a", "label": { "en": "They add new emojis", "hi": "ये नए इमोजी जोड़ते हैं" } },
+        { "id": "b", "label": { "en": "They patch known flaws attackers exploit", "hi": "ये हमलावरों द्वारा शोषित ज्ञात खामियाँ पैच करते हैं" } },
+        { "id": "c", "label": { "en": "They make the phone slower", "hi": "ये फ़ोन धीमा करते हैं" } },
+        { "id": "d", "label": { "en": "They use more data for no reason", "hi": "ये बेवजह ज़्यादा डेटा लेते हैं" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "Regular backups mainly protect you from:", "hi": "नियमित बैकअप मुख्यतः किससे बचाते हैं:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Permanent data loss after theft, damage, or ransomware", "hi": "चोरी, क्षति, या रैंसमवेयर के बाद स्थायी डेटा हानि" } },
+        { "id": "b", "label": { "en": "Slow internet", "hi": "धीमा इंटरनेट" } },
+        { "id": "c", "label": { "en": "Spam calls", "hi": "स्पैम कॉल" } },
+        { "id": "d", "label": { "en": "A cracked screen", "hi": "टूटी स्क्रीन" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "To report a cyber fraud in India you can:", "hi": "भारत में साइबर धोखाधड़ी रिपोर्ट करने के लिए आप:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Post about it on social media only", "hi": "केवल सोशल मीडिया पर पोस्ट करें" } },
+        { "id": "b", "label": { "en": "Wait and hope it resolves", "hi": "इंतज़ार करें कि सुलझ जाए" } },
+        { "id": "c", "label": { "en": "Do nothing", "hi": "कुछ न करें" } },
+        { "id": "d", "label": { "en": "Call 1930 or file at cybercrime.gov.in", "hi": "1930 पर कॉल करें या cybercrime.gov.in पर दर्ज करें" } }
+      ]
+    }
+  ]
+}

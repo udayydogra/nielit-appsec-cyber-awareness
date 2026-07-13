@@ -1,0 +1,109 @@
+{
+  "id": "xss",
+  "module": "appsec",
+  "executionTier": 2,
+  "category": "injection",
+  "title": { "en": "Cross-Site Scripting (Stored)", "hi": "क्रॉस-साइट स्क्रिप्टिंग (स्टोर्ड)" },
+  "summary": {
+    "en": "Post a comment to a guestbook that renders it as raw HTML. Your script is saved and runs every time the page loads. Rendered in a sandbox so it's safe to try.",
+    "hi": "एक गेस्टबुक में टिप्पणी पोस्ट करें जो इसे कच्चे HTML के रूप में रेंडर करती है। आपका स्क्रिप्ट सेव होकर हर बार चलता है। सुरक्षित सैंडबॉक्स में रेंडर।"
+  },
+  "difficultyTiers": ["beginner", "intermediate", "advanced"],
+  "owasp": ["A03:2021 – Injection"],
+  "mitre": ["T1059.007 JavaScript"],
+  "cves": ["CVE-2018-6389", "CVE-2015-8562 (Joomla stored XSS→RCE)"],
+  "target": { "kind": "shared-multitenant", "resetRoute": "/labs/xss/reset", "queryRoute": "/labs/xss/comment" },
+  "lifecycle": [
+    {
+      "id": "intro",
+      "type": "content",
+      "title": { "en": "Introduction", "hi": "परिचय" },
+      "body": {
+        "en": "This guestbook saves your comment and later renders it straight into the page as HTML — no escaping. So a comment like <img src=x onerror=…> isn't shown as text; the browser runs it. Because it's STORED, it runs for everyone who views the page. Here each comment is rendered inside a sandboxed iframe so you can safely watch the payload fire.",
+        "hi": "यह गेस्टबुक आपकी टिप्पणी सेव करके बाद में उसे HTML के रूप में सीधे पेज में रेंडर करती है — बिना एस्केप। तो <img src=x onerror=…> टेक्स्ट नहीं, ब्राउज़र इसे चलाता है। STORED होने से यह हर दर्शक के लिए चलता है।"
+      }
+    },
+    {
+      "id": "objectives",
+      "type": "objectives",
+      "title": { "en": "Learning Objectives", "hi": "सीखने के उद्देश्य" },
+      "items": [
+        { "en": "Inject a payload that executes when the comment is rendered.", "hi": "ऐसा पेलोड इंजेक्ट करें जो टिप्पणी रेंडर होने पर चले।" },
+        { "en": "Explain why stored XSS is worse than reflected XSS.", "hi": "बताएँ स्टोर्ड XSS रिफ्लेक्टेड से बदतर क्यों है।" },
+        { "en": "Write the output-encoding fix and name CSP as defense-in-depth.", "hi": "आउटपुट-एन्कोडिंग फिक्स लिखें और CSP को रक्षा-की-गहराई बताएँ।" }
+      ]
+    },
+    {
+      "id": "attack-surface",
+      "type": "content",
+      "title": { "en": "Attack Surface", "hi": "अटैक सरफेस" },
+      "body": {
+        "en": "POST /labs/xss/comment stores your body verbatim. GET /labs/xss/comments returns it, and the page injects it via innerHTML (simulated here by an iframe srcdoc). Any HTML/JS you store becomes part of the page.",
+        "hi": "POST /labs/xss/comment आपका बॉडी ज्यों-का-त्यों सेव करता है। पेज इसे innerHTML से डालता है। आपका कोई भी HTML/JS पेज का हिस्सा बन जाता है।"
+      }
+    },
+    {
+      "id": "exploitation",
+      "type": "interactive",
+      "widget": "xss-console",
+      "title": { "en": "Exploitation", "hi": "शोषण" },
+      "hints": [
+        { "en": "Try: <img src=x onerror=\"document.body.innerHTML='XSS by you';document.body.style.background='#f85149'\">", "hi": "आज़माएँ: <img src=x onerror=\"document.body.innerHTML='XSS by you';document.body.style.background='#f85149'\">" },
+        { "en": "Or a classic: <script>document.body.textContent='popped'</script>", "hi": "या क्लासिक: <script>document.body.textContent='popped'</script>" }
+      ]
+    },
+    {
+      "id": "root-cause",
+      "type": "content",
+      "title": { "en": "Root Cause Analysis", "hi": "मूल कारण विश्लेषण" },
+      "body": {
+        "en": "User input is inserted into the HTML document without context-aware encoding, so the browser can't tell your data from the page's own markup. Stored XSS persists in the database and fires for every viewer — enabling session theft, keylogging, and account takeover.",
+        "hi": "उपयोगकर्ता इनपुट बिना संदर्भ-आधारित एन्कोडिंग के HTML में डाला जाता है, इसलिए ब्राउज़र आपके डेटा और पेज के मार्कअप में अंतर नहीं कर पाता। स्टोर्ड XSS डेटाबेस में रहता है और हर दर्शक के लिए चलता है।"
+      }
+    },
+    {
+      "id": "secure-fix",
+      "type": "code",
+      "title": { "en": "Secure Fix", "hi": "सुरक्षित फिक्स" },
+      "language": "javascript",
+      "insecure": "// renders attacker HTML as markup\ncommentEl.innerHTML = comment.body;",
+      "secure": "// treat input as TEXT, not markup (context-aware output encoding)\ncommentEl.textContent = comment.body;\n// In React, {comment.body} auto-escapes; avoid dangerouslySetInnerHTML.\n// Defense-in-depth: a strict Content-Security-Policy blocks inline script."
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "Why does the comment's script execute?", "hi": "टिप्पणी का स्क्रिप्ट क्यों चलता है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "The database ran it", "hi": "डेटाबेस ने इसे चलाया" } },
+        { "id": "b", "label": { "en": "The app inserts user input into the page as HTML without escaping", "hi": "ऐप उपयोगकर्ता इनपुट को बिना एस्केप HTML के रूप में डालता है" } },
+        { "id": "c", "label": { "en": "The server compiled it", "hi": "सर्वर ने इसे कंपाइल किया" } },
+        { "id": "d", "label": { "en": "It was sent over HTTP", "hi": "इसे HTTP पर भेजा गया" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "The primary fix for XSS is:", "hi": "XSS का प्राथमिक फिक्स है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Context-aware output encoding / treat input as text", "hi": "संदर्भ-आधारित आउटपुट एन्कोडिंग / इनपुट को टेक्स्ट मानें" } },
+        { "id": "b", "label": { "en": "Blocking the word 'script'", "hi": "'script' शब्द ब्लॉक करना" } },
+        { "id": "c", "label": { "en": "Using POST instead of GET", "hi": "GET के बजाय POST" } },
+        { "id": "d", "label": { "en": "Minifying the JavaScript", "hi": "JavaScript मिनिफ़ाई करना" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "Stored XSS is more dangerous than reflected XSS because:", "hi": "स्टोर्ड XSS रिफ्लेक्टेड से अधिक खतरनाक है क्योंकि:" },
+      "choices": [
+        { "id": "a", "label": { "en": "It is faster to type", "hi": "इसे टाइप करना तेज़ है" } },
+        { "id": "b", "label": { "en": "It only affects the attacker", "hi": "यह केवल हमलावर को प्रभावित करता है" } },
+        { "id": "c", "label": { "en": "It is saved and served to every user who views the page", "hi": "यह सेव होकर हर दर्शक को परोसा जाता है" } },
+        { "id": "d", "label": { "en": "It needs no browser", "hi": "इसे ब्राउज़र नहीं चाहिए" } }
+      ]
+    }
+  ],
+  "interviewQuestions": [
+    { "en": "Why is output encoding context-dependent (HTML vs attribute vs JS)?", "hi": "आउटपुट एन्कोडिंग संदर्भ-निर्भर क्यों है (HTML बनाम एट्रिब्यूट बनाम JS)?" },
+    { "en": "What does a strict CSP protect against, and what doesn't it fix?", "hi": "सख़्त CSP किससे बचाता है, और किसे ठीक नहीं करता?" }
+  ]
+}

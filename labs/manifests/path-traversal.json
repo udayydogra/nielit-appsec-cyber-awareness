@@ -1,0 +1,95 @@
+{
+  "id": "path-traversal",
+  "module": "appsec",
+  "executionTier": 3,
+  "category": "path-traversal",
+  "title": { "en": "Path Traversal (Tier 3)", "hi": "पाथ ट्रैवर्सल (टियर 3)" },
+  "summary": {
+    "en": "A file server joins your input to a base directory without sanitizing it, so ../ escapes the folder. Read /etc/passwd and the flag — safely, in a live container.",
+    "hi": "एक फ़ाइल सर्वर आपके इनपुट को बेस डायरेक्टरी से जोड़ता है बिना सैनिटाइज़ किए, इसलिए ../ फ़ोल्डर से बाहर निकलता है। लाइव कंटेनर में /etc/passwd और फ्लैग पढ़ें।"
+  },
+  "difficultyTiers": ["beginner", "intermediate", "advanced"],
+  "owasp": ["A01:2021 – Broken Access Control (Path Traversal)"],
+  "mitre": ["T1083 File and Directory Discovery", "T1006"],
+  "cves": ["CVE-2021-41773 (Apache path traversal)", "CVE-2019-3396"],
+  "target": { "kind": "ephemeral-container", "image": "nielit/path-traversal:latest" },
+  "lifecycle": [
+    {
+      "id": "intro", "type": "content", "title": { "en": "Introduction", "hi": "परिचय" },
+      "body": {
+        "en": "A download/serve feature builds a filesystem path by joining a base directory with a name you supply: /srv/public/<name>. If <name> can contain ../, you climb out of the intended folder and read anything the process can — /etc/passwd, config files, secrets. Encodings (%2e%2e, ....//) bypass naive filters.",
+        "hi": "एक डाउनलोड फ़ीचर बेस डायरेक्टरी को आपके नाम से जोड़कर पथ बनाता है: /srv/public/<name>। यदि <name> में ../ हो, तो आप इच्छित फ़ोल्डर से बाहर चढ़कर कुछ भी पढ़ सकते हैं।"
+      }
+    },
+    {
+      "id": "objectives", "type": "objectives", "title": { "en": "Learning Objectives", "hi": "सीखने के उद्देश्य" },
+      "items": [
+        { "en": "Escape /srv/public with ../ to read the flag.", "hi": "फ्लैग पढ़ने को ../ से /srv/public से बाहर निकलें।" },
+        { "en": "Read /etc/passwd to prove arbitrary file access.", "hi": "मनमानी फ़ाइल पहुँच साबित करने को /etc/passwd पढ़ें।" },
+        { "en": "Explain canonicalization + base-dir confinement.", "hi": "canonicalization + बेस-डायर सीमन समझाएँ।" }
+      ]
+    },
+    {
+      "id": "attack-surface", "type": "content", "title": { "en": "Attack Surface", "hi": "अटैक सरफेस" },
+      "body": {
+        "en": "getfile <name> runs: cat \"/srv/public/$name\". There's no check that the resolved path stays inside /srv/public, so getfile ../../etc/passwd reads /etc/passwd.",
+        "hi": "getfile <name> चलाता है: cat \"/srv/public/$name\"। कोई जाँच नहीं कि हल किया पथ /srv/public के भीतर रहे, इसलिए getfile ../../etc/passwd /etc/passwd पढ़ता है।"
+      }
+    },
+    {
+      "id": "exploitation", "type": "interactive", "widget": "terminal", "title": { "en": "Live Terminal", "hi": "लाइव टर्मिनल" },
+      "hints": [
+        { "en": "getfile index.html   then   getfile ../../challenge/flag.txt", "hi": "getfile index.html   फिर   getfile ../../challenge/flag.txt" },
+        { "en": "getfile ../../etc/passwd reads any file the process can.", "hi": "getfile ../../etc/passwd कोई भी फ़ाइल पढ़ता है।" }
+      ]
+    },
+    {
+      "id": "root-cause", "type": "content", "title": { "en": "Root Cause Analysis", "hi": "मूल कारण विश्लेषण" },
+      "body": {
+        "en": "The code trusts the user-supplied path fragment. Fix: resolve the full path to its canonical (real) form and verify it still starts with the base directory + separator; reject if not. Prefer an allow-list of known filenames or an opaque id → real path map, and never pass user input into a shell.",
+        "hi": "कोड उपयोगकर्ता पथ अंश पर भरोसा करता है। फिक्स: पूर्ण पथ को उसके canonical रूप में हल करें और सत्यापित करें कि यह बेस डायरेक्टरी + विभाजक से शुरू होता है; अन्यथा अस्वीकार करें। ज्ञात फ़ाइलनामों की allow-list बेहतर।"
+      }
+    },
+    {
+      "id": "secure-fix", "type": "code", "title": { "en": "Secure Fix", "hi": "सुरक्षित फिक्स" }, "language": "javascript",
+      "insecure": "res.sendFile('/srv/public/' + req.params.name);   // ../ escapes",
+      "secure": "import path from 'node:path';\nconst base = '/srv/public';\nconst target = path.resolve(base, req.params.name);\nif (!target.startsWith(base + path.sep)) return res.sendStatus(400);\nres.sendFile(target);"
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "Why does getfile ../../etc/passwd work?", "hi": "getfile ../../etc/passwd क्यों काम करता है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "The path is joined without sanitizing ../", "hi": "पथ बिना ../ सैनिटाइज़ किए जुड़ता है" } },
+        { "id": "b", "label": { "en": "/etc/passwd is world-writable", "hi": "/etc/passwd विश्व-लिखने-योग्य है" } },
+        { "id": "c", "label": { "en": "A SQL injection", "hi": "एक SQL इंजेक्शन" } },
+        { "id": "d", "label": { "en": "A weak password", "hi": "कमज़ोर पासवर्ड" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "The correct fix is to:", "hi": "सही फिक्स है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Blocklist the string '../'", "hi": "'../' स्ट्रिंग ब्लॉकलिस्ट करें" } },
+        { "id": "b", "label": { "en": "Resolve the canonical path and confine it to the base directory", "hi": "canonical पथ हल करें और उसे बेस डायरेक्टरी तक सीमित रखें" } },
+        { "id": "c", "label": { "en": "Rename the folder", "hi": "फ़ोल्डर का नाम बदलें" } },
+        { "id": "d", "label": { "en": "Use HTTPS", "hi": "HTTPS उपयोग करें" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "Why is blocklisting '../' fragile?", "hi": "'../' ब्लॉकलिस्ट करना क्यों नाज़ुक है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "It slows the server", "hi": "यह सर्वर धीमा करता है" } },
+        { "id": "b", "label": { "en": "Encodings and variants (%2e%2e, ....//) bypass it", "hi": "एन्कोडिंग और वेरिएंट (%2e%2e, ....//) इसे बायपास करते हैं" } },
+        { "id": "c", "label": { "en": "It uses more memory", "hi": "यह अधिक मेमोरी लेता है" } },
+        { "id": "d", "label": { "en": "It breaks images", "hi": "यह इमेज तोड़ता है" } }
+      ]
+    }
+  ],
+  "interviewQuestions": [
+    { "en": "Why is canonicalization order (resolve THEN check) important?", "hi": "canonicalization क्रम (पहले हल फिर जाँच) क्यों महत्वपूर्ण है?" },
+    { "en": "How do you serve user files safely without traversal risk?", "hi": "ट्रैवर्सल जोखिम बिना उपयोगकर्ता फ़ाइलें सुरक्षित कैसे परोसें?" }
+  ]
+}

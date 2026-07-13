@@ -1,0 +1,109 @@
+{
+  "id": "command-injection",
+  "module": "appsec",
+  "executionTier": 3,
+  "category": "injection",
+  "title": { "en": "Command Injection (Tier 3 · live container)", "hi": "कमांड इंजेक्शन (टियर 3 · लाइव कंटेनर)" },
+  "summary": {
+    "en": "A ping service builds a shell command from your input. Land a real shell in an ephemeral, isolated Linux container, read the flag, and watch the sandbox contain you.",
+    "hi": "एक ping सेवा आपके इनपुट से शेल कमांड बनाती है। एक क्षणिक, पृथक लिनक्स कंटेनर में असली शेल पाएँ, फ्लैग पढ़ें, और सैंडबॉक्स को आपको रोकते देखें।"
+  },
+  "difficultyTiers": ["beginner", "intermediate", "advanced"],
+  "owasp": ["A03:2021 – Injection"],
+  "mitre": ["T1059 Command and Scripting Interpreter", "T1190 Exploit Public-Facing Application"],
+  "cves": ["CVE-2014-6271 (Shellshock)", "CVE-2021-44228-adjacent RCE patterns"],
+  "target": { "kind": "ephemeral-container", "image": "nielit/command-injection:latest" },
+  "lifecycle": [
+    {
+      "id": "intro",
+      "type": "content",
+      "title": { "en": "Introduction", "hi": "परिचय" },
+      "body": {
+        "en": "This is a Tier-3 lab: entering it lazily spawns YOUR own hardened Linux container (128 MB, read-only, all capabilities dropped, no network egress, auto-reaped on idle). The target's ping helper runs sh -c \"ping -c 1 $INPUT\" — so your input becomes shell code. You already hold a shell here (the result of that RCE); use it to confirm execution and read the flag, then probe the sandbox.",
+        "hi": "यह टियर-3 लैब है: प्रवेश करते ही आपका अपना कठोर लिनक्स कंटेनर बनता है (128 MB, केवल-पठन, सभी क्षमताएँ हटाई, कोई नेटवर्क बाहर नहीं, निष्क्रिय होने पर स्वतः समाप्त)। लक्ष्य का ping हेल्पर sh -c \"ping -c 1 $INPUT\" चलाता है।"
+      }
+    },
+    {
+      "id": "objectives",
+      "type": "objectives",
+      "title": { "en": "Learning Objectives", "hi": "सीखने के उद्देश्य" },
+      "items": [
+        { "en": "Trigger the injection with vulnping \"127.0.0.1; id\".", "hi": "vulnping \"127.0.0.1; id\" से इंजेक्शन ट्रिगर करें।" },
+        { "en": "Read /challenge/flag.txt to prove arbitrary code execution.", "hi": "मनमाना कोड निष्पादन साबित करने को /challenge/flag.txt पढ़ें।" },
+        { "en": "Confirm the sandbox blocks egress and privilege — then write the fix.", "hi": "पुष्टि करें कि सैंडबॉक्स बाहर-जाना और विशेषाधिकार रोकता है — फिर फिक्स लिखें।" }
+      ]
+    },
+    {
+      "id": "attack-surface",
+      "type": "content",
+      "title": { "en": "Attack Surface", "hi": "अटैक सरफेस" },
+      "body": {
+        "en": "The helper /usr/local/bin/vulnping does: sh -c \"ping -c 1 $1\". A ';' or '&&' or '$(...)' in the argument starts a new command. The HTTP variant (GET /ping?host=…) has the same bug. Anything you can express in the shell now runs on the target.",
+        "hi": "हेल्पर /usr/local/bin/vulnping करता है: sh -c \"ping -c 1 $1\"। तर्क में ';' या '&&' या '$(...)' नई कमांड शुरू करता है। HTTP रूप (GET /ping?host=…) में वही बग है।"
+      }
+    },
+    {
+      "id": "exploitation",
+      "type": "interactive",
+      "widget": "terminal",
+      "title": { "en": "Live Terminal", "hi": "लाइव टर्मिनल" },
+      "hints": [
+        { "en": "Run:  cat /challenge/README   then   vulnping \"127.0.0.1; cat /challenge/flag.txt\"", "hi": "चलाएँ:  cat /challenge/README   फिर   vulnping \"127.0.0.1; cat /challenge/flag.txt\"" },
+        { "en": "Try to escape: wget http://169.254.169.254 or ping 8.8.8.8 — both fail (egress locked).", "hi": "बचने का प्रयास: wget http://169.254.169.254 या ping 8.8.8.8 — दोनों विफल (एग्रेस लॉक)।" }
+      ]
+    },
+    {
+      "id": "root-cause",
+      "type": "content",
+      "title": { "en": "Root Cause Analysis", "hi": "मूल कारण विश्लेषण" },
+      "body": {
+        "en": "User input is concatenated into a string that is handed to a shell, which re-parses metacharacters (; | & $() ` ) as syntax. The fix is to never invoke a shell with untrusted data: pass arguments as a vector to execFile/exec-array so the OS treats them as literal args, and validate the input against a strict allow-list (e.g., a hostname/IP pattern).",
+        "hi": "उपयोगकर्ता इनपुट एक स्ट्रिंग में जुड़कर शेल को दिया जाता है, जो मेटाकैरेक्टर को सिंटैक्स मानता है। फिक्स: अविश्वसनीय डेटा के साथ शेल कभी न चलाएँ — तर्कों को वेक्टर के रूप में execFile को दें, और इनपुट को सख़्त allow-list से सत्यापित करें।"
+      }
+    },
+    {
+      "id": "secure-fix",
+      "type": "code",
+      "title": { "en": "Secure Fix", "hi": "सुरक्षित फिक्स" },
+      "language": "python",
+      "insecure": "# shell parses the whole string\nsubprocess.run(f'ping -c 1 {host}', shell=True)",
+      "secure": "import subprocess, ipaddress\nipaddress.ip_address(host)                 # validate: raises on anything but an IP\nsubprocess.run(['ping', '-c', '1', host])  # arg vector, no shell → no injection"
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "Why does '127.0.0.1; id' run the id command?", "hi": "'127.0.0.1; id' id कमांड क्यों चलाता है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "Your input is interpolated into a string passed to a shell", "hi": "आपका इनपुट शेल को दी गई स्ट्रिंग में जुड़ता है" } },
+        { "id": "b", "label": { "en": "ping has a bug", "hi": "ping में बग है" } },
+        { "id": "c", "label": { "en": "The container is root", "hi": "कंटेनर रूट है" } },
+        { "id": "d", "label": { "en": "DNS resolved it", "hi": "DNS ने इसे हल किया" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "The primary fix is to:", "hi": "प्राथमिक फिक्स है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Filter the word 'id'", "hi": "'id' शब्द फ़िल्टर करें" } },
+        { "id": "b", "label": { "en": "Pass arguments as a vector (no shell) and validate input", "hi": "तर्कों को वेक्टर के रूप में दें (कोई शेल नहीं) और इनपुट सत्यापित करें" } },
+        { "id": "c", "label": { "en": "Run ping faster", "hi": "ping तेज़ चलाएँ" } },
+        { "id": "d", "label": { "en": "Use HTTPS", "hi": "HTTPS उपयोग करें" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "Even after RCE, the blast radius is limited here by:", "hi": "RCE के बाद भी यहाँ हानि का दायरा किससे सीमित है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "A firewall on the client", "hi": "क्लाइंट पर फ़ायरवॉल" } },
+        { "id": "b", "label": { "en": "A strong password", "hi": "मज़बूत पासवर्ड" } },
+        { "id": "c", "label": { "en": "An ephemeral, read-only, capability-dropped, egress-locked, reaped container (gVisor in prod)", "hi": "एक क्षणिक, केवल-पठन, क्षमता-रहित, एग्रेस-लॉक, रीप्ड कंटेनर (प्रोडक्शन में gVisor)" } },
+        { "id": "d", "label": { "en": "Nothing — it is game over", "hi": "कुछ नहीं — सब खत्म" } }
+      ]
+    }
+  ],
+  "interviewQuestions": [
+    { "en": "Why is an allow-list on the host argument better than escaping metacharacters?", "hi": "मेटाकैरेक्टर एस्केप करने से होस्ट तर्क पर allow-list बेहतर क्यों है?" },
+    { "en": "What does gVisor add over a standard runc container for this lab?", "hi": "इस लैब के लिए gVisor मानक runc कंटेनर से ऊपर क्या जोड़ता है?" }
+  ]
+}

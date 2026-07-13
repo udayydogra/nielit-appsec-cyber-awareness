@@ -1,0 +1,104 @@
+{
+  "id": "deepfake-ai-scams",
+  "module": "awareness",
+  "executionTier": 0,
+  "category": "impersonation-fraud",
+  "title": { "en": "Deepfake & AI Voice-Clone Scams", "hi": "डीपफ़ेक और AI आवाज़-क्लोन धोखाधड़ी" },
+  "summary": {
+    "en": "You get a call in your son's exact voice: he's in an accident and needs money now. Learn how AI voice cloning weaponises panic.",
+    "hi": "आपको अपने बेटे की हूबहू आवाज़ में कॉल आती है: वह दुर्घटना में है और अभी पैसे चाहिए। जानें AI आवाज़-क्लोनिंग घबराहट को कैसे हथियार बनाती है।"
+  },
+  "start": "n1",
+  "reportingResources": [
+    { "label": { "en": "Cyber Crime Helpline", "hi": "साइबर क्राइम हेल्पलाइन" }, "value": "1930" },
+    { "label": { "en": "National Portal", "hi": "राष्ट्रीय पोर्टल" }, "value": "cybercrime.gov.in" }
+  ],
+  "nodes": {
+    "n1": {
+      "type": "narration", "channel": "videocall",
+      "media": { "clip": "clone_voice_01", "poster": "clone_poster_01" },
+      "anim": "videocall-connect",
+      "content": {
+        "en": "A call connects. It sounds EXACTLY like your son, crying: 'Papa, I had an accident, the police are here, I need ₹80,000 right now or they'll arrest me. Please don't tell Mummy — just send it fast!'",
+        "hi": "एक कॉल जुड़ती है। यह हूबहू आपके बेटे जैसी लगती है, रोते हुए: 'पापा, मेरा एक्सीडेंट हो गया, पुलिस यहाँ है, अभी ₹80,000 चाहिए वरना गिरफ़्तार कर लेंगे। मम्मी को मत बताना — बस जल्दी भेजो!'"
+      },
+      "redFlags": [
+        { "at": 2, "flag": "cloned_voice", "note": { "en": "AI can clone a voice from seconds of audio online.", "hi": "AI ऑनलाइन कुछ सेकंड की आवाज़ से क्लोन बना सकता है।" } },
+        { "at": 6, "flag": "urgency_pressure", "note": { "en": "'Right now' blocks your thinking.", "hi": "'अभी' आपकी सोच रोक देता है।" } },
+        { "at": 10, "flag": "secrecy_demand", "note": { "en": "'Don't tell Mummy' stops you from verifying.", "hi": "'मम्मी को मत बताना' सत्यापन रोकता है।" } }
+      ],
+      "next": "n2"
+    },
+    "n2": {
+      "type": "decision",
+      "prompt": { "en": "What do you do?", "hi": "आप क्या करेंगे?" },
+      "choices": [
+        { "label": { "en": "Send ₹80,000 immediately — it's my son", "hi": "तुरंत ₹80,000 भेजें — यह मेरा बेटा है" }, "goto": "trap1" },
+        { "label": { "en": "Hang up and call my son's own number to check", "hi": "कॉल काटें और बेटे के अपने नंबर पर कॉल कर जाँचें" }, "goto": "safe1" }
+      ]
+    },
+    "trap1": {
+      "type": "consequence", "outcome": "negative", "anim": "shake",
+      "content": {
+        "en": "You sent the money. Your son was safe at college the whole time — the voice was an AI clone built from his social-media videos. The secrecy demand existed only to stop you from calling him and breaking the spell.",
+        "hi": "आपने पैसे भेज दिए। बेटा पूरे समय कॉलेज में सुरक्षित था — आवाज़ उसकी सोशल-मीडिया वीडियो से बना AI क्लोन थी। गोपनीयता की माँग केवल इसलिए थी कि आप उसे कॉल न करें।"
+      },
+      "technique": {
+        "en": "AI voice cloning + a manufactured emergency + a secrecy demand. The realistic voice is exactly why you must verify on a separate call.",
+        "hi": "AI आवाज़-क्लोनिंग + गढ़ी आपात स्थिति + गोपनीयता की माँग। असली-सी आवाज़ ही वजह है कि अलग कॉल पर सत्यापन ज़रूरी है।"
+      },
+      "next": "feedback"
+    },
+    "safe1": {
+      "type": "consequence", "outcome": "positive", "anim": "check-pop",
+      "content": {
+        "en": "Correct. You hung up and called your son directly — he answered, safe. A realistic voice proves nothing now that AI can clone one; verification on a known number does.",
+        "hi": "सही। आपने कॉल काटकर बेटे को सीधे कॉल किया — उसने जवाब दिया, सुरक्षित। अब जब AI आवाज़ क्लोन कर सकता है, असली-सी आवाज़ कुछ साबित नहीं करती; ज्ञात नंबर पर सत्यापन करता है।"
+      },
+      "next": "feedback"
+    },
+    "feedback": {
+      "type": "checklist",
+      "title": { "en": "Prevention Checklist", "hi": "रोकथाम चेकलिस्ट" },
+      "items": [
+        { "en": "A familiar voice is no longer proof — AI can clone it easily.", "hi": "परिचित आवाज़ अब प्रमाण नहीं — AI इसे आसानी से क्लोन कर सकता है।" },
+        { "en": "Any 'emergency, pay now, tell no one' call: hang up and verify.", "hi": "कोई भी 'आपातकाल, अभी भुगतान, किसी को न बताएँ' कॉल: काटें और सत्यापित करें।" },
+        { "en": "Agree a family 'safe word' for real emergencies in advance.", "hi": "असली आपात के लिए परिवार में पहले से एक 'सेफ़ वर्ड' तय करें।" },
+        { "en": "Limit public videos/voice clips that can train a clone; report to 1930.", "hi": "सार्वजनिक वीडियो/आवाज़ क्लिप सीमित करें; 1930 पर रिपोर्ट करें।" }
+      ],
+      "next": "quiz"
+    }
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "Hearing a loved one's exact voice on a call now proves:", "hi": "कॉल पर किसी प्रिय की हूबहू आवाज़ अब साबित करती है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Nothing — AI can clone voices", "hi": "कुछ नहीं — AI आवाज़ क्लोन कर सकता है" } },
+        { "id": "b", "label": { "en": "It is definitely them", "hi": "यह निश्चित रूप से वही है" } },
+        { "id": "c", "label": { "en": "The call is secure", "hi": "कॉल सुरक्षित है" } },
+        { "id": "d", "label": { "en": "They are nearby", "hi": "वे पास हैं" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "Why does the scammer say 'don't tell anyone'?", "hi": "ठग 'किसी को मत बताना' क्यों कहता है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "To protect your privacy", "hi": "आपकी गोपनीयता के लिए" } },
+        { "id": "b", "label": { "en": "To stop you from verifying and breaking the panic", "hi": "ताकि आप सत्यापन न करें और घबराहट न टूटे" } },
+        { "id": "c", "label": { "en": "Because it's embarrassing", "hi": "क्योंकि यह शर्मनाक है" } },
+        { "id": "d", "label": { "en": "To save time", "hi": "समय बचाने को" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "A strong defence against voice-clone emergencies is:", "hi": "आवाज़-क्लोन आपात के विरुद्ध मज़बूत बचाव है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Sending money faster", "hi": "पैसे तेज़ भेजना" } },
+        { "id": "b", "label": { "en": "Trusting caller ID", "hi": "कॉलर ID पर भरोसा" } },
+        { "id": "c", "label": { "en": "Hang up and call back on a known number (or use a family safe word)", "hi": "काटें और ज्ञात नंबर पर वापस कॉल करें (या परिवार सेफ़ वर्ड)" } },
+        { "id": "d", "label": { "en": "Staying on the line longer", "hi": "अधिक देर लाइन पर रहना" } }
+      ]
+    }
+  ]
+}

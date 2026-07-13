@@ -1,0 +1,97 @@
+{
+  "id": "otp-sim-swap",
+  "module": "awareness",
+  "executionTier": 0,
+  "category": "account-takeover",
+  "title": { "en": "OTP Sharing & SIM Swap", "hi": "OTP साझा करना और सिम स्वैप" },
+  "summary": {
+    "en": "A caller needs 'just one OTP to verify you' — and later your number stops working. Learn how OTP theft and SIM swap take over accounts.",
+    "hi": "एक कॉलर को 'आपको सत्यापित करने के लिए बस एक OTP' चाहिए — और बाद में आपका नंबर बंद हो जाता है। जानें OTP चोरी और सिम स्वैप कैसे खाते हड़पते हैं।"
+  },
+  "start": "n1",
+  "reportingResources": [
+    { "label": { "en": "Cyber Crime Helpline", "hi": "साइबर क्राइम हेल्पलाइन" }, "value": "1930" },
+    { "label": { "en": "National Portal", "hi": "राष्ट्रीय पोर्टल" }, "value": "cybercrime.gov.in" }
+  ],
+  "nodes": {
+    "n1": {
+      "type": "narration", "channel": "sms", "anim": "sms-slide-in",
+      "content": {
+        "en": "Call: 'I'm from your telecom operator. To upgrade your SIM to 5G for free, I've sent an OTP to your number. Please read it out to verify the request.'",
+        "hi": "कॉल: 'मैं आपके टेलीकॉम ऑपरेटर से हूँ। आपकी SIM मुफ़्त 5G में अपग्रेड करने को OTP भेजा है। कृपया पढ़कर बताएँ ताकि अनुरोध सत्यापित हो।'"
+      },
+      "next": "n2"
+    },
+    "n2": {
+      "type": "decision",
+      "prompt": { "en": "What do you do?", "hi": "आप क्या करेंगे?" },
+      "choices": [
+        { "label": { "en": "Read out the OTP for the free upgrade", "hi": "मुफ़्त अपग्रेड के लिए OTP पढ़कर बताएँ" }, "goto": "trap1" },
+        { "label": { "en": "Refuse — never share an OTP with anyone", "hi": "मना करें — OTP कभी किसी से साझा न करें" }, "goto": "safe1" }
+      ]
+    },
+    "trap1": {
+      "type": "consequence", "outcome": "negative", "anim": "shake",
+      "content": {
+        "en": "That OTP authorised a SIM-swap: your number was ported to the scammer's SIM. Your phone lost signal, and every banking OTP now went to THEM. Sharing an OTP or approving a SIM request hands over your digital identity.",
+        "hi": "उस OTP ने SIM-स्वैप को अधिकृत किया: आपका नंबर ठग की SIM पर पोर्ट हो गया। आपके फ़ोन का सिग्नल गया, और हर बैंकिंग OTP अब उनके पास। OTP साझा करना आपकी डिजिटल पहचान सौंप देता है।"
+      },
+      "technique": {
+        "en": "OTP theft (direct) or SIM swap (porting your number) lets the attacker receive your 2FA codes and reset accounts — email, bank, wallets.",
+        "hi": "OTP चोरी (सीधे) या SIM स्वैप (नंबर पोर्ट) से हमलावर आपके 2FA कोड पाकर खाते रीसेट करता है — ईमेल, बैंक, वॉलेट।"
+      },
+      "next": "feedback"
+    },
+    "safe1": {
+      "type": "consequence", "outcome": "positive", "anim": "check-pop",
+      "content": {
+        "en": "Correct. No operator needs you to read an OTP aloud. If your signal ever drops unexpectedly for hours, contact your operator immediately — it can be a SIM swap in progress.",
+        "hi": "सही। किसी ऑपरेटर को OTP पढ़वाने की ज़रूरत नहीं। अगर सिग्नल अचानक घंटों बंद हो, तुरंत ऑपरेटर से संपर्क करें — यह चल रहा SIM स्वैप हो सकता है।"
+      },
+      "next": "feedback"
+    },
+    "feedback": {
+      "type": "checklist",
+      "title": { "en": "Prevention Checklist", "hi": "रोकथाम चेकलिस्ट" },
+      "items": [
+        { "en": "An OTP is a private key to ONE action — never read it to anyone.", "hi": "OTP एक क्रिया की निजी चाबी है — कभी किसी को न बताएँ।" },
+        { "en": "Sudden loss of mobile signal for hours can mean a SIM swap.", "hi": "अचानक घंटों सिग्नल जाना SIM स्वैप का संकेत हो सकता है।" },
+        { "en": "Prefer app-based authenticators over SMS OTP where possible.", "hi": "जहाँ संभव हो SMS OTP से बेहतर ऐप-आधारित ऑथेंटिकेटर चुनें।" },
+        { "en": "On signal loss, call your operator; report fraud to 1930.", "hi": "सिग्नल जाने पर ऑपरेटर को कॉल करें; धोखाधड़ी 1930 पर रिपोर्ट करें।" }
+      ],
+      "next": "quiz"
+    }
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "You should share a one-time password (OTP) with:", "hi": "एक बार का पासवर्ड (OTP) आपको साझा करना चाहिए:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Your bank's caller", "hi": "बैंक के कॉलर से" } },
+        { "id": "b", "label": { "en": "Nobody, ever", "hi": "किसी से भी नहीं, कभी नहीं" } },
+        { "id": "c", "label": { "en": "Telecom staff", "hi": "टेलीकॉम कर्मचारी से" } },
+        { "id": "d", "label": { "en": "A verified HR", "hi": "सत्यापित HR से" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "A SIM swap lets an attacker:", "hi": "SIM स्वैप हमलावर को देता है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Receive your calls and OTPs on their SIM", "hi": "आपकी कॉल और OTP अपनी SIM पर पाना" } },
+        { "id": "b", "label": { "en": "Give you free 5G", "hi": "आपको मुफ़्त 5G देना" } },
+        { "id": "c", "label": { "en": "Only see your contacts", "hi": "केवल आपके संपर्क देखना" } },
+        { "id": "d", "label": { "en": "Improve your signal", "hi": "आपका सिग्नल सुधारना" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "A stronger second factor than SMS OTP is:", "hi": "SMS OTP से मज़बूत दूसरा कारक है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "A longer phone number", "hi": "लंबा फ़ोन नंबर" } },
+        { "id": "b", "label": { "en": "Reusing one password", "hi": "एक ही पासवर्ड दोहराना" } },
+        { "id": "c", "label": { "en": "Writing the OTP down", "hi": "OTP लिख लेना" } },
+        { "id": "d", "label": { "en": "An app-based authenticator", "hi": "ऐप-आधारित ऑथेंटिकेटर" } }
+      ]
+    }
+  ]
+}

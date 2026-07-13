@@ -1,0 +1,109 @@
+{
+  "id": "file-upload",
+  "module": "appsec",
+  "executionTier": 2,
+  "category": "file-upload",
+  "title": { "en": "Insecure File Upload", "hi": "असुरक्षित फ़ाइल अपलोड" },
+  "summary": {
+    "en": "The uploader trusts the Content-Type header and only checks the last extension. Slip a web shell past it with a spoofed type or a double extension.",
+    "hi": "अपलोडर Content-Type हेडर पर भरोसा करता है और केवल अंतिम एक्सटेंशन जाँचता है। स्पूफ़ प्रकार या डबल एक्सटेंशन से वेब शेल निकालें।"
+  },
+  "difficultyTiers": ["beginner", "intermediate", "advanced"],
+  "owasp": ["A04:2021 – Insecure Design", "A05:2021 – Security Misconfiguration"],
+  "mitre": ["T1505.003 Web Shell"],
+  "cves": ["CVE-2018-9206 (jQuery File Upload)", "CVE-2017-12617 (Tomcat PUT)"],
+  "target": { "kind": "shared-multitenant", "queryRoute": "/labs/file-upload/upload" },
+  "lifecycle": [
+    {
+      "id": "intro",
+      "type": "content",
+      "title": { "en": "Introduction", "hi": "परिचय" },
+      "body": {
+        "en": "This uploader tries to allow only images. But it decides using two things an attacker controls: the Content-Type header (spoofable to image/jpeg) and the file's last extension (bypassable with shell.php.jpg). Neither looks at the real bytes. So a web shell or a script-carrying SVG walks right in.",
+        "hi": "यह अपलोडर केवल इमेज की अनुमति देना चाहता है। पर यह दो चीज़ों से तय करता है जो हमलावर नियंत्रित करता है: Content-Type हेडर (image/jpeg में स्पूफ़) और अंतिम एक्सटेंशन (shell.php.jpg से बायपास)। कोई असली बाइट्स नहीं देखता।"
+      }
+    },
+    {
+      "id": "objectives",
+      "type": "objectives",
+      "title": { "en": "Learning Objectives", "hi": "सीखने के उद्देश्य" },
+      "items": [
+        { "en": "Bypass the filter with a spoofed Content-Type.", "hi": "स्पूफ़ Content-Type से फ़िल्टर बायपास करें।" },
+        { "en": "Bypass it again with a double extension / SVG payload.", "hi": "डबल एक्सटेंशन / SVG पेलोड से फिर बायपास करें।" },
+        { "en": "List the layered fixes (content check, allow-list, storage).", "hi": "स्तरित फिक्स सूचीबद्ध करें (सामग्री जाँच, allow-list, भंडारण)।" }
+      ]
+    },
+    {
+      "id": "attack-surface",
+      "type": "content",
+      "title": { "en": "Attack Surface", "hi": "अटैक सरफेस" },
+      "body": {
+        "en": "POST /labs/file-upload/upload {filename, contentType}. Rule: accept if Content-Type starts with image/, else accept if the last extension isn't in a small blocklist (php, jsp, exe…). A misconfigured server then executes whatever it stored.",
+        "hi": "POST /labs/file-upload/upload {filename, contentType}। नियम: यदि Content-Type image/ से शुरू हो तो स्वीकार, अन्यथा यदि अंतिम एक्सटेंशन छोटी ब्लॉकलिस्ट में न हो तो स्वीकार।"
+      }
+    },
+    {
+      "id": "exploitation",
+      "type": "interactive",
+      "widget": "fileupload-console",
+      "title": { "en": "Exploitation", "hi": "शोषण" },
+      "hints": [
+        { "en": "Try shell.php with Content-Type image/jpeg — the spoofed type is trusted.", "hi": "shell.php को Content-Type image/jpeg के साथ आज़माएँ — स्पूफ़ प्रकार पर भरोसा होता है।" },
+        { "en": "Or shell.php.jpg — the last extension (.jpg) passes the blocklist.", "hi": "या shell.php.jpg — अंतिम एक्सटेंशन (.jpg) ब्लॉकलिस्ट पास कर जाता है।" }
+      ]
+    },
+    {
+      "id": "root-cause",
+      "type": "content",
+      "title": { "en": "Root Cause Analysis", "hi": "मूल कारण विश्लेषण" },
+      "body": {
+        "en": "Validation relies on attacker-controlled metadata (header, filename) instead of the actual file. Fix in layers: verify real content (magic bytes / re-encode images), ALLOW-list expected types (don't blocklist bad ones), store outside the web root under a random name, strip execute permission, and serve with a safe Content-Type and Content-Disposition.",
+        "hi": "सत्यापन हमलावर-नियंत्रित मेटाडेटा (हेडर, फ़ाइलनाम) पर निर्भर है, असली फ़ाइल पर नहीं। स्तरों में फिक्स: असली सामग्री सत्यापित करें, अपेक्षित प्रकार allow-list करें, वेब रूट के बाहर रैंडम नाम से रखें, execute हटाएँ।"
+      }
+    },
+    {
+      "id": "secure-fix",
+      "type": "code",
+      "title": { "en": "Secure Fix", "hi": "सुरक्षित फिक्स" },
+      "language": "javascript",
+      "insecure": "if (contentType.startsWith('image/')) accept();            // trusts header\nelse if (!BLOCKED.includes(lastExt(name))) accept();       // blocklist",
+      "secure": "const kind = await sniffMagicBytes(bytes);          // real content type\nif (!ALLOW.has(kind)) return reject();              // allow-list\nconst safeName = randomId() + EXT_FOR[kind];        // no attacker name\nstoreOutsideWebroot(safeName, bytes, { mode: 0o644, execute: false });\n// serve with Content-Type from allow-list + Content-Disposition: attachment"
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "Why do shell.php (image/jpeg) and shell.php.jpg both get through?", "hi": "shell.php (image/jpeg) और shell.php.jpg दोनों क्यों निकल जाते हैं?" },
+      "choices": [
+        { "id": "a", "label": { "en": "The validator trusts the Content-Type header and only checks the last extension", "hi": "वैलिडेटर Content-Type हेडर पर भरोसा करता है और केवल अंतिम एक्सटेंशन जाँचता है" } },
+        { "id": "b", "label": { "en": "The files are small", "hi": "फ़ाइलें छोटी हैं" } },
+        { "id": "c", "label": { "en": "The server is fast", "hi": "सर्वर तेज़ है" } },
+        { "id": "d", "label": { "en": "They are compressed", "hi": "वे संपीड़ित हैं" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "The strongest fixes include:", "hi": "सबसे मज़बूत फिक्स में शामिल हैं:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Check real content, allow-list types, store outside webroot, no execute", "hi": "असली सामग्री जाँचें, प्रकार allow-list करें, वेब रूट के बाहर रखें, execute नहीं" } },
+        { "id": "b", "label": { "en": "Add more extensions to the blocklist", "hi": "ब्लॉकलिस्ट में और एक्सटेंशन जोड़ें" } },
+        { "id": "c", "label": { "en": "Trust the Content-Type", "hi": "Content-Type पर भरोसा करें" } },
+        { "id": "d", "label": { "en": "Rename to .txt only", "hi": "केवल .txt में बदलें" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "Why can an 'image' SVG still be dangerous?", "hi": "एक 'इमेज' SVG फिर भी खतरनाक क्यों हो सकती है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "It is too large", "hi": "यह बहुत बड़ी है" } },
+        { "id": "b", "label": { "en": "SVG is XML and can contain <script> → stored XSS", "hi": "SVG XML है और <script> रख सकती है → स्टोर्ड XSS" } },
+        { "id": "c", "label": { "en": "It loads slowly", "hi": "यह धीरे लोड होती है" } },
+        { "id": "d", "label": { "en": "It has no colours", "hi": "इसमें रंग नहीं हैं" } }
+      ]
+    }
+  ],
+  "interviewQuestions": [
+    { "en": "Why is content-sniffing safer than trusting the extension or header?", "hi": "एक्सटेंशन/हेडर पर भरोसे से कंटेंट-स्निफ़िंग सुरक्षित क्यों है?" },
+    { "en": "How does serving uploads from a separate domain reduce risk?", "hi": "अपलोड को अलग डोमेन से परोसना जोखिम कैसे घटाता है?" }
+  ]
+}

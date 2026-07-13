@@ -1,0 +1,87 @@
+# Base services sized for a ~5GB VM. Ollama is opt-in (Profile C only) via the
+# `local-llm` profile — OFF by default. Memory limits mirror the §3 budget.
+name: nielit-appsec-cyber-awareness
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${PGUSER:-nielit}
+      POSTGRES_PASSWORD: ${PGPASSWORD:-nielit}
+      POSTGRES_DB: ${PGDATABASE:-nielit}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./db/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PGUSER:-nielit}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--maxmemory", "48mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 64m
+
+  lab-manager:
+    build: ./lab-manager
+    env_file: .env
+    environment:
+      PGHOST: postgres
+      REDIS_URL: redis://redis:6379
+      MANIFEST_DIR: /labs/manifests
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${API_PORT:-4000}:4000"
+    volumes:
+      # Lets ContainerManager spawn Tier-3 targets on the host docker daemon.
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Manifests are read at runtime; mounting them means adding a lab needs no rebuild.
+      - ./labs:/labs:ro
+    deploy:
+      resources:
+        limits:
+          memory: 160m
+
+  web:
+    build: ./web
+    depends_on:
+      - lab-manager
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    deploy:
+      resources:
+        limits:
+          memory: 48m
+
+  # Profile C ONLY (in-VM last resort). Start with:  docker compose --profile local-llm up
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["local-llm"]
+    volumes:
+      - ollama:/root/.ollama
+    deploy:
+      resources:
+        limits:
+          memory: 3g
+
+volumes:
+  pgdata:
+  ollama:

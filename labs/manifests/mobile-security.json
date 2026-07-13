@@ -1,0 +1,97 @@
+{
+  "id": "mobile-security",
+  "module": "awareness",
+  "executionTier": 0,
+  "category": "device-security",
+  "title": { "en": "Mobile Security — Malicious APKs & Permissions", "hi": "मोबाइल सुरक्षा — दुर्भावनापूर्ण APK और अनुमतियाँ" },
+  "summary": {
+    "en": "A WhatsApp forward asks you to install an APK for a 'free gift'. Learn why sideloaded apps and greedy permissions are dangerous.",
+    "hi": "एक WhatsApp फॉरवर्ड 'मुफ़्त गिफ़्ट' के लिए APK इंस्टॉल करने को कहता है। जानें साइडलोडेड ऐप और अत्यधिक अनुमतियाँ क्यों खतरनाक हैं।"
+  },
+  "start": "n1",
+  "reportingResources": [
+    { "label": { "en": "Cyber Crime Helpline", "hi": "साइबर क्राइम हेल्पलाइन" }, "value": "1930" },
+    { "label": { "en": "National Portal", "hi": "राष्ट्रीय पोर्टल" }, "value": "cybercrime.gov.in" }
+  ],
+  "nodes": {
+    "n1": {
+      "type": "narration", "channel": "chat", "anim": "sms-slide-in",
+      "content": {
+        "en": "A relative forwards: 'Govt is giving ₹5,000 to everyone! Install this app to claim: PMYojana_Reward.apk'. On opening, it demands access to SMS, Contacts, and 'Accessibility'.",
+        "hi": "एक रिश्तेदार फॉरवर्ड करता है: 'सरकार सबको ₹5,000 दे रही है! दावा करने को यह ऐप इंस्टॉल करें: PMYojana_Reward.apk'। खोलने पर यह SMS, संपर्क और 'एक्सेसिबिलिटी' की अनुमति माँगता है।"
+      },
+      "next": "n2"
+    },
+    "n2": {
+      "type": "decision",
+      "prompt": { "en": "What do you do?", "hi": "आप क्या करेंगे?" },
+      "choices": [
+        { "label": { "en": "Install it and grant the permissions to claim ₹5,000", "hi": "₹5,000 पाने को इंस्टॉल कर अनुमतियाँ दें" }, "goto": "trap1" },
+        { "label": { "en": "Delete it — install only from the official Play Store", "hi": "हटाएँ — केवल आधिकारिक Play Store से इंस्टॉल करें" }, "goto": "safe1" }
+      ]
+    },
+    "trap1": {
+      "type": "consequence", "outcome": "negative", "anim": "shake",
+      "content": {
+        "en": "The APK was malware. 'SMS' access let it read your banking OTPs; 'Accessibility' let it tap buttons and steal from your banking app in the background. There was no ₹5,000 scheme.",
+        "hi": "APK मैलवेयर था। 'SMS' अनुमति ने बैंकिंग OTP पढ़े; 'एक्सेसिबिलिटी' ने बैकग्राउंड में बटन दबाकर बैंकिंग ऐप से चोरी की। कोई ₹5,000 योजना नहीं थी।"
+      },
+      "technique": {
+        "en": "Sideloaded APKs bypass Play Store checks; SMS + Accessibility permissions together let malware read OTPs and operate your apps unseen.",
+        "hi": "साइडलोडेड APK Play Store जाँच से बचते हैं; SMS + एक्सेसिबिलिटी अनुमतियाँ मिलकर मैलवेयर को OTP पढ़ने और ऐप चलाने देती हैं।"
+      },
+      "next": "feedback"
+    },
+    "safe1": {
+      "type": "consequence", "outcome": "positive", "anim": "check-pop",
+      "content": {
+        "en": "Correct. You never install .apk files from chats. Real government schemes are on official portals, not WhatsApp forwards, and never need SMS/Accessibility permissions.",
+        "hi": "सही। आप चैट से .apk फ़ाइलें कभी इंस्टॉल नहीं करते। असली सरकारी योजनाएँ आधिकारिक पोर्टल पर होती हैं, WhatsApp फॉरवर्ड पर नहीं।"
+      },
+      "next": "feedback"
+    },
+    "feedback": {
+      "type": "checklist",
+      "title": { "en": "Prevention Checklist", "hi": "रोकथाम चेकलिस्ट" },
+      "items": [
+        { "en": "Install apps only from the official Play Store / App Store.", "hi": "ऐप केवल आधिकारिक Play Store / App Store से इंस्टॉल करें।" },
+        { "en": "Never sideload .apk files sent in chats or SMS.", "hi": "चैट/SMS में भेजी .apk फ़ाइलें कभी साइडलोड न करें।" },
+        { "en": "Question permissions — why would a reward app need SMS/Accessibility?", "hi": "अनुमतियाँ जाँचें — रिवॉर्ड ऐप को SMS/एक्सेसिबिलिटी क्यों चाहिए?" },
+        { "en": "If installed, uninstall, run a scan, and change banking passwords.", "hi": "अगर इंस्टॉल किया, हटाएँ, स्कैन चलाएँ, बैंकिंग पासवर्ड बदलें।" }
+      ],
+      "next": "quiz"
+    }
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "Installing an .apk sent over WhatsApp is risky because:", "hi": "WhatsApp पर भेजी .apk इंस्टॉल करना जोखिम भरा है क्योंकि:" },
+      "choices": [
+        { "id": "a", "label": { "en": "It bypasses Play Store safety checks and may be malware", "hi": "यह Play Store जाँच से बचता है और मैलवेयर हो सकता है" } },
+        { "id": "b", "label": { "en": "It uses mobile data", "hi": "यह मोबाइल डेटा उपयोग करता है" } },
+        { "id": "c", "label": { "en": "It is always a large file", "hi": "यह हमेशा बड़ी फ़ाइल है" } },
+        { "id": "d", "label": { "en": "It drains the battery", "hi": "यह बैटरी खत्म करता है" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "Why is 'Accessibility' permission especially dangerous for malware?", "hi": "'एक्सेसिबिलिटी' अनुमति मैलवेयर के लिए विशेष रूप से खतरनाक क्यों है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "It changes the wallpaper", "hi": "यह वॉलपेपर बदलती है" } },
+        { "id": "b", "label": { "en": "It lets an app view the screen and tap buttons for you", "hi": "यह ऐप को स्क्रीन देखने और बटन दबाने देती है" } },
+        { "id": "c", "label": { "en": "It only enlarges text", "hi": "यह केवल टेक्स्ट बड़ा करती है" } },
+        { "id": "d", "label": { "en": "It disables the camera", "hi": "यह कैमरा बंद करती है" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "A reward app demanding SMS access should make you:", "hi": "SMS अनुमति माँगने वाला रिवॉर्ड ऐप आपको करना चाहिए:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Grant it quickly", "hi": "जल्दी दे दें" } },
+        { "id": "b", "label": { "en": "Restart the phone", "hi": "फ़ोन रीस्टार्ट करें" } },
+        { "id": "c", "label": { "en": "Refuse and uninstall — the permission makes no sense", "hi": "मना करें और हटाएँ — अनुमति का कोई तुक नहीं" } },
+        { "id": "d", "label": { "en": "Grant it just once", "hi": "केवल एक बार दें" } }
+      ]
+    }
+  ]
+}

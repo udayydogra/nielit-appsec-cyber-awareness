@@ -1,0 +1,89 @@
+{
+  "id": "recon",
+  "module": "appsec",
+  "executionTier": 0,
+  "category": "reconnaissance",
+  "title": { "en": "Reconnaissance (Passive)", "hi": "टोही (निष्क्रिय)" },
+  "summary": {
+    "en": "Map a target's public footprint without ever touching it: WHOIS, DNS, certificate transparency, and dorking. Tier 0 — read-only OSINT.",
+    "hi": "बिना छुए किसी लक्ष्य का सार्वजनिक फ़ुटप्रिंट मैप करें: WHOIS, DNS, सर्टिफ़िकेट ट्रांसपेरेंसी, और डॉर्किंग। टियर 0 — केवल-पठन OSINT।"
+  },
+  "difficultyTiers": ["beginner", "intermediate", "advanced"],
+  "owasp": ["A05:2021 – Security Misconfiguration"],
+  "mitre": ["TA0043 Reconnaissance", "T1596 Search Open Technical Databases"],
+  "cves": [],
+  "lifecycle": [
+    {
+      "id": "intro",
+      "type": "content",
+      "title": { "en": "Introduction", "hi": "परिचय" },
+      "body": {
+        "en": "Passive recon gathers information from third-party sources without sending traffic to the target, so it is quiet and low-risk. It builds the attack surface map an engagement starts from — and shows defenders what they are leaking publicly.",
+        "hi": "निष्क्रिय टोही लक्ष्य पर ट्रैफ़िक भेजे बिना तृतीय-पक्ष स्रोतों से जानकारी जुटाती है, इसलिए यह शांत और कम-जोखिम है। यह अटैक सरफेस मैप बनाती है और रक्षकों को दिखाती है कि वे सार्वजनिक रूप से क्या लीक कर रहे हैं।"
+      }
+    },
+    {
+      "id": "objectives",
+      "type": "objectives",
+      "title": { "en": "Learning Objectives", "hi": "सीखने के उद्देश्य" },
+      "items": [
+        { "en": "Separate passive from active recon and know why it matters.", "hi": "निष्क्रिय और सक्रिय टोही अलग करें और जानें क्यों मायने रखती है।" },
+        { "en": "Use WHOIS, DNS, and certificate transparency to find assets.", "hi": "एसेट खोजने को WHOIS, DNS, और सर्टिफ़िकेट ट्रांसपेरेंसी उपयोग करें।" },
+        { "en": "Write targeted search 'dorks' to surface exposed files.", "hi": "उजागर फ़ाइलें खोजने को लक्षित सर्च 'डॉर्क' लिखें।" }
+      ]
+    },
+    {
+      "id": "sources",
+      "type": "content",
+      "title": { "en": "Passive Sources", "hi": "निष्क्रिय स्रोत" },
+      "body": {
+        "en": "WHOIS gives registration and contacts; DNS records (A, MX, TXT, NS) reveal hosts and mail; certificate transparency logs list every TLS cert issued for a domain — a goldmine of subdomains; dorking uses search operators to find files never meant to be indexed.",
+        "hi": "WHOIS पंजीकरण और संपर्क देता है; DNS रिकॉर्ड (A, MX, TXT, NS) होस्ट और मेल दिखाते हैं; सर्टिफ़िकेट ट्रांसपेरेंसी लॉग हर जारी TLS प्रमाणपत्र सूचीबद्ध करते हैं — सबडोमेन की खान; डॉर्किंग सर्च ऑपरेटरों से उजागर फ़ाइलें खोजती है।"
+      }
+    },
+    {
+      "id": "dorks",
+      "type": "code",
+      "title": { "en": "Certificate Transparency & Dorks", "hi": "सर्टिफ़िकेट ट्रांसपेरेंसी और डॉर्क" },
+      "language": "text",
+      "insecure": "Certificate transparency (passive subdomain discovery):\n  crt.sh?q=%25.example.com  -> dev.example.com, vpn.example.com ...\n\nSearch dorks:\n  site:example.com filetype:pdf\n  site:example.com intitle:\"index of\"\n  site:example.com ext:sql OR ext:env",
+      "secure": "Defender takeaways:\n  - Don't expose staging/admin subdomains publicly\n  - Block directory listing; keep .env/.sql out of the webroot\n  - Assume every cert you issue is publicly enumerable"
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "Passive reconnaissance is defined by:", "hi": "निष्क्रिय टोही की परिभाषा है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Port-scanning the target", "hi": "लक्ष्य की पोर्ट-स्कैनिंग" } },
+        { "id": "b", "label": { "en": "Brute-forcing directories", "hi": "डायरेक्टरी ब्रूट-फोर्स" } },
+        { "id": "c", "label": { "en": "Gathering info from third parties without touching the target", "hi": "लक्ष्य को छुए बिना तृतीय-पक्ष से जानकारी जुटाना" } },
+        { "id": "d", "label": { "en": "Sending phishing emails", "hi": "फ़िशिंग ईमेल भेजना" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "Certificate transparency logs are useful to an attacker because they:", "hi": "सर्टिफ़िकेट ट्रांसपेरेंसी लॉग हमलावर के लिए उपयोगी हैं क्योंकि वे:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Reveal subdomains from issued TLS certificates", "hi": "जारी TLS प्रमाणपत्रों से सबडोमेन उजागर करते हैं" } },
+        { "id": "b", "label": { "en": "Contain user passwords", "hi": "उपयोगकर्ता पासवर्ड रखते हैं" } },
+        { "id": "c", "label": { "en": "Show live server load", "hi": "लाइव सर्वर लोड दिखाते हैं" } },
+        { "id": "d", "label": { "en": "Grant admin access", "hi": "एडमिन एक्सेस देते हैं" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "A defender's best response to 'index of' dorking is to:", "hi": "'index of' डॉर्किंग के विरुद्ध रक्षक की सबसे अच्छी प्रतिक्रिया है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Rename the server", "hi": "सर्वर का नाम बदलें" } },
+        { "id": "b", "label": { "en": "Disable directory listing and keep sensitive files out of the webroot", "hi": "डायरेक्टरी लिस्टिंग बंद करें और संवेदनशील फ़ाइलें वेबरूट से बाहर रखें" } },
+        { "id": "c", "label": { "en": "Block all search engines from the internet", "hi": "इंटरनेट से सभी सर्च इंजन ब्लॉक करें" } },
+        { "id": "d", "label": { "en": "Use a longer domain name", "hi": "लंबा डोमेन नाम उपयोग करें" } }
+      ]
+    }
+  ],
+  "interviewQuestions": [
+    { "en": "Why is passive recon harder for a target to detect than active recon?", "hi": "सक्रिय की तुलना में निष्क्रिय टोही का पता लगाना लक्ष्य के लिए कठिन क्यों है?" },
+    { "en": "How would you enumerate subdomains without scanning the target?", "hi": "लक्ष्य को स्कैन किए बिना आप सबडोमेन कैसे खोजेंगे?" }
+  ]
+}

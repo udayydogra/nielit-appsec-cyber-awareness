@@ -1,0 +1,95 @@
+{
+  "id": "deserialization",
+  "module": "appsec",
+  "executionTier": 3,
+  "category": "deserialization",
+  "title": { "en": "Insecure Deserialization (Tier 3)", "hi": "असुरक्षित डीसीरियलाइज़ेशन (टियर 3)" },
+  "summary": {
+    "en": "A service loads Python pickles from untrusted input. A crafted pickle runs code the moment it is loaded — real RCE, in a live isolated container.",
+    "hi": "एक सेवा अविश्वसनीय इनपुट से Python pickle लोड करती है। एक रचित pickle लोड होते ही कोड चलाता है — असली RCE, लाइव पृथक कंटेनर में।"
+  },
+  "difficultyTiers": ["beginner", "intermediate", "advanced"],
+  "owasp": ["A08:2021 – Software and Data Integrity Failures"],
+  "mitre": ["T1059 Command and Scripting Interpreter"],
+  "cves": ["CVE-2017-5941 (node-serialize)", "CVE-2015-8103 (Java deserialization)"],
+  "target": { "kind": "ephemeral-container", "image": "nielit/deserialization:latest" },
+  "lifecycle": [
+    {
+      "id": "intro", "type": "content", "title": { "en": "Introduction", "hi": "परिचय" },
+      "body": {
+        "en": "Serialization turns objects into bytes; deserialization rebuilds them. In many formats (Python pickle, Java, PHP, Ruby) the rebuild step can INVOKE code — pickle calls a __reduce__ method that says 'to rebuild me, run this function with these args'. Feed such a format untrusted bytes and you get code execution just by loading them. No parsing bug required; the format is the weapon.",
+        "hi": "सीरियलाइज़ेशन ऑब्जेक्ट को बाइट्स में बदलता है; डीसीरियलाइज़ेशन उन्हें फिर बनाता है। कई प्रारूपों में यह पुनर्निर्माण कोड चला सकता है — pickle __reduce__ को कॉल करता है। ऐसे प्रारूप को अविश्वसनीय बाइट्स दें और लोड करते ही कोड निष्पादन।"
+      }
+    },
+    {
+      "id": "objectives", "type": "objectives", "title": { "en": "Learning Objectives", "hi": "सीखने के उद्देश्य" },
+      "items": [
+        { "en": "Craft a malicious pickle whose __reduce__ runs a command.", "hi": "एक दुर्भावनापूर्ण pickle बनाएँ जिसका __reduce__ कमांड चलाए।" },
+        { "en": "Load it and observe code execution (the flag).", "hi": "इसे लोड करें और कोड निष्पादन देखें (फ्लैग)।" },
+        { "en": "Explain why safe formats / signing are the fix.", "hi": "बताएँ सुरक्षित प्रारूप / हस्ताक्षर फिक्स क्यों हैं।" }
+      ]
+    },
+    {
+      "id": "attack-surface", "type": "content", "title": { "en": "Attack Surface", "hi": "अटैक सरफेस" },
+      "body": {
+        "en": "unpickle <file> runs pickle.load() on the file. make-evil-pickle writes /tmp/evil.pkl whose __reduce__ returns (os.system, ('cat /challenge/flag.txt',)). Loading executes it.",
+        "hi": "unpickle <file> फ़ाइल पर pickle.load() चलाता है। make-evil-pickle /tmp/evil.pkl लिखता है जिसका __reduce__ (os.system, ...) लौटाता है।"
+      }
+    },
+    {
+      "id": "exploitation", "type": "interactive", "widget": "terminal", "title": { "en": "Live Terminal", "hi": "लाइव टर्मिनल" },
+      "hints": [
+        { "en": "make-evil-pickle   then   unpickle /tmp/evil.pkl", "hi": "make-evil-pickle   फिर   unpickle /tmp/evil.pkl" },
+        { "en": "cat /challenge/README to see the mechanism.", "hi": "तंत्र देखने को cat /challenge/README।" }
+      ]
+    },
+    {
+      "id": "root-cause", "type": "content", "title": { "en": "Root Cause Analysis", "hi": "मूल कारण विश्लेषण" },
+      "body": {
+        "en": "The app deserializes attacker-controlled bytes with a format that can execute code during reconstruction. The fix is architectural: never deserialize untrusted data with such formats. Use a data-only format (JSON) with an explicit schema; if a rich format is unavoidable, cryptographically sign the payload and verify before loading, and constrain allowed types.",
+        "hi": "ऐप हमलावर-नियंत्रित बाइट्स को ऐसे प्रारूप से डीसीरियलाइज़ करता है जो पुनर्निर्माण के दौरान कोड चला सकता है। फिक्स: ऐसे प्रारूपों से अविश्वसनीय डेटा कभी डीसीरियलाइज़ न करें; JSON उपयोग करें; अपरिहार्य हो तो payload पर हस्ताक्षर करें।"
+      }
+    },
+    {
+      "id": "secure-fix", "type": "code", "title": { "en": "Secure Fix", "hi": "सुरक्षित फिक्स" }, "language": "python",
+      "insecure": "data = pickle.load(untrusted_bytes)   # runs __reduce__ → code execution",
+      "secure": "import json\ndata = json.loads(untrusted_bytes)    # data only, no code paths\n# if a rich format is required: verify an HMAC signature first, then load,\n# and restrict allowed classes."
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "Why does loading the pickle run a command?", "hi": "pickle लोड करना कमांड क्यों चलाता है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "Deserializing it can invoke code (pickle's __reduce__)", "hi": "इसे डीसीरियलाइज़ करना कोड चला सकता है (pickle का __reduce__)" } },
+        { "id": "b", "label": { "en": "The file was executable", "hi": "फ़ाइल निष्पादन योग्य थी" } },
+        { "id": "c", "label": { "en": "A shell injection in the filename", "hi": "फ़ाइलनाम में शेल इंजेक्शन" } },
+        { "id": "d", "label": { "en": "A SQL query", "hi": "एक SQL क्वेरी" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "The correct fix is to:", "hi": "सही फिक्स है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Compress the pickle", "hi": "pickle संपीड़ित करें" } },
+        { "id": "b", "label": { "en": "Never deserialize untrusted data with code-capable formats; use JSON / sign payloads", "hi": "कोड-सक्षम प्रारूपों से अविश्वसनीय डेटा कभी डीसीरियलाइज़ न करें; JSON / हस्ताक्षरित payload" } },
+        { "id": "c", "label": { "en": "Rename the file to .json", "hi": "फ़ाइल को .json नाम दें" } },
+        { "id": "d", "label": { "en": "Run it as non-root", "hi": "नॉन-रूट के रूप में चलाएँ" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "This vulnerability class exists in:", "hi": "यह भेद्यता वर्ग मौजूद है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Only Python", "hi": "केवल Python" } },
+        { "id": "b", "label": { "en": "Only old software", "hi": "केवल पुराने सॉफ़्टवेयर" } },
+        { "id": "c", "label": { "en": "Many ecosystems — Java, PHP, Ruby, .NET, Python", "hi": "कई इकोसिस्टम — Java, PHP, Ruby, .NET, Python" } },
+        { "id": "d", "label": { "en": "Only web browsers", "hi": "केवल वेब ब्राउज़र" } }
+      ]
+    }
+  ],
+  "interviewQuestions": [
+    { "en": "What is a 'gadget chain' and why does it matter for deserialization?", "hi": "'गैजेट चेन' क्या है और डीसीरियलाइज़ेशन के लिए क्यों मायने रखता है?" },
+    { "en": "How does signing a serialized blob help — and what doesn't it solve?", "hi": "सीरियलाइज़्ड blob पर हस्ताक्षर कैसे मदद करता है — और क्या हल नहीं करता?" }
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "id": "threat-modeling",
+  "module": "appsec",
+  "executionTier": 0,
+  "category": "secure-design",
+  "title": { "en": "Threat Modeling", "hi": "थ्रेट मॉडलिंग" },
+  "summary": {
+    "en": "Find design flaws before code exists: map assets, draw a data-flow diagram, apply STRIDE, and rank risk. Tier 0 — no backend.",
+    "hi": "कोड बनने से पहले डिज़ाइन खामियाँ खोजें: एसेट मैप करें, डेटा-फ्लो डायग्राम बनाएँ, STRIDE लगाएँ, और जोखिम रैंक करें। टियर 0।"
+  },
+  "difficultyTiers": ["beginner", "intermediate", "advanced"],
+  "owasp": ["A04:2021 – Insecure Design"],
+  "mitre": ["Pre-ATT&CK: Threat Modeling"],
+  "cves": [],
+  "lifecycle": [
+    {
+      "id": "intro",
+      "type": "content",
+      "title": { "en": "Introduction", "hi": "परिचय" },
+      "body": {
+        "en": "Threat modeling asks four questions: What are we building? What can go wrong? What will we do about it? Did we do a good job? Done early, it catches whole classes of bugs at the design stage, where they are cheapest to fix.",
+        "hi": "थ्रेट मॉडलिंग चार सवाल पूछती है: हम क्या बना रहे हैं? क्या गलत हो सकता है? हम क्या करेंगे? क्या हमने अच्छा काम किया? जल्दी करने पर यह डिज़ाइन चरण में ही खामियाँ पकड़ लेती है।"
+      }
+    },
+    {
+      "id": "objectives",
+      "type": "objectives",
+      "title": { "en": "Learning Objectives", "hi": "सीखने के उद्देश्य" },
+      "items": [
+        { "en": "Identify assets, trust boundaries, and entry points.", "hi": "एसेट, ट्रस्ट सीमाएँ और एंट्री पॉइंट पहचानें।" },
+        { "en": "Apply STRIDE to each element of a data-flow diagram.", "hi": "डेटा-फ्लो डायग्राम के हर तत्व पर STRIDE लगाएँ।" },
+        { "en": "Rank threats by likelihood × impact and choose mitigations.", "hi": "खतरों को संभावना × प्रभाव से रैंक करें और शमन चुनें।" }
+      ]
+    },
+    {
+      "id": "dfd",
+      "type": "content",
+      "title": { "en": "Data-Flow Diagram & Trust Boundaries", "hi": "डेटा-फ्लो डायग्राम और ट्रस्ट सीमाएँ" },
+      "body": {
+        "en": "A DFD shows external entities, processes, data stores, and data flows. Trust boundaries mark where data crosses from less- to more-trusted zones (browser → API, API → DB). Threats concentrate at those boundaries.",
+        "hi": "DFD बाहरी संस्थाएँ, प्रक्रियाएँ, डेटा स्टोर और डेटा फ्लो दिखाता है। ट्रस्ट सीमाएँ वहाँ चिह्नित करती हैं जहाँ डेटा कम-विश्वसनीय से अधिक-विश्वसनीय ज़ोन में जाता है। खतरे इन्हीं सीमाओं पर केंद्रित होते हैं।"
+      }
+    },
+    {
+      "id": "stride",
+      "type": "content",
+      "title": { "en": "STRIDE", "hi": "STRIDE" },
+      "body": {
+        "en": "STRIDE = Spoofing (identity), Tampering (integrity), Repudiation (non-repudiation), Information disclosure (confidentiality), Denial of service (availability), Elevation of privilege (authorization). Each maps to a property you must defend.",
+        "hi": "STRIDE = स्पूफ़िंग (पहचान), टैम्परिंग (अखंडता), रिप्यूडिएशन (अस्वीकार्यता), इंफ़ॉर्मेशन डिस्क्लोज़र (गोपनीयता), डिनायल ऑफ़ सर्विस (उपलब्धता), एलेवेशन ऑफ़ प्रिविलेज (प्राधिकरण)।"
+      }
+    },
+    {
+      "id": "example",
+      "type": "code",
+      "title": { "en": "Worked Example — a login flow", "hi": "उदाहरण — लॉगिन प्रवाह" },
+      "language": "text",
+      "insecure": "Threat (Spoofing at browser→API boundary):\n  Attacker replays a stolen session token.\nElevation of privilege at API→DB:\n  A 'user' calls an admin-only endpoint.",
+      "secure": "Mitigations:\n  Spoofing  -> short-lived signed tokens + re-auth for sensitive ops\n  EoP       -> deny-by-default authz, permission checks per endpoint\n  Tampering -> integrity checks / HMAC on client-visible state"
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "In STRIDE, the 'E' (Elevation of Privilege) threatens which property?", "hi": "STRIDE में 'E' (एलेवेशन ऑफ़ प्रिविलेज) किस गुण को खतरे में डालता है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "Availability", "hi": "उपलब्धता" } },
+        { "id": "b", "label": { "en": "Authorization", "hi": "प्राधिकरण" } },
+        { "id": "c", "label": { "en": "Confidentiality", "hi": "गोपनीयता" } },
+        { "id": "d", "label": { "en": "Non-repudiation", "hi": "अस्वीकार्यता" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "Threats concentrate most at:", "hi": "खतरे सबसे अधिक कहाँ केंद्रित होते हैं:" },
+      "choices": [
+        { "id": "a", "label": { "en": "The colour of the UI", "hi": "UI के रंग पर" } },
+        { "id": "b", "label": { "en": "Comments in the code", "hi": "कोड की टिप्पणियों पर" } },
+        { "id": "c", "label": { "en": "Trust boundaries where data crosses zones", "hi": "ट्रस्ट सीमाओं पर जहाँ डेटा ज़ोन बदलता है" } },
+        { "id": "d", "label": { "en": "The variable names", "hi": "वेरिएबल नामों पर" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "The biggest advantage of threat modeling early is:", "hi": "जल्दी थ्रेट मॉडलिंग का सबसे बड़ा लाभ है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Catching design flaws before they are coded", "hi": "डिज़ाइन खामियाँ कोड होने से पहले पकड़ना" } },
+        { "id": "b", "label": { "en": "Making the app faster", "hi": "ऐप तेज़ बनाना" } },
+        { "id": "c", "label": { "en": "Reducing the file size", "hi": "फ़ाइल आकार घटाना" } },
+        { "id": "d", "label": { "en": "Improving the fonts", "hi": "फ़ॉन्ट सुधारना" } }
+      ]
+    }
+  ],
+  "interviewQuestions": [
+    { "en": "Walk me through STRIDE on a file-upload feature.", "hi": "फ़ाइल-अपलोड फ़ीचर पर STRIDE समझाएँ।" },
+    { "en": "How do you prioritise which threats to mitigate first?", "hi": "कौन से खतरों को पहले शमन करना है, यह कैसे तय करते हैं?" }
+  ]
+}

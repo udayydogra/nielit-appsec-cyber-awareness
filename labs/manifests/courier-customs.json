@@ -1,0 +1,97 @@
+{
+  "id": "courier-customs",
+  "module": "awareness",
+  "executionTier": 0,
+  "category": "impersonation-fraud",
+  "title": { "en": "Courier / Customs Parcel Scam", "hi": "कूरियर / कस्टम पार्सल धोखाधड़ी" },
+  "summary": {
+    "en": "A caller says a parcel in your name holds illegal items and you must pay a 'customs clearance' fee or face arrest. Learn the script.",
+    "hi": "एक कॉलर कहता है आपके नाम के पार्सल में अवैध सामान है और आपको 'कस्टम क्लीयरेंस' फीस भरनी होगी वरना गिरफ़्तारी। स्क्रिप्ट समझें।"
+  },
+  "start": "n1",
+  "reportingResources": [
+    { "label": { "en": "Cyber Crime Helpline", "hi": "साइबर क्राइम हेल्पलाइन" }, "value": "1930" },
+    { "label": { "en": "National Portal", "hi": "राष्ट्रीय पोर्टल" }, "value": "cybercrime.gov.in" }
+  ],
+  "nodes": {
+    "n1": {
+      "type": "narration", "channel": "sms", "anim": "sms-slide-in",
+      "content": {
+        "en": "Call: 'This is FedEx Customs. A parcel booked in YOUR name and Aadhaar contains illegal drugs. It is a police matter. To clear your name, pay a ₹15,000 verification fee immediately or a case will be filed.'",
+        "hi": "कॉल: 'यह FedEx कस्टम है। आपके नाम और आधार पर बुक एक पार्सल में अवैध ड्रग्स हैं। यह पुलिस मामला है। नाम साफ़ करने को तुरंत ₹15,000 वेरिफिकेशन फीस भरें वरना केस दर्ज होगा।'"
+      },
+      "next": "n2"
+    },
+    "n2": {
+      "type": "decision",
+      "prompt": { "en": "What do you do?", "hi": "आप क्या करेंगे?" },
+      "choices": [
+        { "label": { "en": "Pay ₹15,000 to avoid the police case", "hi": "पुलिस केस से बचने को ₹15,000 भरें" }, "goto": "trap1" },
+        { "label": { "en": "Hang up — customs never phones you to demand fees", "hi": "कॉल काटें — कस्टम कभी फ़ोन कर फीस नहीं माँगता" }, "goto": "safe1" }
+      ]
+    },
+    "trap1": {
+      "type": "consequence", "outcome": "negative", "anim": "shake",
+      "content": {
+        "en": "You paid, and the 'officer' immediately demanded more to 'stop the FIR'. Customs and courier companies never call to threaten arrest or collect fees over the phone. The whole 'parcel' was fiction.",
+        "hi": "आपने भुगतान किया, और 'अधिकारी' ने 'FIR रोकने' को तुरंत और माँगा। कस्टम और कूरियर कंपनियाँ कभी फ़ोन पर गिरफ़्तारी की धमकी या फीस नहीं लेतीं। पूरा 'पार्सल' काल्पनिक था।"
+      },
+      "technique": {
+        "en": "Authority (customs/police) + fear (drugs, arrest) + urgency + a 'clearance' fee. Identical to the digital-arrest playbook, wrapped around a parcel.",
+        "hi": "अधिकार (कस्टम/पुलिस) + भय (ड्रग्स, गिरफ़्तारी) + तात्कालिकता + 'क्लीयरेंस' फीस। डिजिटल-अरेस्ट जैसा ही खेल, पार्सल के इर्द-गिर्द।"
+      },
+      "next": "feedback"
+    },
+    "safe1": {
+      "type": "consequence", "outcome": "positive", "anim": "check-pop",
+      "content": {
+        "en": "Correct. No customs officer or courier resolves a legal matter by phone and UPI. You hung up and reported the number. Nothing was lost.",
+        "hi": "सही। कोई कस्टम अधिकारी या कूरियर फ़ोन और UPI से कानूनी मामला नहीं सुलझाता। आपने कॉल काटकर नंबर रिपोर्ट किया।"
+      },
+      "next": "feedback"
+    },
+    "feedback": {
+      "type": "checklist",
+      "title": { "en": "Prevention Checklist", "hi": "रोकथाम चेकलिस्ट" },
+      "items": [
+        { "en": "Customs/courier firms never call to threaten arrest or take fees.", "hi": "कस्टम/कूरियर कंपनियाँ कभी गिरफ़्तारी की धमकी या फीस नहीं लेतीं।" },
+        { "en": "No agency asks for money to 'clear your name' in a criminal case.", "hi": "कोई एजेंसी आपराधिक मामले में 'नाम साफ़' करने को पैसे नहीं माँगती।" },
+        { "en": "Fear + urgency + pay-now = scam, whatever the story wrapped around it.", "hi": "भय + तात्कालिकता + तुरंत-भुगतान = ठगी, चाहे कहानी कुछ भी हो।" },
+        { "en": "Hang up, verify with the courier's official app, report to 1930.", "hi": "कॉल काटें, कूरियर के आधिकारिक ऐप से सत्यापित करें, 1930 पर रिपोर्ट करें।" }
+      ],
+      "next": "quiz"
+    }
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "A 'customs officer' phoning to demand a clearance fee is:", "hi": "क्लीयरेंस फीस माँगने को फ़ोन करने वाला 'कस्टम अधिकारी' है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Always a scam — customs never does this", "hi": "हमेशा ठगी — कस्टम ऐसा नहीं करता" } },
+        { "id": "b", "label": { "en": "Legitimate if a parcel is really flagged", "hi": "वैध अगर पार्सल सच में फ्लैग है" } },
+        { "id": "c", "label": { "en": "Standard FedEx procedure", "hi": "मानक FedEx प्रक्रिया" } },
+        { "id": "d", "label": { "en": "Required for Aadhaar-linked parcels", "hi": "आधार-लिंक्ड पार्सल के लिए आवश्यक" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "The core manipulation levers here are:", "hi": "यहाँ मुख्य हेरफेर के तरीके हैं:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Discounts and offers", "hi": "छूट और ऑफ़र" } },
+        { "id": "b", "label": { "en": "Friendship and trust-building", "hi": "दोस्ती और भरोसा" } },
+        { "id": "c", "label": { "en": "Authority, fear of arrest, and urgency", "hi": "अधिकार, गिरफ़्तारी का भय, और तात्कालिकता" } },
+        { "id": "d", "label": { "en": "Technical jargon only", "hi": "केवल तकनीकी शब्द" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "The right action is to:", "hi": "सही कार्य है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Pay a partial fee", "hi": "आंशिक फीस भरें" } },
+        { "id": "b", "label": { "en": "Hang up and report to 1930 / cybercrime.gov.in", "hi": "कॉल काटें और 1930 / cybercrime.gov.in पर रिपोर्ट करें" } },
+        { "id": "c", "label": { "en": "Share your Aadhaar to prove innocence", "hi": "बेगुनाही साबित करने को आधार साझा करें" } },
+        { "id": "d", "label": { "en": "Negotiate the fee down", "hi": "फीस कम कराएँ" } }
+      ]
+    }
+  ]
+}

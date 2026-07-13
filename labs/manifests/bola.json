@@ -1,0 +1,109 @@
+{
+  "id": "bola",
+  "module": "appsec",
+  "executionTier": 2,
+  "category": "broken-access-control",
+  "title": { "en": "BOLA — Broken Object Level Authorization (API)", "hi": "BOLA — ब्रोकन ऑब्जेक्ट लेवल ऑथराइज़ेशन (API)" },
+  "summary": {
+    "en": "An order API returns and cancels orders by id without checking they're yours. Read another persona's order — then cancel it. OWASP API #1.",
+    "hi": "एक ऑर्डर API बिना यह जाँचे कि ऑर्डर आपका है, id से ऑर्डर लौटाता और रद्द करता है। किसी और का ऑर्डर पढ़ें — फिर रद्द करें। OWASP API #1।"
+  },
+  "difficultyTiers": ["beginner", "intermediate", "advanced"],
+  "owasp": ["API1:2023 – Broken Object Level Authorization", "A01:2021 – Broken Access Control"],
+  "mitre": ["T1190 Exploit Public-Facing Application"],
+  "cves": ["CVE-2021-22986", "CVE-2019-16919"],
+  "target": { "kind": "shared-multitenant", "resetRoute": "/labs/bola/reset", "queryRoute": "/labs/bola/order/:id" },
+  "lifecycle": [
+    {
+      "id": "intro",
+      "type": "content",
+      "title": { "en": "Introduction", "hi": "परिचय" },
+      "body": {
+        "en": "BOLA is IDOR's API-native form and OWASP's #1 API risk. Here a JSON order API exposes GET /order/:id and POST /order/:id/cancel. Both check that you're logged in but not that the order is yours — so you can read AND modify other users' objects just by changing the id.",
+        "hi": "BOLA, IDOR का API-रूप और OWASP का #1 API जोखिम है। यहाँ JSON ऑर्डर API GET /order/:id और POST /order/:id/cancel देता है। दोनों जाँचते हैं कि आप लॉग-इन हैं पर यह नहीं कि ऑर्डर आपका है।"
+      }
+    },
+    {
+      "id": "objectives",
+      "type": "objectives",
+      "title": { "en": "Learning Objectives", "hi": "सीखने के उद्देश्य" },
+      "items": [
+        { "en": "Read another persona's order (#5002, #5003) by id.", "hi": "किसी और पर्सोना का ऑर्डर (#5002, #5003) id से पढ़ें।" },
+        { "en": "Demonstrate BOLA on WRITE by cancelling their order.", "hi": "उनका ऑर्डर रद्द करके WRITE पर BOLA दिखाएँ।" },
+        { "en": "Explain per-object authorization as the fix.", "hi": "फिक्स के रूप में प्रति-ऑब्जेक्ट प्राधिकरण समझाएँ।" }
+      ]
+    },
+    {
+      "id": "attack-surface",
+      "type": "content",
+      "title": { "en": "Attack Surface", "hi": "अटैक सरफेस" },
+      "body": {
+        "en": "GET /labs/bola/order/:id → SELECT ... WHERE order_id = :id, no owner clause. POST /labs/bola/order/:id/cancel → UPDATE status='cancelled' for any id. Order #5001 is yours; #5002 and #5003 belong to others.",
+        "hi": "GET /labs/bola/order/:id → SELECT ... WHERE order_id = :id, बिना owner क्लॉज। POST .../cancel किसी भी id को रद्द कर देता है। #5001 आपका है; #5002 और #5003 दूसरों के।"
+      }
+    },
+    {
+      "id": "exploitation",
+      "type": "interactive",
+      "widget": "bola-console",
+      "title": { "en": "Exploitation", "hi": "शोषण" },
+      "hints": [
+        { "en": "Fetch order #5003 — it belongs to 'admin' and holds the flag.", "hi": "ऑर्डर #5003 लाएँ — यह 'admin' का है और उसमें फ्लैग है।" },
+        { "en": "Then Cancel #5002 to prove BOLA works on writes too.", "hi": "फिर #5002 रद्द करें ताकि साबित हो BOLA राइट पर भी काम करता है।" }
+      ]
+    },
+    {
+      "id": "root-cause",
+      "type": "content",
+      "title": { "en": "Root Cause Analysis", "hi": "मूल कारण विश्लेषण" },
+      "body": {
+        "en": "The API authenticates the session but performs no OBJECT-level authorization: it never asks 'does this order belong to the caller?'. Since ids are direct references, any authenticated client can read or mutate any object. The fix is a per-object ownership check on every access, ideally centralized so no endpoint can forget it.",
+        "hi": "API सत्र प्रमाणित करता है पर ऑब्जेक्ट-स्तर प्राधिकरण नहीं करता: यह कभी नहीं पूछता 'क्या यह ऑर्डर कॉलर का है?'। फिक्स हर पहुँच पर प्रति-ऑब्जेक्ट स्वामित्व जाँच है, आदर्शतः केंद्रीकृत।"
+      }
+    },
+    {
+      "id": "secure-fix",
+      "type": "code",
+      "title": { "en": "Secure Fix", "hi": "सुरक्षित फिक्स" },
+      "language": "javascript",
+      "insecure": "app.get('/order/:id', requireLogin, async (req,res) => {\n  res.json(await db.getOrder(req.params.id));   // any id\n});",
+      "secure": "app.get('/order/:id', requireLogin, async (req,res) => {\n  const o = await db.getOrder(req.params.id);\n  if (!o || o.ownerId !== req.user.id) return res.sendStatus(404);\n  res.json(o);\n});\n// centralize this check (policy/middleware) so no route forgets it."
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "Why can you read and cancel order #5003?", "hi": "आप ऑर्डर #5003 क्यों पढ़ और रद्द कर सकते हैं?" },
+      "choices": [
+        { "id": "a", "label": { "en": "The API never checks the order belongs to you", "hi": "API कभी नहीं जाँचता कि ऑर्डर आपका है" } },
+        { "id": "b", "label": { "en": "The order id was encrypted", "hi": "ऑर्डर id एन्क्रिप्टेड थी" } },
+        { "id": "c", "label": { "en": "You guessed the password", "hi": "आपने पासवर्ड अनुमानित किया" } },
+        { "id": "d", "label": { "en": "The API used GraphQL", "hi": "API ने GraphQL उपयोग किया" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "This is which OWASP API risk?", "hi": "यह कौन सा OWASP API जोखिम है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "SSRF", "hi": "SSRF" } },
+        { "id": "b", "label": { "en": "API1 — Broken Object Level Authorization", "hi": "API1 — ब्रोकन ऑब्जेक्ट लेवल ऑथराइज़ेशन" } },
+        { "id": "c", "label": { "en": "Rate limiting", "hi": "रेट लिमिटिंग" } },
+        { "id": "d", "label": { "en": "Security misconfiguration", "hi": "सुरक्षा मिसकॉन्फ़िगरेशन" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "The correct fix is to:", "hi": "सही फिक्स है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Use random UUIDs for order ids", "hi": "ऑर्डर id के लिए रैंडम UUID उपयोग करें" } },
+        { "id": "b", "label": { "en": "Rate-limit the endpoint", "hi": "एंडपॉइंट रेट-लिमिट करें" } },
+        { "id": "c", "label": { "en": "Authorize every object access against the caller's identity", "hi": "हर ऑब्जेक्ट पहुँच को कॉलर की पहचान से प्राधिकृत करें" } },
+        { "id": "d", "label": { "en": "Move the id to the request body", "hi": "id को रिक्वेस्ट बॉडी में ले जाएँ" } }
+      ]
+    }
+  ],
+  "interviewQuestions": [
+    { "en": "How do you enforce object authorization consistently across many endpoints?", "hi": "कई एंडपॉइंट में ऑब्जेक्ट प्राधिकरण लगातार कैसे लागू करें?" },
+    { "en": "Why don't random ids fix BOLA on their own?", "hi": "रैंडम id अकेले BOLA क्यों नहीं ठीक करते?" }
+  ]
+}

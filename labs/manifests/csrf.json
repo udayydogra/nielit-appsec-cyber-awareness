@@ -1,0 +1,109 @@
+{
+  "id": "csrf",
+  "module": "appsec",
+  "executionTier": 2,
+  "category": "session-attacks",
+  "title": { "en": "Cross-Site Request Forgery (CSRF)", "hi": "क्रॉस-साइट रिक्वेस्ट फोर्जरी (CSRF)" },
+  "summary": {
+    "en": "An endpoint changes your account email using only the session cookie — no token. See a forged request succeed, then watch the token-protected version reject it.",
+    "hi": "एक एंडपॉइंट केवल सेशन कुकी से आपका ईमेल बदलता है — बिना टोकन। एक फोर्ज्ड रिक्वेस्ट सफल देखें, फिर टोकन-सुरक्षित संस्करण उसे अस्वीकार करता देखें।"
+  },
+  "difficultyTiers": ["beginner", "intermediate", "advanced"],
+  "owasp": ["A01:2021 – Broken Access Control (CSRF)"],
+  "mitre": ["T1189 Drive-by Compromise"],
+  "cves": ["CVE-2020-8163", "CVE-2018-1000525"],
+  "target": { "kind": "shared-multitenant", "resetRoute": "/labs/csrf/reset", "queryRoute": "/labs/csrf/change-email" },
+  "lifecycle": [
+    {
+      "id": "intro",
+      "type": "content",
+      "title": { "en": "Introduction", "hi": "परिचय" },
+      "body": {
+        "en": "CSRF abuses the fact that browsers auto-attach your session cookie to every request to a site — even requests triggered by a DIFFERENT site. If a state-changing endpoint trusts only that cookie, an attacker's page can silently make you perform actions. Here we simulate the forged request so you can see it land.",
+        "hi": "CSRF इस बात का दुरुपयोग करता है कि ब्राउज़र आपकी सेशन कुकी हर अनुरोध से जोड़ देता है — भले ही अनुरोध किसी और साइट से हो। यदि एंडपॉइंट केवल उस कुकी पर भरोसा करे, तो हमलावर का पेज चुपचाप कार्रवाई करा सकता है।"
+      }
+    },
+    {
+      "id": "objectives",
+      "type": "objectives",
+      "title": { "en": "Learning Objectives", "hi": "सीखने के उद्देश्य" },
+      "items": [
+        { "en": "Change the account email via a request carrying no CSRF token.", "hi": "बिना CSRF टोकन वाले अनुरोध से खाता ईमेल बदलें।" },
+        { "en": "See the token-protected endpoint reject the same forged request.", "hi": "टोकन-सुरक्षित एंडपॉइंट को वही फोर्ज्ड अनुरोध अस्वीकार करते देखें।" },
+        { "en": "Explain anti-CSRF tokens and SameSite cookies.", "hi": "एंटी-CSRF टोकन और SameSite कुकी समझाएँ।" }
+      ]
+    },
+    {
+      "id": "attack-surface",
+      "type": "content",
+      "title": { "en": "Attack Surface", "hi": "अटैक सरफेस" },
+      "body": {
+        "en": "POST /labs/csrf/change-email accepts a new email and updates the profile with NO anti-CSRF token and no custom-header requirement — the session cookie alone authorises it. A cross-site form auto-submitting to it would succeed.",
+        "hi": "POST /labs/csrf/change-email नया ईमेल लेकर प्रोफ़ाइल अपडेट करता है — बिना CSRF टोकन और बिना कस्टम-हेडर के; अकेली सेशन कुकी इसे अधिकृत करती है।"
+      }
+    },
+    {
+      "id": "exploitation",
+      "type": "interactive",
+      "widget": "csrf-console",
+      "title": { "en": "Exploitation", "hi": "शोषण" },
+      "hints": [
+        { "en": "Press 'Fire forged request' — the email changes with no token at all.", "hi": "'फोर्ज्ड रिक्वेस्ट भेजें' दबाएँ — बिना किसी टोकन के ईमेल बदल जाता है।" },
+        { "en": "Then try the token-protected endpoint from the same 'attacker page' — 403.", "hi": "फिर उसी 'अटैकर पेज' से टोकन-सुरक्षित एंडपॉइंट आज़माएँ — 403।" }
+      ]
+    },
+    {
+      "id": "root-cause",
+      "type": "content",
+      "title": { "en": "Root Cause Analysis", "hi": "मूल कारण विश्लेषण" },
+      "body": {
+        "en": "The endpoint authenticates the session but does not verify INTENT — it can't tell a real click from a forged cross-site request, because the only proof required (the cookie) is attached automatically. An unpredictable per-session token, which an attacker's page cannot read, restores that proof of intent.",
+        "hi": "एंडपॉइंट सेशन प्रमाणित करता है पर इरादे की पुष्टि नहीं करता — यह असली क्लिक और फोर्ज्ड अनुरोध में अंतर नहीं कर पाता, क्योंकि एकमात्र प्रमाण (कुकी) स्वतः जुड़ता है।"
+      }
+    },
+    {
+      "id": "secure-fix",
+      "type": "code",
+      "title": { "en": "Secure Fix", "hi": "सुरक्षित फिक्स" },
+      "language": "javascript",
+      "insecure": "// authorised by the auto-sent cookie alone\napp.post('/change-email', requireLogin, (req, res) => {\n  db.setEmail(req.user.id, req.body.email);\n});",
+      "secure": "// require an unpredictable token an attacker page can't read\napp.post('/change-email', requireLogin, (req, res) => {\n  if (req.get('x-csrf-token') !== session.csrfToken) return res.sendStatus(403);\n  db.setEmail(req.user.id, req.body.email);\n});\n// plus: set cookies SameSite=Lax/Strict; keep GET side-effect-free."
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "What makes a CSRF attack possible?", "hi": "CSRF हमला किससे संभव होता है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "A weak password", "hi": "कमज़ोर पासवर्ड" } },
+        { "id": "b", "label": { "en": "A state-changing request authorised only by an auto-sent cookie, no token", "hi": "केवल स्वतः-भेजी कुकी से अधिकृत, बिना टोकन का स्टेट-बदलने वाला अनुरोध" } },
+        { "id": "c", "label": { "en": "Using HTTPS", "hi": "HTTPS उपयोग" } },
+        { "id": "d", "label": { "en": "A slow server", "hi": "धीमा सर्वर" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "The standard defences against CSRF are:", "hi": "CSRF के विरुद्ध मानक बचाव हैं:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Anti-CSRF tokens + SameSite cookies", "hi": "एंटी-CSRF टोकन + SameSite कुकी" } },
+        { "id": "b", "label": { "en": "Longer passwords", "hi": "लंबे पासवर्ड" } },
+        { "id": "c", "label": { "en": "Hiding the endpoint URL", "hi": "एंडपॉइंट URL छिपाना" } },
+        { "id": "d", "label": { "en": "Rate limiting alone", "hi": "केवल रेट लिमिटिंग" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "Which is also good CSRF hygiene?", "hi": "कौन सी अच्छी CSRF स्वच्छता भी है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "Let GET requests change state", "hi": "GET अनुरोधों को स्टेट बदलने दें" } },
+        { "id": "b", "label": { "en": "Store passwords in cookies", "hi": "पासवर्ड कुकी में रखें" } },
+        { "id": "c", "label": { "en": "Keep state-changing actions to POST/PUT/DELETE, never GET", "hi": "स्टेट-बदलने वाली क्रियाएँ POST/PUT/DELETE तक रखें, GET कभी नहीं" } },
+        { "id": "d", "label": { "en": "Disable cookies entirely", "hi": "कुकी पूरी तरह बंद करें" } }
+      ]
+    }
+  ],
+  "interviewQuestions": [
+    { "en": "How does SameSite=Lax mitigate CSRF, and where does it fall short?", "hi": "SameSite=Lax CSRF को कैसे कम करता है, और कहाँ कमज़ोर है?" },
+    { "en": "Why are CSRF tokens tied to the session and unpredictable?", "hi": "CSRF टोकन सेशन से बँधे और अप्रत्याशित क्यों होते हैं?" }
+  ]
+}

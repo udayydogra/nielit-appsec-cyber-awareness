@@ -1,0 +1,109 @@
+{
+  "id": "api-security",
+  "module": "appsec",
+  "executionTier": 2,
+  "category": "api-security",
+  "title": { "en": "API Security — Data Exposure & Mass Assignment", "hi": "API सुरक्षा — डेटा एक्सपोज़र और मास असाइनमेंट" },
+  "summary": {
+    "en": "The profile API leaks internal fields on GET, and blindly accepts any field on PATCH — send {\"is_admin\":true} to make yourself admin. OWASP API #3.",
+    "hi": "प्रोफ़ाइल API GET पर आंतरिक फ़ील्ड लीक करता है, और PATCH पर कोई भी फ़ील्ड मान लेता है — {\"is_admin\":true} भेजकर खुद को admin बनाएँ। OWASP API #3।"
+  },
+  "difficultyTiers": ["beginner", "intermediate", "advanced"],
+  "owasp": ["API3:2023 – Broken Object Property Level Authorization", "API6 – Mass Assignment"],
+  "mitre": ["T1078 Valid Accounts"],
+  "cves": ["CVE-2012-2054 (Rails mass assignment)", "CVE-2013-0276"],
+  "target": { "kind": "shared-multitenant", "resetRoute": "/labs/api-security/reset", "queryRoute": "/labs/api-security/profile" },
+  "lifecycle": [
+    {
+      "id": "intro",
+      "type": "content",
+      "title": { "en": "Introduction", "hi": "परिचय" },
+      "body": {
+        "en": "Two API property-level flaws. GET /profile returns the WHOLE record — including the password hash and an internal note the client should never see (Excessive Data Exposure). PATCH /profile takes your JSON and assigns every field it recognises — including role and is_admin, which should be server-controlled (Mass Assignment). So you can read secrets and promote yourself to admin.",
+        "hi": "दो API प्रॉपर्टी-स्तर खामियाँ। GET /profile पूरा रिकॉर्ड लौटाता है — पासवर्ड हैश और आंतरिक नोट सहित (एक्सेसिव डेटा एक्सपोज़र)। PATCH /profile आपके JSON के हर पहचाने फ़ील्ड को असाइन करता है — role और is_admin सहित (मास असाइनमेंट)।"
+      }
+    },
+    {
+      "id": "objectives",
+      "type": "objectives",
+      "title": { "en": "Learning Objectives", "hi": "सीखने के उद्देश्य" },
+      "items": [
+        { "en": "Spot internal fields leaking in the GET response.", "hi": "GET प्रतिक्रिया में लीक होते आंतरिक फ़ील्ड पहचानें।" },
+        { "en": "Escalate to admin by mass-assigning is_admin/role.", "hi": "is_admin/role मास-असाइन कर admin बनें।" },
+        { "en": "Explain response allow-lists and writable-field allow-lists.", "hi": "प्रतिक्रिया allow-list और लिखने-योग्य फ़ील्ड allow-list समझाएँ।" }
+      ]
+    },
+    {
+      "id": "attack-surface",
+      "type": "content",
+      "title": { "en": "Attack Surface", "hi": "अटैक सरफेस" },
+      "body": {
+        "en": "GET /labs/api-security/profile → returns display_name, role, is_admin, password_hash, internal_note. PATCH /labs/api-security/profile → assigns any of {display_name, role, is_admin, internal_note} from your body.",
+        "hi": "GET .../profile → display_name, role, is_admin, password_hash, internal_note लौटाता है। PATCH .../profile → आपके बॉडी से इनमें से कोई भी असाइन करता है।"
+      }
+    },
+    {
+      "id": "exploitation",
+      "type": "interactive",
+      "widget": "api-console",
+      "title": { "en": "Exploitation", "hi": "शोषण" },
+      "hints": [
+        { "en": "GET the profile — note password_hash and internal_note are exposed.", "hi": "प्रोफ़ाइल GET करें — password_hash और internal_note उजागर हैं।" },
+        { "en": "Press 'Escalate' to PATCH {\"is_admin\":true,\"role\":\"admin\"}.", "hi": "'Escalate' दबाएँ ताकि PATCH {\"is_admin\":true,\"role\":\"admin\"}।" }
+      ]
+    },
+    {
+      "id": "root-cause",
+      "type": "content",
+      "title": { "en": "Root Cause Analysis", "hi": "मूल कारण विश्लेषण" },
+      "body": {
+        "en": "The API serialises and binds objects wholesale instead of choosing exactly which properties are readable and which are client-writable. Return a DTO with only the fields the client needs, and bind writes to an explicit allow-list — never let the client set privilege fields like role or is_admin.",
+        "hi": "API ऑब्जेक्ट को पूरा सीरियलाइज़/बाइंड करता है, बजाय यह चुनने के कि कौन सी प्रॉपर्टी पठनीय और कौन क्लाइंट-लिखने-योग्य है। केवल आवश्यक फ़ील्ड वाला DTO लौटाएँ, और लिखाई को स्पष्ट allow-list से बाँधें।"
+      }
+    },
+    {
+      "id": "secure-fix",
+      "type": "code",
+      "title": { "en": "Secure Fix", "hi": "सुरक्षित फिक्स" },
+      "language": "javascript",
+      "insecure": "app.get('/profile', (req,res)=> res.json(user));          // whole row\napp.patch('/profile', (req,res)=> Object.assign(user, req.body)); // any field",
+      "secure": "// response: expose only what the client needs\nres.json({ displayName: user.display_name, role: user.role });\n// writes: bind ONLY safe fields; role/is_admin are server-controlled\nconst { displayName } = req.body;\nif (displayName !== undefined) user.display_name = displayName;"
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "Returning password_hash and internal_note on GET is:", "hi": "GET पर password_hash और internal_note लौटाना है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Fine, they're encrypted", "hi": "ठीक है, वे एन्क्रिप्टेड हैं" } },
+        { "id": "b", "label": { "en": "Excessive Data Exposure — the client should never receive them", "hi": "एक्सेसिव डेटा एक्सपोज़र — क्लाइंट को कभी नहीं मिलने चाहिए" } },
+        { "id": "c", "label": { "en": "Required by REST", "hi": "REST द्वारा आवश्यक" } },
+        { "id": "d", "label": { "en": "A caching optimisation", "hi": "कैशिंग अनुकूलन" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "Setting is_admin via PATCH is which flaw?", "hi": "PATCH से is_admin सेट करना कौन सी खामी है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "Mass assignment", "hi": "मास असाइनमेंट" } },
+        { "id": "b", "label": { "en": "SQL injection", "hi": "SQL इंजेक्शन" } },
+        { "id": "c", "label": { "en": "Clickjacking", "hi": "क्लिकजैकिंग" } },
+        { "id": "d", "label": { "en": "Open redirect", "hi": "ओपन रीडायरेक्ट" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "The fixes are to:", "hi": "फिक्स हैं:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Encrypt the whole response", "hi": "पूरी प्रतिक्रिया एन्क्रिप्ट करें" } },
+        { "id": "b", "label": { "en": "Trust the client for role fields", "hi": "role फ़ील्ड के लिए क्लाइंट पर भरोसा करें" } },
+        { "id": "c", "label": { "en": "Return only needed fields and allow-list writable fields server-side", "hi": "केवल आवश्यक फ़ील्ड लौटाएँ और लिखने-योग्य फ़ील्ड सर्वर-साइड allow-list करें" } },
+        { "id": "d", "label": { "en": "Rename the fields", "hi": "फ़ील्ड का नाम बदलें" } }
+      ]
+    }
+  ],
+  "interviewQuestions": [
+    { "en": "Why are DTOs safer than serialising ORM entities directly?", "hi": "ORM एंटिटी सीधे सीरियलाइज़ करने से DTO सुरक्षित क्यों हैं?" },
+    { "en": "How would you catch mass-assignment risk in code review?", "hi": "कोड समीक्षा में मास-असाइनमेंट जोखिम कैसे पकड़ेंगे?" }
+  ]
+}

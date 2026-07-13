@@ -1,0 +1,146 @@
+{
+  "id": "digital-arrest",
+  "module": "awareness",
+  "executionTier": 0,
+  "category": "impersonation-fraud",
+  "title": { "en": "Fake Police / CBI Video Call — \"Digital Arrest\"", "hi": "नकली पुलिस / सीबीआई वीडियो कॉल — \"डिजिटल अरेस्ट\"" },
+  "summary": {
+    "en": "A scammer posing as police video-calls you, claims a warrant, and pressures you to transfer money to 'clear your name'. Learn to recognize and stop it.",
+    "hi": "एक ठग पुलिस बनकर वीडियो कॉल करता है, वारंट का दावा करता है, और आप पर पैसे भेजने का दबाव डालता है। इसे पहचानना और रोकना सीखें।"
+  },
+  "start": "n1",
+  "reportingResources": [
+    { "label": { "en": "Cyber Crime Helpline", "hi": "साइबर क्राइम हेल्पलाइन" }, "value": "1930" },
+    { "label": { "en": "National Portal", "hi": "राष्ट्रीय पोर्टल" }, "value": "cybercrime.gov.in" }
+  ],
+  "nodes": {
+    "n1": {
+      "type": "narration",
+      "channel": "sms",
+      "anim": "sms-slide-in",
+      "content": {
+        "en": "Your phone buzzes. An SMS: 'DEPT OF TELECOM: Your Aadhaar linked number will be disconnected in 2 hrs due to illegal activity. Press 1 to connect to officer.'",
+        "hi": "आपका फ़ोन बजता है। एक SMS: 'दूरसंचार विभाग: अवैध गतिविधि के कारण आपका आधार-लिंक्ड नंबर 2 घंटे में बंद हो जाएगा। अधिकारी से जुड़ने के लिए 1 दबाएँ।'"
+      },
+      "next": "n2"
+    },
+    "n2": {
+      "type": "decision",
+      "prompt": { "en": "What do you do?", "hi": "आप क्या करेंगे?" },
+      "choices": [
+        { "label": { "en": "Press 1 to talk to the officer", "hi": "अधिकारी से बात करने के लिए 1 दबाएँ" }, "goto": "vc1" },
+        { "label": { "en": "Ignore it — DoT never threatens like this over SMS", "hi": "अनदेखा करें — DoT SMS पर ऐसी धमकी नहीं देता" }, "goto": "safe_end" }
+      ]
+    },
+    "vc1": {
+      "type": "narration",
+      "channel": "videocall",
+      "media": { "clip": "officer_threat_01", "poster": "officer_poster_01" },
+      "anim": "videocall-connect",
+      "content": {
+        "en": "The screen fills with a man in a police uniform, a government logo behind him. 'This is Inspector Sharma, CBI. A money-laundering case is registered against your Aadhaar. You are under DIGITAL ARREST. Do not disconnect or leave the room.'",
+        "hi": "स्क्रीन पर पुलिस वर्दी में एक व्यक्ति दिखता है, पीछे सरकारी लोगो। 'मैं इंस्पेक्टर शर्मा, सीबीआई। आपके आधार पर मनी लॉन्ड्रिंग केस दर्ज है। आप डिजिटल अरेस्ट में हैं। कॉल न काटें, कमरा न छोड़ें।'"
+      },
+      "redFlags": [
+        { "at": 2, "flag": "fake_uniform", "note": { "en": "Real police don't arrest over a video call.", "hi": "असली पुलिस वीडियो कॉल पर गिरफ़्तार नहीं करती।" } },
+        { "at": 6, "flag": "urgency_pressure", "note": { "en": "'Do not disconnect' manufactures panic.", "hi": "'कॉल न काटें' घबराहट पैदा करता है।" } },
+        { "at": 10, "flag": "isolation_demand", "note": { "en": "'Do not leave the room' isolates the victim.", "hi": "'कमरा न छोड़ें' पीड़ित को अलग करता है।" } }
+      ],
+      "next": "n3"
+    },
+    "n3": {
+      "type": "decision",
+      "prompt": { "en": "\"To prove your account is clean, transfer ₹50,000 to this verification account. It will be refunded.\" What do you do?", "hi": "\"खाता साफ़ साबित करने के लिए ₹50,000 इस सत्यापन खाते में भेजें। वापस कर दिया जाएगा।\" आप क्या करेंगे?" },
+      "choices": [
+        { "label": { "en": "Transfer the money to clear my name", "hi": "नाम साफ़ करने के लिए पैसे भेजें" }, "goto": "trap1" },
+        { "label": { "en": "Hang up and call 1930", "hi": "कॉल काटें और 1930 पर कॉल करें" }, "goto": "correct1" },
+        { "label": { "en": "Stay on the call but refuse to pay", "hi": "कॉल पर रहें पर भुगतान से इनकार करें" }, "goto": "partial1" }
+      ]
+    },
+    "trap1": {
+      "type": "consequence",
+      "outcome": "negative",
+      "anim": "shake",
+      "content": {
+        "en": "You transferred ₹50,000. The 'officer' immediately demands more to 'complete the clearance'. There is no refund — this money is gone. There is no such thing as digital arrest in Indian law.",
+        "hi": "आपने ₹50,000 भेज दिए। 'अधिकारी' तुरंत 'क्लीयरेंस पूरा करने' के लिए और माँगता है। कोई रिफंड नहीं — पैसे चले गए। भारतीय कानून में 'डिजिटल अरेस्ट' नाम की कोई चीज़ नहीं है।"
+      },
+      "technique": {
+        "en": "Authority + urgency + isolation + a refundable 'verification' transfer. No agency ever asks for money to prove innocence.",
+        "hi": "अधिकार + तात्कालिकता + अलगाव + रिफंडेबल 'सत्यापन' ट्रांसफर। कोई एजेंसी बेगुनाही साबित करने के लिए पैसे नहीं माँगती।"
+      },
+      "next": "feedback"
+    },
+    "partial1": {
+      "type": "consequence",
+      "outcome": "neutral",
+      "content": {
+        "en": "Good instinct not to pay — but staying on the call keeps you exposed to escalating pressure and fake 'senior officers'. The right move is to disconnect and independently verify.",
+        "hi": "भुगतान न करना अच्छा — पर कॉल पर बने रहना आपको बढ़ते दबाव के सामने रखता है। सही कदम है कॉल काटकर स्वतंत्र रूप से सत्यापन करना।"
+      },
+      "next": "n3"
+    },
+    "correct1": {
+      "type": "consequence",
+      "outcome": "positive",
+      "anim": "check-pop",
+      "content": {
+        "en": "You hung up and called 1930. No money lost. You reported the number on cybercrime.gov.in. This is exactly right: real law enforcement never conducts arrests or takes payments over a video call.",
+        "hi": "आपने कॉल काटकर 1930 पर कॉल किया। कोई नुकसान नहीं। आपने नंबर cybercrime.gov.in पर रिपोर्ट किया। यही सही है।"
+      },
+      "next": "feedback"
+    },
+    "safe_end": {
+      "type": "consequence",
+      "outcome": "positive",
+      "content": {
+        "en": "You ignored the SMS. Telecom departments do not disconnect numbers over threatening SMS, and never route you to an 'officer'. Nothing lost.",
+        "hi": "आपने SMS अनदेखा किया। दूरसंचार विभाग धमकी भरे SMS से नंबर बंद नहीं करता। कोई नुकसान नहीं।"
+      },
+      "next": "feedback"
+    },
+    "feedback": {
+      "type": "checklist",
+      "title": { "en": "Prevention Checklist", "hi": "रोकथाम चेकलिस्ट" },
+      "items": [
+        { "en": "'Digital arrest' is not real — no agency arrests you on a video call.", "hi": "'डिजिटल अरेस्ट' असली नहीं है — कोई एजेंसी वीडियो कॉल पर गिरफ़्तार नहीं करती।" },
+        { "en": "No government body asks for money to 'prove innocence' or 'clear' a case.", "hi": "कोई सरकारी संस्था बेगुनाही साबित करने के लिए पैसे नहीं माँगती।" },
+        { "en": "Pressure to not disconnect / not tell anyone is the scam, not the law.", "hi": "कॉल न काटने / किसी को न बताने का दबाव ही ठगी है।" },
+        { "en": "Disconnect, verify independently, and report to 1930 / cybercrime.gov.in.", "hi": "कॉल काटें, स्वतंत्र सत्यापन करें, और 1930 / cybercrime.gov.in पर रिपोर्ट करें।" }
+      ],
+      "next": "quiz"
+    }
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "A caller in police uniform says you are under 'digital arrest'. This is:", "hi": "पुलिस वर्दी में एक कॉलर कहता है आप 'डिजिटल अरेस्ट' में हैं। यह है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "A real legal procedure", "hi": "एक असली कानूनी प्रक्रिया" } },
+        { "id": "b", "label": { "en": "Always a scam — no such thing exists", "hi": "हमेशा ठगी — ऐसी कोई चीज़ नहीं" } },
+        { "id": "c", "label": { "en": "Legal only if they show a warrant", "hi": "वारंट दिखाएँ तो ही कानूनी" } },
+        { "id": "d", "label": { "en": "Legal for tax cases", "hi": "कर मामलों के लिए कानूनी" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "Which is the biggest red flag?", "hi": "सबसे बड़ा रेड फ्लैग कौन सा है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "The officer speaks Hindi", "hi": "अधिकारी हिंदी बोलता है" } },
+        { "id": "b", "label": { "en": "The call is on video", "hi": "कॉल वीडियो पर है" } },
+        { "id": "c", "label": { "en": "Demand to transfer money to 'clear' your name", "hi": "नाम 'साफ़' करने के लिए पैसे भेजने की माँग" } },
+        { "id": "d", "label": { "en": "It happened in the afternoon", "hi": "यह दोपहर में हुआ" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "The correct response is to:", "hi": "सही प्रतिक्रिया है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Hang up and call 1930 / report at cybercrime.gov.in", "hi": "कॉल काटें और 1930 / cybercrime.gov.in पर रिपोर्ट करें" } },
+        { "id": "b", "label": { "en": "Pay a small amount to make them go away", "hi": "थोड़ा भुगतान करके छुटकारा पाएँ" } },
+        { "id": "c", "label": { "en": "Argue with the officer on the call", "hi": "कॉल पर अधिकारी से बहस करें" } },
+        { "id": "d", "label": { "en": "Share your OTP to verify identity", "hi": "पहचान सत्यापित करने के लिए OTP साझा करें" } }
+      ]
+    }
+  ]
+}

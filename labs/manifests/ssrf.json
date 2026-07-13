@@ -1,0 +1,95 @@
+{
+  "id": "ssrf",
+  "module": "appsec",
+  "executionTier": 3,
+  "category": "ssrf",
+  "title": { "en": "SSRF — Server-Side Request Forgery (Tier 3)", "hi": "SSRF — सर्वर-साइड रिक्वेस्ट फोर्जरी (टियर 3)" },
+  "summary": {
+    "en": "A URL fetcher with no allow-list lets you make the server request internal-only services. Reach the cloud metadata endpoint and steal credentials — in a live, egress-locked container.",
+    "hi": "बिना allow-list वाला URL फ़ेचर आपको सर्वर से आंतरिक सेवाओं तक अनुरोध कराने देता है। क्लाउड मेटाडेटा तक पहुँचकर क्रेडेंशियल चुराएँ।"
+  },
+  "difficultyTiers": ["beginner", "intermediate", "advanced"],
+  "owasp": ["A10:2021 – Server-Side Request Forgery"],
+  "mitre": ["T1090 Proxy", "T1552.005 Cloud Instance Metadata API"],
+  "cves": ["CVE-2019-8451 (Jira SSRF)", "CVE-2021-26855 (Exchange SSRF)"],
+  "target": { "kind": "ephemeral-container", "image": "nielit/ssrf:latest" },
+  "lifecycle": [
+    {
+      "id": "intro", "type": "content", "title": { "en": "Introduction", "hi": "परिचय" },
+      "body": {
+        "en": "SSRF turns a server into your proxy: you supply a URL and the SERVER fetches it, from inside the network where firewalls don't apply. The classic prize is the cloud metadata service (169.254.169.254), which hands out temporary credentials to anything that can reach it. This target's fetcher has no allow-list. External egress is blocked, and the metadata service is simulated on loopback.",
+        "hi": "SSRF सर्वर को आपका प्रॉक्सी बना देता है: आप URL देते हैं और सर्वर उसे नेटवर्क के भीतर से लाता है। क्लासिक इनाम क्लाउड मेटाडेटा सेवा (169.254.169.254) है, जो पहुँच पाने वाले किसी को भी अस्थायी क्रेडेंशियल देती है।"
+      }
+    },
+    {
+      "id": "objectives", "type": "objectives", "title": { "en": "Learning Objectives", "hi": "सीखने के उद्देश्य" },
+      "items": [
+        { "en": "Fetch the internal metadata URL via the vulnerable service.", "hi": "असुरक्षित सेवा से आंतरिक मेटाडेटा URL लाएँ।" },
+        { "en": "Confirm external egress is blocked but internal is reachable.", "hi": "पुष्टि करें बाहरी एग्रेस रुका है पर आंतरिक पहुँच योग्य है।" },
+        { "en": "Explain allow-lists and blocking link-local ranges.", "hi": "allow-list और link-local रेंज ब्लॉक करना समझाएँ।" }
+      ]
+    },
+    {
+      "id": "attack-surface", "type": "content", "title": { "en": "Attack Surface", "hi": "अटैक सरफेस" },
+      "body": {
+        "en": "ssrf-fetch <url> runs wget on any URL you give it. The app intends only public images, but there's no scheme/host allow-list, so http://127.0.0.1:8080/latest/meta-data/… is fetched too.",
+        "hi": "ssrf-fetch <url> किसी भी URL पर wget चलाता है। ऐप केवल सार्वजनिक इमेज चाहता है, पर कोई host allow-list नहीं है।"
+      }
+    },
+    {
+      "id": "exploitation", "type": "interactive", "widget": "terminal", "title": { "en": "Live Terminal", "hi": "लाइव टर्मिनल" },
+      "hints": [
+        { "en": "cat /challenge/README   then   ssrf-fetch http://127.0.0.1:8080/latest/meta-data/iam/security-credentials/labrole", "hi": "cat /challenge/README   फिर   ssrf-fetch http://127.0.0.1:8080/latest/meta-data/iam/security-credentials/labrole" },
+        { "en": "ssrf-fetch http://8.8.8.8 fails — external egress is locked.", "hi": "ssrf-fetch http://8.8.8.8 विफल — बाहरी एग्रेस लॉक है।" }
+      ]
+    },
+    {
+      "id": "root-cause", "type": "content", "title": { "en": "Root Cause Analysis", "hi": "मूल कारण विश्लेषण" },
+      "body": {
+        "en": "The server fetches a user-controlled URL with no restriction on scheme, host, or IP range, so it can be aimed at loopback, link-local (169.254/16), or internal hosts. Fix: allow-list exact destinations, resolve the host and reject private/link-local/loopback ranges (and re-check after redirects), disable unneeded URL schemes, and require IMDSv2.",
+        "hi": "सर्वर उपयोगकर्ता-नियंत्रित URL बिना प्रतिबंध लाता है। फिक्स: सटीक गंतव्य allow-list करें, host हल कर निजी/link-local/loopback रेंज अस्वीकार करें, रीडायरेक्ट के बाद पुनः जाँचें, और IMDSv2 माँगें।"
+      }
+    },
+    {
+      "id": "secure-fix", "type": "code", "title": { "en": "Secure Fix", "hi": "सुरक्षित फिक्स" }, "language": "python",
+      "insecure": "requests.get(user_url)   # any scheme, any host, any IP",
+      "secure": "host = urlparse(user_url).hostname\nip = ipaddress.ip_address(socket.gethostbyname(host))\nif ip.is_private or ip.is_loopback or ip.is_link_local: raise Forbidden\nif host not in ALLOWED_HOSTS: raise Forbidden\nrequests.get(user_url, allow_redirects=False)"
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "What makes SSRF possible here?", "hi": "यहाँ SSRF किससे संभव है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "The server fetches a user-supplied URL with no allow-list", "hi": "सर्वर बिना allow-list उपयोगकर्ता URL लाता है" } },
+        { "id": "b", "label": { "en": "A weak password", "hi": "कमज़ोर पासवर्ड" } },
+        { "id": "c", "label": { "en": "Missing HTTPS", "hi": "HTTPS की कमी" } },
+        { "id": "d", "label": { "en": "A slow network", "hi": "धीमा नेटवर्क" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "The high-value SSRF target on a cloud host is:", "hi": "क्लाउड होस्ट पर उच्च-मूल्य SSRF लक्ष्य है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "The favicon", "hi": "फ़ेविकॉन" } },
+        { "id": "b", "label": { "en": "The instance metadata service (credentials)", "hi": "इंस्टेंस मेटाडेटा सेवा (क्रेडेंशियल)" } },
+        { "id": "c", "label": { "en": "The CSS files", "hi": "CSS फ़ाइलें" } },
+        { "id": "d", "label": { "en": "The robots.txt", "hi": "robots.txt" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "A strong SSRF defence is to:", "hi": "मज़बूत SSRF बचाव है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Trust the URL if it starts with http", "hi": "URL http से शुरू हो तो भरोसा करें" } },
+        { "id": "b", "label": { "en": "Only block the word 'metadata'", "hi": "केवल 'metadata' शब्द ब्लॉक करें" } },
+        { "id": "c", "label": { "en": "Allow-list hosts and reject private/link-local/loopback IPs", "hi": "host allow-list करें और निजी/link-local/loopback IP अस्वीकार करें" } },
+        { "id": "d", "label": { "en": "Use a bigger server", "hi": "बड़ा सर्वर उपयोग करें" } }
+      ]
+    }
+  ],
+  "interviewQuestions": [
+    { "en": "Why does IMDSv2 (session tokens) blunt SSRF against metadata?", "hi": "IMDSv2 मेटाडेटा के विरुद्ध SSRF को क्यों कमज़ोर करता है?" },
+    { "en": "How can DNS rebinding defeat a naive host allow-list?", "hi": "DNS रीबाइंडिंग भोले host allow-list को कैसे हराता है?" }
+  ]
+}

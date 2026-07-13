@@ -1,0 +1,97 @@
+{
+  "id": "kyc-scam",
+  "module": "awareness",
+  "executionTier": 0,
+  "category": "impersonation-fraud",
+  "title": { "en": "KYC Update Scam", "hi": "केवाईसी अपडेट धोखाधड़ी" },
+  "summary": {
+    "en": "An SMS warns your bank account will be blocked unless you 'update KYC' via a link. Learn to spot the phish.",
+    "hi": "एक SMS चेतावनी देता है कि लिंक से 'KYC अपडेट' न करने पर खाता ब्लॉक हो जाएगा। फ़िशिंग पहचानना सीखें।"
+  },
+  "start": "n1",
+  "reportingResources": [
+    { "label": { "en": "Cyber Crime Helpline", "hi": "साइबर क्राइम हेल्पलाइन" }, "value": "1930" },
+    { "label": { "en": "National Portal", "hi": "राष्ट्रीय पोर्टल" }, "value": "cybercrime.gov.in" }
+  ],
+  "nodes": {
+    "n1": {
+      "type": "narration", "channel": "sms", "anim": "sms-slide-in",
+      "content": {
+        "en": "SMS: 'Dear customer, your Bank a/c will be SUSPENDED today. Complete KYC now: http://kyc-verify-sbi.xyz/update — Team SBI'",
+        "hi": "SMS: 'प्रिय ग्राहक, आपका बैंक खाता आज निलंबित होगा। अभी KYC पूरी करें: http://kyc-verify-sbi.xyz/update — टीम SBI'"
+      },
+      "next": "n2"
+    },
+    "n2": {
+      "type": "decision",
+      "prompt": { "en": "What do you do?", "hi": "आप क्या करेंगे?" },
+      "choices": [
+        { "label": { "en": "Tap the link and enter my account + Aadhaar + OTP", "hi": "लिंक पर टैप करें और खाता + आधार + OTP डालें" }, "goto": "trap1" },
+        { "label": { "en": "Ignore it and call the number on my bank card / passbook", "hi": "अनदेखा करें और बैंक कार्ड/पासबुक पर लिखे नंबर पर कॉल करें" }, "goto": "safe1" }
+      ]
+    },
+    "trap1": {
+      "type": "consequence", "outcome": "negative", "anim": "shake",
+      "content": {
+        "en": "The link was a fake page mimicking your bank. It captured your account number, Aadhaar and OTP — enough to drain the account. Banks NEVER send KYC links by SMS, and the domain 'kyc-verify-sbi.xyz' is not your bank.",
+        "hi": "लिंक बैंक जैसी नकली पेज थी। इसने आपका खाता नंबर, आधार और OTP ले लिया — खाता खाली करने के लिए काफ़ी। बैंक कभी SMS से KYC लिंक नहीं भेजते।"
+      },
+      "technique": {
+        "en": "Urgency ('suspended today') + a lookalike domain + a form that harvests credentials. The OTP is the last key — sharing it authorises the theft.",
+        "hi": "तात्कालिकता ('आज निलंबित') + मिलती-जुलती डोमेन + क्रेडेंशियल चुराने वाला फॉर्म। OTP आख़िरी चाबी है।"
+      },
+      "next": "feedback"
+    },
+    "safe1": {
+      "type": "consequence", "outcome": "positive", "anim": "check-pop",
+      "content": {
+        "en": "Correct. KYC is never done through an SMS link. You called the official number and confirmed there was no issue. Never enter details on a link you didn't originate.",
+        "hi": "सही। KYC कभी SMS लिंक से नहीं होती। आपने आधिकारिक नंबर पर कॉल करके पुष्टि की कि कोई समस्या नहीं है।"
+      },
+      "next": "feedback"
+    },
+    "feedback": {
+      "type": "checklist",
+      "title": { "en": "Prevention Checklist", "hi": "रोकथाम चेकलिस्ट" },
+      "items": [
+        { "en": "Banks never ask for KYC/Aadhaar/OTP via SMS or WhatsApp links.", "hi": "बैंक कभी SMS/WhatsApp लिंक से KYC/आधार/OTP नहीं माँगते।" },
+        { "en": "Check the domain — lookalikes like 'sbi.xyz' are not your bank.", "hi": "डोमेन जाँचें — 'sbi.xyz' जैसी नकलें आपका बैंक नहीं हैं।" },
+        { "en": "Never share an OTP; it authorises a transaction or login.", "hi": "OTP कभी साझा न करें; यह लेनदेन/लॉगिन को अधिकृत करता है।" },
+        { "en": "Verify only via the number on your card/passbook or the official app.", "hi": "केवल कार्ड/पासबुक के नंबर या आधिकारिक ऐप से सत्यापित करें।" }
+      ],
+      "next": "quiz"
+    }
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "A genuine bank will ask you to complete KYC by:", "hi": "असली बैंक आपको KYC पूरी करने को कहेगा:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Clicking an SMS link", "hi": "SMS लिंक पर क्लिक करके" } },
+        { "id": "b", "label": { "en": "Visiting a branch or the official app — never an SMS link", "hi": "शाखा या आधिकारिक ऐप पर — कभी SMS लिंक नहीं" } },
+        { "id": "c", "label": { "en": "Sharing your OTP with the caller", "hi": "कॉलर से OTP साझा करके" } },
+        { "id": "d", "label": { "en": "Sending your PIN by SMS", "hi": "SMS से PIN भेजकर" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "The domain 'kyc-verify-sbi.xyz' is a red flag because:", "hi": "'kyc-verify-sbi.xyz' डोमेन रेड फ्लैग है क्योंकि:" },
+      "choices": [
+        { "id": "a", "label": { "en": "It is too long", "hi": "यह बहुत लंबी है" } },
+        { "id": "b", "label": { "en": "It uses Hindi", "hi": "यह हिंदी उपयोग करती है" } },
+        { "id": "c", "label": { "en": "It is a lookalike, not the bank's real domain", "hi": "यह नकली है, बैंक की असली डोमेन नहीं" } },
+        { "id": "d", "label": { "en": "It has no https", "hi": "इसमें https नहीं है" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "Sharing the OTP on such a page:", "hi": "ऐसी पेज पर OTP साझा करना:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Authorises the attacker's transaction", "hi": "हमलावर के लेनदेन को अधिकृत करता है" } },
+        { "id": "b", "label": { "en": "Is required for KYC", "hi": "KYC के लिए आवश्यक है" } },
+        { "id": "c", "label": { "en": "Keeps your account safe", "hi": "आपका खाता सुरक्षित रखता है" } },
+        { "id": "d", "label": { "en": "Only shows your balance", "hi": "केवल बैलेंस दिखाता है" } }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "id": "session",
+  "module": "appsec",
+  "executionTier": 2,
+  "category": "session-attacks",
+  "title": { "en": "Session Management", "hi": "सेशन प्रबंधन" },
+  "summary": {
+    "en": "Your session token is just base64 of your identity, with no signature. Decode it, swap the name to 'admin', and hijack their session.",
+    "hi": "आपका सेशन टोकन केवल आपकी पहचान का base64 है, बिना हस्ताक्षर। इसे डिकोड करें, नाम 'admin' करें, और उनका सेशन हड़पें।"
+  },
+  "difficultyTiers": ["beginner", "intermediate", "advanced"],
+  "owasp": ["A07:2021 – Identification and Authentication Failures"],
+  "mitre": ["T1539 Steal Web Session Cookie"],
+  "cves": ["CVE-2019-11510", "CVE-2013-1965"],
+  "target": { "kind": "shared-multitenant", "queryRoute": "/labs/session/whoami" },
+  "lifecycle": [
+    {
+      "id": "intro",
+      "type": "content",
+      "title": { "en": "Introduction", "hi": "परिचय" },
+      "body": {
+        "en": "A session token proves who you are on every request. This app's token is base64('u:you') — it CARRIES your identity but is not signed, so the server believes whatever the token claims. Anyone can craft base64('u:admin') and become admin. Good tokens are random server-side identifiers (or signed), and are rotated on login.",
+        "hi": "सेशन टोकन हर अनुरोध पर बताता है आप कौन हैं। इस ऐप का टोकन base64('u:you') है — यह पहचान रखता है पर हस्ताक्षरित नहीं, इसलिए सर्वर टोकन के दावे पर भरोसा करता है। कोई भी base64('u:admin') बनाकर admin बन सकता है।"
+      }
+    },
+    {
+      "id": "objectives",
+      "type": "objectives",
+      "title": { "en": "Learning Objectives", "hi": "सीखने के उद्देश्य" },
+      "items": [
+        { "en": "Decode the issued token and read its structure.", "hi": "जारी टोकन डिकोड करें और उसकी संरचना पढ़ें।" },
+        { "en": "Forge an 'admin' token and hijack the session.", "hi": "'admin' टोकन बनाएँ और सेशन हड़पें।" },
+        { "en": "Explain random server-side IDs, signing, and rotation.", "hi": "रैंडम सर्वर-साइड ID, हस्ताक्षर, और रोटेशन समझाएँ।" }
+      ]
+    },
+    {
+      "id": "attack-surface",
+      "type": "content",
+      "title": { "en": "Attack Surface", "hi": "अटैक सरफेस" },
+      "body": {
+        "en": "GET /labs/session/whoami?token=… decodes the token as base64, reads the persona after 'u:', and returns that persona's data — with no verification that the token was issued to you.",
+        "hi": "GET /labs/session/whoami?token=… टोकन को base64 डिकोड करता है, 'u:' के बाद पर्सोना पढ़ता है, और उसका डेटा लौटाता है — बिना यह जाँचे कि टोकन आपको जारी हुआ था।"
+      }
+    },
+    {
+      "id": "exploitation",
+      "type": "interactive",
+      "widget": "session-console",
+      "title": { "en": "Exploitation", "hi": "शोषण" },
+      "hints": [
+        { "en": "Your token decodes to 'u:you'. Change 'you' to 'admin' and re-encode.", "hi": "आपका टोकन 'u:you' में डिकोड होता है। 'you' को 'admin' करें और फिर से एनकोड करें।" },
+        { "en": "Use the 'Forge as admin' button — it crafts base64('u:admin') for you.", "hi": "'admin के रूप में फोर्ज करें' बटन उपयोग करें — यह base64('u:admin') बना देता है।" }
+      ]
+    },
+    {
+      "id": "root-cause",
+      "type": "content",
+      "title": { "en": "Root Cause Analysis", "hi": "मूल कारण विश्लेषण" },
+      "body": {
+        "en": "The token is CLIENT-CONTROLLED state trusted as identity. Because it isn't signed and isn't an opaque server-side reference, the client can rewrite it. Session identifiers must be unguessable, verifiable, stored/looked-up server-side, and rotated after login to prevent fixation.",
+        "hi": "टोकन क्लाइंट-नियंत्रित स्थिति है जिसे पहचान माना जाता है। हस्ताक्षरित न होने और अपारदर्शी सर्वर-साइड संदर्भ न होने से क्लाइंट इसे बदल सकता है। सेशन ID अप्रत्याशित, सत्यापन-योग्य, सर्वर-साइड, और लॉगिन पर रोटेटेड होनी चाहिए।"
+      }
+    },
+    {
+      "id": "secure-fix",
+      "type": "code",
+      "title": { "en": "Secure Fix", "hi": "सुरक्षित फिक्स" },
+      "language": "javascript",
+      "insecure": "// identity read from a forgeable token\nconst persona = atob(token).split(':')[1];\nreturn dataFor(persona);",
+      "secure": "// opaque random id -> server-side session record\nconst sess = await sessions.get(token);          // 128-bit random id\nif (!sess) return res.sendStatus(401);\n// rotate on login, invalidate on logout, set HttpOnly+Secure+SameSite\nreturn dataFor(sess.userId);"
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "Why can the token be forged?", "hi": "टोकन क्यों बनाया जा सकता है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "It is too long", "hi": "यह बहुत लंबा है" } },
+        { "id": "b", "label": { "en": "It carries identity with no signature the server verifies", "hi": "यह पहचान रखता है, बिना ऐसे हस्ताक्षर के जिसे सर्वर जाँचे" } },
+        { "id": "c", "label": { "en": "It is sent over HTTPS", "hi": "यह HTTPS पर भेजा जाता है" } },
+        { "id": "d", "label": { "en": "It uses base64", "hi": "यह base64 उपयोग करता है" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "A secure session identifier should be:", "hi": "एक सुरक्षित सेशन पहचानकर्ता होना चाहिए:" },
+      "choices": [
+        { "id": "a", "label": { "en": "An unguessable random id mapped server-side (or signed)", "hi": "अप्रत्याशित रैंडम id जो सर्वर-साइड मैप हो (या हस्ताक्षरित)" } },
+        { "id": "b", "label": { "en": "The user's email in plain text", "hi": "सादे टेक्स्ट में यूज़र का ईमेल" } },
+        { "id": "c", "label": { "en": "A sequential number", "hi": "एक क्रमिक संख्या" } },
+        { "id": "d", "label": { "en": "The username base64-encoded", "hi": "base64 में यूज़रनेम" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "Rotating the session ID on login primarily prevents:", "hi": "लॉगिन पर सेशन ID रोटेट करना मुख्यतः रोकता है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Slow logins", "hi": "धीमे लॉगिन" } },
+        { "id": "b", "label": { "en": "Large cookies", "hi": "बड़ी कुकीज़" } },
+        { "id": "c", "label": { "en": "Session fixation", "hi": "सेशन फिक्सेशन" } },
+        { "id": "d", "label": { "en": "XSS", "hi": "XSS" } }
+      ]
+    }
+  ],
+  "interviewQuestions": [
+    { "en": "Compare opaque session ids vs signed stateless tokens (JWT).", "hi": "अपारदर्शी सेशन id बनाम हस्ताक्षरित स्टेटलेस टोकन (JWT) की तुलना करें।" },
+    { "en": "What cookie flags harden a session, and why?", "hi": "कौन से कुकी फ्लैग सेशन को मज़बूत करते हैं, और क्यों?" }
+  ]
+}

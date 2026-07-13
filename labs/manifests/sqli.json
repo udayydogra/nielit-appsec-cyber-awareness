@@ -1,0 +1,114 @@
+{
+  "id": "sqli",
+  "module": "appsec",
+  "executionTier": 2,
+  "category": "injection",
+  "title": { "en": "SQL Injection", "hi": "एसक्यूएल इंजेक्शन" },
+  "summary": {
+    "en": "Bypass a login and exfiltrate secrets from a deliberately vulnerable, per-user query.",
+    "hi": "एक जानबूझकर असुरक्षित क्वेरी से लॉगिन बायपास करें और गुप्त डेटा निकालें।"
+  },
+  "difficultyTiers": ["beginner", "intermediate", "advanced"],
+  "owasp": ["A03:2021 – Injection"],
+  "mitre": ["T1190 Exploit Public-Facing Application"],
+  "cves": ["CVE-2012-2661 (Rails SQLi)", "CVE-2019-8446 (Jira SQLi)"],
+  "target": {
+    "kind": "shared-multitenant",
+    "resetRoute": "/labs/sqli/reset",
+    "queryRoute": "/labs/sqli/login"
+  },
+  "lifecycle": [
+    {
+      "id": "intro",
+      "type": "content",
+      "title": { "en": "Introduction", "hi": "परिचय" },
+      "body": {
+        "en": "The login form below builds its SQL by string-concatenating your input. When the query trusts input as code, you control the query. This is Tier 2: one hardened shared app, your data is your own DB rows, and Reset restores them.",
+        "hi": "नीचे दिया लॉगिन फॉर्म आपके इनपुट को जोड़कर SQL बनाता है। जब क्वेरी इनपुट पर भरोसा करती है, तो आप क्वेरी को नियंत्रित करते हैं। यह टियर 2 है: एक साझा ऐप, आपका डेटा आपकी अपनी पंक्तियाँ हैं।"
+      }
+    },
+    {
+      "id": "objectives",
+      "type": "objectives",
+      "title": { "en": "Learning Objectives", "hi": "सीखने के उद्देश्य" },
+      "items": [
+        { "en": "Bypass authentication with a boolean tautology (' OR '1'='1).", "hi": "बूलियन टॉटोलॉजी से प्रमाणीकरण बायपास करें।" },
+        { "en": "Use UNION SELECT to exfiltrate columns from another row.", "hi": "UNION SELECT से दूसरी पंक्ति के कॉलम निकालें।" },
+        { "en": "Explain the root cause and write the parameterized fix.", "hi": "मूल कारण समझाएँ और पैरामीटराइज़्ड फिक्स लिखें।" }
+      ]
+    },
+    {
+      "id": "attack-surface",
+      "type": "content",
+      "title": { "en": "Attack Surface", "hi": "अटैक सरफेस" },
+      "anim": "sqli-dataflow",
+      "body": {
+        "en": "Endpoint POST /labs/sqli/login runs: SELECT username, role, secret_note FROM accounts WHERE username='<u>' AND password='<p>'. Both <u> and <p> are concatenated unescaped.",
+        "hi": "एंडपॉइंट POST /labs/sqli/login यह चलाता है: SELECT ... WHERE username='<u>' AND password='<p>'. दोनों इनपुट बिना एस्केप किए जुड़ते हैं।"
+      }
+    },
+    {
+      "id": "exploitation",
+      "type": "interactive",
+      "widget": "sqli-console",
+      "title": { "en": "Exploitation", "hi": "शोषण" },
+      "hints": [
+        { "en": "Auth bypass: username admin, password  ' OR '1'='1", "hi": "बायपास: यूज़रनेम admin, पासवर्ड  ' OR '1'='1" },
+        { "en": "UNION: put ' UNION SELECT username, role, password FROM accounts-- in the username field.", "hi": "UNION: यूज़रनेम फ़ील्ड में ' UNION SELECT username, role, password FROM accounts-- डालें।" }
+      ]
+    },
+    {
+      "id": "root-cause",
+      "type": "content",
+      "title": { "en": "Root Cause Analysis", "hi": "मूल कारण विश्लेषण" },
+      "body": {
+        "en": "Input is concatenated into the query string, so a quote closes the literal and the rest is parsed as SQL. The database cannot distinguish data from code because the driver was never told which is which.",
+        "hi": "इनपुट क्वेरी स्ट्रिंग में जुड़ता है, इसलिए एक कोट लिटरल को बंद कर देता है और बाकी SQL के रूप में पढ़ा जाता है।"
+      }
+    },
+    {
+      "id": "secure-fix",
+      "type": "code",
+      "title": { "en": "Secure Fix", "hi": "सुरक्षित फिक्स" },
+      "language": "javascript",
+      "insecure": "const q = `SELECT username, role FROM accounts WHERE username='${u}' AND password='${p}'`;\nawait db.query(q);",
+      "secure": "// Parameterized query: driver binds values as DATA, never code.\nawait db.query(\n  'SELECT username, role FROM accounts WHERE username=$1 AND password=$2',\n  [u, p]\n);"
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "Why does ' OR '1'='1 bypass the login?", "hi": "' OR '1'='1 लॉगिन क्यों बायपास करता है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "It guesses the password", "hi": "यह पासवर्ड का अनुमान लगाता है" } },
+        { "id": "b", "label": { "en": "It crashes the database", "hi": "यह डेटाबेस क्रैश करता है" } },
+        { "id": "c", "label": { "en": "The WHERE clause always evaluates true", "hi": "WHERE क्लॉज हमेशा सत्य होता है" } },
+        { "id": "d", "label": { "en": "It encrypts the query", "hi": "यह क्वेरी एन्क्रिप्ट करता है" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "What is the correct primary fix?", "hi": "सही प्राथमिक फिक्स क्या है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "Blocklist the word SELECT", "hi": "SELECT शब्द ब्लॉक करें" } },
+        { "id": "b", "label": { "en": "Parameterized / prepared statements", "hi": "पैरामीटराइज़्ड / प्रिपेयर्ड स्टेटमेंट" } },
+        { "id": "c", "label": { "en": "Hide the error messages", "hi": "एरर संदेश छिपाएँ" } },
+        { "id": "d", "label": { "en": "Use HTTPS", "hi": "HTTPS उपयोग करें" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "UNION-based SQLi requires the injected SELECT to match what?", "hi": "UNION-आधारित SQLi के लिए इंजेक्टेड SELECT को क्या मिलाना होता है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "The table name", "hi": "टेबल का नाम" } },
+        { "id": "b", "label": { "en": "The database version", "hi": "डेटाबेस संस्करण" } },
+        { "id": "c", "label": { "en": "The user's password", "hi": "यूज़र का पासवर्ड" } },
+        { "id": "d", "label": { "en": "The column count and compatible types", "hi": "कॉलम की संख्या और संगत प्रकार" } }
+      ]
+    }
+  ],
+  "interviewQuestions": [
+    { "en": "How does a prepared statement stop injection at the driver level?", "hi": "प्रिपेयर्ड स्टेटमेंट ड्राइवर स्तर पर इंजेक्शन कैसे रोकता है?" },
+    { "en": "When is an ORM still vulnerable to SQLi?", "hi": "ORM अभी भी SQLi के प्रति असुरक्षित कब होता है?" }
+  ]
+}

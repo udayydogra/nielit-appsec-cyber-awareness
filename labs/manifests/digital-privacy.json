@@ -1,0 +1,97 @@
+{
+  "id": "digital-privacy",
+  "module": "awareness",
+  "executionTier": 0,
+  "category": "privacy",
+  "title": { "en": "Digital Privacy — Permissions, Location & Public Wi-Fi", "hi": "डिजिटल गोपनीयता — अनुमतियाँ, स्थान और सार्वजनिक Wi-Fi" },
+  "summary": {
+    "en": "At a café you connect to free Wi-Fi and think about opening your banking app. Learn what oversharing and open networks expose.",
+    "hi": "एक कैफ़े में आप मुफ़्त Wi-Fi से जुड़ते हैं और बैंकिंग ऐप खोलने की सोचते हैं। जानें ओवरशेयरिंग और खुले नेटवर्क क्या उजागर करते हैं।"
+  },
+  "start": "n1",
+  "reportingResources": [
+    { "label": { "en": "Cyber Crime Helpline", "hi": "साइबर क्राइम हेल्पलाइन" }, "value": "1930" },
+    { "label": { "en": "National Portal", "hi": "राष्ट्रीय पोर्टल" }, "value": "cybercrime.gov.in" }
+  ],
+  "nodes": {
+    "n1": {
+      "type": "narration", "channel": "chat", "anim": "sms-slide-in",
+      "content": {
+        "en": "At an airport you join an open network named 'Free_Airport_WiFi' (no password). You need to check your bank balance and pay a bill.",
+        "hi": "एयरपोर्ट पर आप 'Free_Airport_WiFi' (बिना पासवर्ड) खुले नेटवर्क से जुड़ते हैं। आपको बैंक बैलेंस देखना और बिल भरना है।"
+      },
+      "next": "n2"
+    },
+    "n2": {
+      "type": "decision",
+      "prompt": { "en": "What do you do?", "hi": "आप क्या करेंगे?" },
+      "choices": [
+        { "label": { "en": "Log into my bank right away on the free Wi-Fi", "hi": "मुफ़्त Wi-Fi पर तुरंत बैंक में लॉगिन करें" }, "goto": "trap1" },
+        { "label": { "en": "Use my mobile data (or a VPN) for anything sensitive", "hi": "संवेदनशील काम के लिए मोबाइल डेटा (या VPN) उपयोग करें" }, "goto": "safe1" }
+      ]
+    },
+    "trap1": {
+      "type": "consequence", "outcome": "negative", "anim": "shake",
+      "content": {
+        "en": "The 'free' network was a rogue hotspot set up by an attacker nearby. On an open network they can intercept traffic and harvest logins. Sensitive apps on untrusted Wi-Fi expose exactly what you can least afford to lose.",
+        "hi": "'मुफ़्त' नेटवर्क पास बैठे हमलावर का नकली हॉटस्पॉट था। खुले नेटवर्क पर वे ट्रैफ़िक पकड़कर लॉगिन जुटा सकते हैं। अविश्वसनीय Wi-Fi पर संवेदनशील ऐप वही उजागर करते हैं जो सबसे कीमती है।"
+      },
+      "technique": {
+        "en": "Rogue/'evil-twin' hotspots and open networks let attackers snoop unencrypted traffic. Convenience of 'free Wi-Fi' is the bait.",
+        "hi": "नकली/'ईविल-ट्विन' हॉटस्पॉट और खुले नेटवर्क हमलावरों को बिना-एन्क्रिप्शन ट्रैफ़िक देखने देते हैं। 'मुफ़्त Wi-Fi' की सुविधा चारा है।"
+      },
+      "next": "feedback"
+    },
+    "safe1": {
+      "type": "consequence", "outcome": "positive", "anim": "check-pop",
+      "content": {
+        "en": "Correct. You kept banking off the open network — mobile data (or a trusted VPN) keeps sensitive traffic private. Free public Wi-Fi is fine for browsing, not for logins and payments.",
+        "hi": "सही। आपने बैंकिंग खुले नेटवर्क से दूर रखी — मोबाइल डेटा (या भरोसेमंद VPN) संवेदनशील ट्रैफ़िक निजी रखता है। मुफ़्त Wi-Fi ब्राउज़िंग के लिए ठीक, लॉगिन/भुगतान के लिए नहीं।"
+      },
+      "next": "feedback"
+    },
+    "feedback": {
+      "type": "checklist",
+      "title": { "en": "Prevention Checklist", "hi": "रोकथाम चेकलिस्ट" },
+      "items": [
+        { "en": "Don't do banking/logins on open public Wi-Fi; use mobile data/VPN.", "hi": "खुले सार्वजनिक Wi-Fi पर बैंकिंग/लॉगिन न करें; मोबाइल डेटा/VPN उपयोग करें।" },
+        { "en": "Review app permissions — deny location/mic/contacts you don't need.", "hi": "ऐप अनुमतियाँ जाँचें — अनावश्यक स्थान/माइक/संपर्क मना करें।" },
+        { "en": "Turn off auto-connect to unknown networks.", "hi": "अनजान नेटवर्क से ऑटो-कनेक्ट बंद करें।" },
+        { "en": "Oversharing location/plans publicly helps stalkers and thieves.", "hi": "स्थान/योजनाएँ सार्वजनिक करना पीछा करने वालों और चोरों की मदद करता है।" }
+      ],
+      "next": "quiz"
+    }
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "Open public Wi-Fi is risky for banking because:", "hi": "खुला सार्वजनिक Wi-Fi बैंकिंग के लिए जोखिम भरा है क्योंकि:" },
+      "choices": [
+        { "id": "a", "label": { "en": "It is slow", "hi": "यह धीमा है" } },
+        { "id": "b", "label": { "en": "It costs money", "hi": "इसमें पैसे लगते हैं" } },
+        { "id": "c", "label": { "en": "Attackers can intercept traffic or run rogue hotspots", "hi": "हमलावर ट्रैफ़िक पकड़ सकते हैं या नकली हॉटस्पॉट चला सकते हैं" } },
+        { "id": "d", "label": { "en": "It uses more battery", "hi": "यह ज़्यादा बैटरी लेता है" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "For sensitive tasks on the go, prefer:", "hi": "चलते-फिरते संवेदनशील कामों के लिए बेहतर है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Mobile data or a trusted VPN", "hi": "मोबाइल डेटा या भरोसेमंद VPN" } },
+        { "id": "b", "label": { "en": "The strongest open network", "hi": "सबसे तेज़ खुला नेटवर्क" } },
+        { "id": "c", "label": { "en": "Any network without a password", "hi": "बिना पासवर्ड कोई भी नेटवर्क" } },
+        { "id": "d", "label": { "en": "A shared hotspot from a stranger", "hi": "अजनबी का साझा हॉटस्पॉट" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "A good privacy habit is to:", "hi": "एक अच्छी गोपनीयता आदत है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Grant every app all permissions", "hi": "हर ऐप को सभी अनुमतियाँ दें" } },
+        { "id": "b", "label": { "en": "Deny permissions an app doesn't need (location, mic, contacts)", "hi": "ऐप की अनावश्यक अनुमतियाँ मना करें (स्थान, माइक, संपर्क)" } },
+        { "id": "c", "label": { "en": "Auto-connect to all Wi-Fi", "hi": "सभी Wi-Fi से ऑटो-कनेक्ट करें" } },
+        { "id": "d", "label": { "en": "Share your live location publicly", "hi": "अपना लाइव स्थान सार्वजनिक करें" } }
+      ]
+    }
+  ]
+}

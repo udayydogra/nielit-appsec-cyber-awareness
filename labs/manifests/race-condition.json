@@ -1,0 +1,109 @@
+{
+  "id": "race-condition",
+  "module": "appsec",
+  "executionTier": 2,
+  "category": "concurrency",
+  "title": { "en": "Race Conditions (TOCTOU)", "hi": "रेस कंडीशन (TOCTOU)" },
+  "summary": {
+    "en": "Your wallet has ₹100. One withdrawal of ₹100 is fine — but fire several at once and they all pass the balance check before any deducts. Double-spend.",
+    "hi": "आपके वॉलेट में ₹100 हैं। ₹100 की एक निकासी ठीक है — पर एक साथ कई भेजें और सभी घटाने से पहले जाँच पास कर जाती हैं। डबल-स्पेंड।"
+  },
+  "difficultyTiers": ["beginner", "intermediate", "advanced"],
+  "owasp": ["A04:2021 – Insecure Design"],
+  "mitre": ["T1499 Endpoint Denial of Service"],
+  "cves": ["CVE-2019-11253", "CVE-2022-31626"],
+  "target": { "kind": "shared-multitenant", "resetRoute": "/labs/race-condition/reset", "queryRoute": "/labs/race-condition/withdraw" },
+  "lifecycle": [
+    {
+      "id": "intro",
+      "type": "content",
+      "title": { "en": "Introduction", "hi": "परिचय" },
+      "body": {
+        "en": "The withdrawal does three steps that aren't atomic: read the balance, check it's enough, then deduct. Between the check and the deduct there's a tiny window. Fire many requests concurrently and they all read ₹100, all pass the check, and all deduct — so ₹100 becomes ₹500 withdrawn and a negative balance. This is a Time-Of-Check-To-Time-Of-Use (TOCTOU) race.",
+        "hi": "निकासी तीन चरण करती है जो atomic नहीं हैं: बैलेंस पढ़ें, जाँचें कि पर्याप्त है, फिर घटाएँ। जाँच और घटाने के बीच एक छोटी खिड़की है। कई अनुरोध एक साथ भेजें, सभी ₹100 पढ़ते हैं, सभी जाँच पास करते हैं, सभी घटाते हैं।"
+      }
+    },
+    {
+      "id": "objectives",
+      "type": "objectives",
+      "title": { "en": "Learning Objectives", "hi": "सीखने के उद्देश्य" },
+      "items": [
+        { "en": "Withdraw more than the balance using concurrent requests.", "hi": "समवर्ती अनुरोधों से बैलेंस से अधिक निकालें।" },
+        { "en": "Explain the check-then-act (TOCTOU) window.", "hi": "जाँच-फिर-कार्य (TOCTOU) खिड़की समझाएँ।" },
+        { "en": "Name atomic updates / row locks as the fix.", "hi": "फिक्स के रूप में atomic अपडेट / रो लॉक बताएँ।" }
+      ]
+    },
+    {
+      "id": "attack-surface",
+      "type": "content",
+      "title": { "en": "Attack Surface", "hi": "अटैक सरफेस" },
+      "body": {
+        "en": "POST /labs/race-condition/withdraw reads balance, checks balance ≥ 100, waits, then does UPDATE balance = balance − 100. Concurrency turns that gap into a double-spend.",
+        "hi": "POST /labs/race-condition/withdraw बैलेंस पढ़ता है, जाँचता है ≥ 100, रुकता है, फिर UPDATE balance = balance − 100 करता है। समवर्तीता उस अंतराल को डबल-स्पेंड बना देती है।"
+      }
+    },
+    {
+      "id": "exploitation",
+      "type": "interactive",
+      "widget": "race-console",
+      "title": { "en": "Exploitation", "hi": "शोषण" },
+      "hints": [
+        { "en": "Press 'Fire 5 concurrent' — several withdrawals succeed on a ₹100 balance.", "hi": "'5 समवर्ती भेजें' दबाएँ — ₹100 बैलेंस पर कई निकासी सफल होती हैं।" },
+        { "en": "Watch the final balance go negative — money conjured from thin air.", "hi": "अंतिम बैलेंस ऋणात्मक होते देखें — पैसे शून्य से बने।" }
+      ]
+    },
+    {
+      "id": "root-cause",
+      "type": "content",
+      "title": { "en": "Root Cause Analysis", "hi": "मूल कारण विश्लेषण" },
+      "body": {
+        "en": "The invariant 'never spend more than you have' is checked and enforced in two separate steps that other requests can interleave between. The fix makes check-and-deduct a single atomic operation: a conditional UPDATE (WHERE balance ≥ amount), SELECT … FOR UPDATE, or an application/DB lock so only one withdrawal wins.",
+        "hi": "'जितना है उससे अधिक खर्च न करें' का नियम दो अलग चरणों में जाँचा-लागू होता है जिनके बीच अन्य अनुरोध घुस सकते हैं। फिक्स जाँच-और-घटाव को एक atomic ऑपरेशन बनाता है।"
+      }
+    },
+    {
+      "id": "secure-fix",
+      "type": "code",
+      "title": { "en": "Secure Fix", "hi": "सुरक्षित फिक्स" },
+      "language": "sql",
+      "insecure": "-- read, check, then write (racy)\nSELECT balance FROM wallet WHERE id=$1;   -- 100\n-- if (balance >= 100)\nUPDATE wallet SET balance = balance - 100 WHERE id=$1;",
+      "secure": "-- atomic: only succeeds if funds still suffice\nUPDATE wallet SET balance = balance - 100\n WHERE id=$1 AND balance >= 100\n RETURNING balance;   -- 0 rows = insufficient, no double-spend"
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "Why does firing concurrent withdrawals over-spend the wallet?", "hi": "समवर्ती निकासी वॉलेट को अधिक खर्च क्यों कराती है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "The balance check and the deduction aren't atomic (TOCTOU)", "hi": "बैलेंस जाँच और घटाव atomic नहीं हैं (TOCTOU)" } },
+        { "id": "b", "label": { "en": "The password is weak", "hi": "पासवर्ड कमज़ोर है" } },
+        { "id": "c", "label": { "en": "The server is slow", "hi": "सर्वर धीमा है" } },
+        { "id": "d", "label": { "en": "HTTPS is missing", "hi": "HTTPS गायब है" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "The correct fix is:", "hi": "सही फिक्स है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Add a CAPTCHA", "hi": "CAPTCHA जोड़ें" } },
+        { "id": "b", "label": { "en": "An atomic conditional UPDATE / row lock (SELECT … FOR UPDATE)", "hi": "atomic कंडीशनल UPDATE / रो लॉक (SELECT … FOR UPDATE)" } },
+        { "id": "c", "label": { "en": "A longer session token", "hi": "लंबा सेशन टोकन" } },
+        { "id": "d", "label": { "en": "Hiding the endpoint", "hi": "एंडपॉइंट छिपाना" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "During the race, the concurrent requests all:", "hi": "रेस के दौरान समवर्ती अनुरोध सभी:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Fail immediately", "hi": "तुरंत विफल होते हैं" } },
+        { "id": "b", "label": { "en": "Wait for each other", "hi": "एक-दूसरे की प्रतीक्षा करते हैं" } },
+        { "id": "c", "label": { "en": "Read the same stale balance before any deducts", "hi": "किसी के घटाने से पहले वही पुराना बैलेंस पढ़ते हैं" } },
+        { "id": "d", "label": { "en": "Use different accounts", "hi": "अलग खाते उपयोग करते हैं" } }
+      ]
+    }
+  ],
+  "interviewQuestions": [
+    { "en": "How do idempotency keys help with duplicate/racing requests?", "hi": "आइडेम्पोटेंसी कुंजियाँ डुप्लिकेट/रेसिंग अनुरोधों में कैसे मदद करती हैं?" },
+    { "en": "Optimistic vs pessimistic locking — when would you pick each?", "hi": "आशावादी बनाम निराशावादी लॉकिंग — कब कौन?" }
+  ]
+}

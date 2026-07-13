@@ -1,0 +1,95 @@
+{
+  "id": "xxe",
+  "module": "appsec",
+  "executionTier": 3,
+  "category": "injection",
+  "title": { "en": "XXE — XML External Entity (Tier 3)", "hi": "XXE — XML बाहरी एंटिटी (टियर 3)" },
+  "summary": {
+    "en": "An XML parser resolves external entities, so a crafted document reads local files off the server. Read the flag with a file:// entity in a live container.",
+    "hi": "एक XML पार्सर बाहरी एंटिटी हल करता है, इसलिए एक रचित दस्तावेज़ सर्वर से स्थानीय फ़ाइलें पढ़ता है। लाइव कंटेनर में file:// एंटिटी से फ्लैग पढ़ें।"
+  },
+  "difficultyTiers": ["beginner", "intermediate", "advanced"],
+  "owasp": ["A05:2021 – Security Misconfiguration (XXE)"],
+  "mitre": ["T1059", "T1005 Data from Local System"],
+  "cves": ["CVE-2018-1000840", "CVE-2019-0227"],
+  "target": { "kind": "ephemeral-container", "image": "nielit/xxe:latest" },
+  "lifecycle": [
+    {
+      "id": "intro", "type": "content", "title": { "en": "Introduction", "hi": "परिचय" },
+      "body": {
+        "en": "XML lets a document declare ENTITIES — reusable placeholders. An EXTERNAL entity can point at a URL or a local file: <!ENTITY xxe SYSTEM \"file:///etc/passwd\">. If the parser resolves external entities (many do by default), it inlines that file's contents into the output. That's arbitrary local file read, and it can pivot to SSRF.",
+        "hi": "XML दस्तावेज़ को ENTITIES घोषित करने देता है। एक बाहरी एंटिटी URL या स्थानीय फ़ाइल की ओर इशारा कर सकती है। यदि पार्सर बाहरी एंटिटी हल करता है, तो वह फ़ाइल की सामग्री आउटपुट में डाल देता है।"
+      }
+    },
+    {
+      "id": "objectives", "type": "objectives", "title": { "en": "Learning Objectives", "hi": "सीखने के उद्देश्य" },
+      "items": [
+        { "en": "Read /challenge/flag.txt via a file:// external entity.", "hi": "file:// बाहरी एंटिटी से /challenge/flag.txt पढ़ें।" },
+        { "en": "Point the entity at /etc/passwd to prove arbitrary read.", "hi": "मनमाना पठन साबित करने को एंटिटी /etc/passwd पर लगाएँ।" },
+        { "en": "State the fix: disable DTDs / external entities.", "hi": "फिक्स बताएँ: DTD / बाहरी एंटिटी बंद करें।" }
+      ]
+    },
+    {
+      "id": "attack-surface", "type": "content", "title": { "en": "Attack Surface", "hi": "अटैक सरफेस" },
+      "body": {
+        "en": "parse-xml <file> runs xmllint --noent, which RESOLVES external entities. The payload declares an entity pointing at file:///challenge/flag.txt and prints it inside <data>.",
+        "hi": "parse-xml <file> xmllint --noent चलाता है, जो बाहरी एंटिटी हल करता है। पेलोड file:///challenge/flag.txt की एंटिटी घोषित कर उसे प्रिंट करता है।"
+      }
+    },
+    {
+      "id": "exploitation", "type": "interactive", "widget": "terminal", "title": { "en": "Live Terminal", "hi": "लाइव टर्मिनल" },
+      "hints": [
+        { "en": "cat /challenge/payload.xml   then   parse-xml /challenge/payload.xml", "hi": "cat /challenge/payload.xml   फिर   parse-xml /challenge/payload.xml" },
+        { "en": "Write your own to /tmp pointing the entity at file:///etc/passwd.", "hi": "अपना /tmp में लिखें जो एंटिटी file:///etc/passwd पर लगाए।" }
+      ]
+    },
+    {
+      "id": "root-cause", "type": "content", "title": { "en": "Root Cause Analysis", "hi": "मूल कारण विश्लेषण" },
+      "body": {
+        "en": "The parser was configured (or defaults) to process DOCTYPE declarations and resolve external general/parameter entities. Untrusted XML should be parsed with DTDs and external entities DISABLED (e.g., defusedxml, or set features to forbid DOCTYPE). Entity expansion limits also stop billion-laughs DoS.",
+        "hi": "पार्सर DOCTYPE और बाहरी एंटिटी हल करने के लिए कॉन्फ़िगर था। अविश्वसनीय XML को DTD और बाहरी एंटिटी बंद करके पार्स करें। एंटिटी विस्तार सीमाएँ billion-laughs DoS भी रोकती हैं।"
+      }
+    },
+    {
+      "id": "secure-fix", "type": "code", "title": { "en": "Secure Fix", "hi": "सुरक्षित फिक्स" }, "language": "python",
+      "insecure": "import xml.etree.ElementTree as ET\nET.parse(untrusted_xml)          # may resolve entities",
+      "secure": "from defusedxml.ElementTree import parse\nparse(untrusted_xml)             # DTDs + external entities forbidden\n# or configure the parser to disallow DOCTYPE entirely"
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "What lets the XML read a local file?", "hi": "XML को स्थानीय फ़ाइल पढ़ने क्या देता है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "The parser resolves external entities", "hi": "पार्सर बाहरी एंटिटी हल करता है" } },
+        { "id": "b", "label": { "en": "The file was public", "hi": "फ़ाइल सार्वजनिक थी" } },
+        { "id": "c", "label": { "en": "A SQL query", "hi": "एक SQL क्वेरी" } },
+        { "id": "d", "label": { "en": "A weak password", "hi": "कमज़ोर पासवर्ड" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "The primary fix for XXE is to:", "hi": "XXE का प्राथमिक फिक्स है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Encrypt the XML", "hi": "XML एन्क्रिप्ट करें" } },
+        { "id": "b", "label": { "en": "Disable DTDs / external entity resolution when parsing untrusted XML", "hi": "अविश्वसनीय XML पार्स करते समय DTD / बाहरी एंटिटी बंद करें" } },
+        { "id": "c", "label": { "en": "Use larger buffers", "hi": "बड़े बफ़र उपयोग करें" } },
+        { "id": "d", "label": { "en": "Rename the entity", "hi": "एंटिटी का नाम बदलें" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "Besides file read, XXE can also cause:", "hi": "फ़ाइल पठन के अलावा, XXE कारण भी बन सकता है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Faster parsing", "hi": "तेज़ पार्सिंग" } },
+        { "id": "b", "label": { "en": "Better compression", "hi": "बेहतर संपीड़न" } },
+        { "id": "c", "label": { "en": "SSRF and denial of service (billion laughs)", "hi": "SSRF और सेवा अस्वीकार (billion laughs)" } },
+        { "id": "d", "label": { "en": "Nothing else", "hi": "और कुछ नहीं" } }
+      ]
+    }
+  ],
+  "interviewQuestions": [
+    { "en": "How does a parameter-entity (blind) XXE exfiltrate data out-of-band?", "hi": "पैरामीटर-एंटिटी (ब्लाइंड) XXE डेटा out-of-band कैसे निकालता है?" },
+    { "en": "Why is disabling DOCTYPE stronger than filtering '<!ENTITY'?", "hi": "'<!ENTITY' फ़िल्टर करने से DOCTYPE बंद करना क्यों मज़बूत है?" }
+  ]
+}

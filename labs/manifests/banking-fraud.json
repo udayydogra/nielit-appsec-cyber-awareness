@@ -1,0 +1,97 @@
+{
+  "id": "banking-fraud",
+  "module": "awareness",
+  "executionTier": 0,
+  "category": "impersonation-fraud",
+  "title": { "en": "Banking Fraud — Card Blocked / OTP Theft", "hi": "बैंकिंग धोखाधड़ी — कार्ड ब्लॉक / OTP चोरी" },
+  "summary": {
+    "en": "A caller claiming to be from your bank says your card is blocked and needs an OTP to 'reactivate'. Learn why no OTP is ever shared.",
+    "hi": "बैंक से होने का दावा करने वाला कॉलर कहता है आपका कार्ड ब्लॉक है और 'पुनः सक्रिय' करने को OTP चाहिए। जानें OTP कभी साझा क्यों नहीं करते।"
+  },
+  "start": "n1",
+  "reportingResources": [
+    { "label": { "en": "Cyber Crime Helpline", "hi": "साइबर क्राइम हेल्पलाइन" }, "value": "1930" },
+    { "label": { "en": "National Portal", "hi": "राष्ट्रीय पोर्टल" }, "value": "cybercrime.gov.in" }
+  ],
+  "nodes": {
+    "n1": {
+      "type": "narration", "channel": "sms", "anim": "sms-slide-in",
+      "content": {
+        "en": "Call: 'Sir, I'm calling from your bank's security cell. Your debit card is BLOCKED due to suspicious activity. To reactivate, I'll send an OTP — please read it back to me.'",
+        "hi": "कॉल: 'सर, मैं आपके बैंक की सुरक्षा सेल से बोल रहा हूँ। संदिग्ध गतिविधि के कारण आपका डेबिट कार्ड ब्लॉक है। पुनः सक्रिय करने के लिए OTP भेज रहा हूँ — कृपया पढ़कर बताएँ।'"
+      },
+      "next": "n2"
+    },
+    "n2": {
+      "type": "decision",
+      "prompt": { "en": "An OTP arrives. What do you do?", "hi": "एक OTP आता है। आप क्या करेंगे?" },
+      "choices": [
+        { "label": { "en": "Read the OTP to him so the card is reactivated", "hi": "कार्ड सक्रिय करने के लिए OTP उसे पढ़कर बताएँ" }, "goto": "trap1" },
+        { "label": { "en": "Refuse and hang up — no bank asks for an OTP", "hi": "मना करें और कॉल काटें — कोई बैंक OTP नहीं माँगता" }, "goto": "safe1" }
+      ]
+    },
+    "trap1": {
+      "type": "consequence", "outcome": "negative", "anim": "shake",
+      "content": {
+        "en": "The OTP authorised a transaction the scammer had already started — money left instantly. Your card was never blocked; the call manufactured a crisis so you'd read out the one code that approves the theft.",
+        "hi": "OTP ने ठग द्वारा पहले से शुरू लेनदेन को अधिकृत किया — पैसे तुरंत निकल गए। कार्ड कभी ब्लॉक नहीं था; कॉल ने संकट गढ़ा ताकि आप वही कोड पढ़ें जो चोरी को मंज़ूरी देता है।"
+      },
+      "technique": {
+        "en": "Impersonation + false urgency ('card blocked') to extract the OTP — the single credential that finalises a transaction the attacker initiated.",
+        "hi": "प्रतिरूपण + झूठी तात्कालिकता ('कार्ड ब्लॉक') से OTP निकालना — वह एकमात्र क्रेडेंशियल जो हमलावर के शुरू किए लेनदेन को पूरा करता है।"
+      },
+      "next": "feedback"
+    },
+    "safe1": {
+      "type": "consequence", "outcome": "positive", "anim": "check-pop",
+      "content": {
+        "en": "Correct. Bank staff never ask for OTP, PIN, CVV or card number. You hung up and checked your account through the official app — everything was fine.",
+        "hi": "सही। बैंक कर्मचारी कभी OTP, PIN, CVV या कार्ड नंबर नहीं माँगते। आपने कॉल काटकर आधिकारिक ऐप से खाता जाँचा — सब ठीक था।"
+      },
+      "next": "feedback"
+    },
+    "feedback": {
+      "type": "checklist",
+      "title": { "en": "Prevention Checklist", "hi": "रोकथाम चेकलिस्ट" },
+      "items": [
+        { "en": "No bank employee ever asks for OTP, PIN, CVV, or full card number.", "hi": "कोई बैंक कर्मचारी कभी OTP, PIN, CVV या पूरा कार्ड नंबर नहीं माँगता।" },
+        { "en": "An OTP finalises a transaction — reading it out approves the theft.", "hi": "OTP लेनदेन को पूरा करता है — पढ़कर बताना चोरी को मंज़ूरी देता है।" },
+        { "en": "'Your card is blocked, act now' is pressure, not a real bank process.", "hi": "'कार्ड ब्लॉक है, तुरंत करें' दबाव है, असली बैंक प्रक्रिया नहीं।" },
+        { "en": "Hang up and verify via the official app or card helpline; report to 1930.", "hi": "कॉल काटें और आधिकारिक ऐप/हेल्पलाइन से सत्यापित करें; 1930 पर रिपोर्ट करें।" }
+      ],
+      "next": "quiz"
+    }
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "A bank employee asking you to read out an OTP is:", "hi": "OTP पढ़कर बताने को कहने वाला बैंक कर्मचारी है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Always a scammer — banks never ask this", "hi": "हमेशा ठग — बैंक कभी नहीं माँगते" } },
+        { "id": "b", "label": { "en": "Following RBI procedure", "hi": "RBI प्रक्रिया का पालन" } },
+        { "id": "c", "label": { "en": "Fine if the card is really blocked", "hi": "ठीक अगर कार्ड सच में ब्लॉक है" } },
+        { "id": "d", "label": { "en": "Required for reactivation", "hi": "पुनः सक्रियण के लिए आवश्यक" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "What does an OTP actually do?", "hi": "OTP असल में क्या करता है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "Unblocks a card", "hi": "कार्ड अनब्लॉक करता है" } },
+        { "id": "b", "label": { "en": "Authorises/finalises a specific transaction or login", "hi": "किसी लेनदेन/लॉगिन को अधिकृत/पूरा करता है" } },
+        { "id": "c", "label": { "en": "Shows your balance", "hi": "बैलेंस दिखाता है" } },
+        { "id": "d", "label": { "en": "Changes your PIN", "hi": "आपका PIN बदलता है" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "The safest response is to:", "hi": "सबसे सुरक्षित प्रतिक्रिया है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Give a fake OTP", "hi": "नकली OTP दें" } },
+        { "id": "b", "label": { "en": "Keep him talking", "hi": "उससे बात करते रहें" } },
+        { "id": "c", "label": { "en": "Hang up and verify via the official app / card helpline", "hi": "कॉल काटें और आधिकारिक ऐप/हेल्पलाइन से सत्यापित करें" } },
+        { "id": "d", "label": { "en": "Share only the last 2 digits", "hi": "केवल आख़िरी 2 अंक दें" } }
+      ]
+    }
+  ]
+}

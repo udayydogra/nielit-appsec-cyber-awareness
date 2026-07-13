@@ -1,0 +1,95 @@
+{
+  "id": "cloud-security",
+  "module": "appsec",
+  "executionTier": 1,
+  "category": "cloud-security",
+  "title": { "en": "Cloud Security (Simulated)", "hi": "क्लाउड सुरक्षा (सिमुलेटेड)" },
+  "summary": {
+    "en": "Explore a mock cloud account with a public S3 bucket and an over-permissive IAM policy. Fully simulated — no real AWS, no LocalStack, zero VM cost.",
+    "hi": "एक सार्वजनिक S3 बकेट और अत्यधिक-अनुमति IAM नीति वाले मॉक क्लाउड खाते की खोज करें। पूरी तरह सिमुलेटेड — कोई असली AWS नहीं।"
+  },
+  "difficultyTiers": ["beginner", "intermediate", "advanced"],
+  "owasp": ["A05:2021 – Security Misconfiguration", "A01:2021 – Broken Access Control"],
+  "mitre": ["T1530 Data from Cloud Storage", "T1078.004 Cloud Accounts"],
+  "cves": [],
+  "target": { "kind": "simulated", "queryRoute": "/labs/cloud-security/run" },
+  "lifecycle": [
+    {
+      "id": "intro", "type": "content", "title": { "en": "Introduction", "hi": "परिचय" },
+      "body": {
+        "en": "Most cloud breaches are misconfigurations, not exploits: a storage bucket left world-readable, an IAM role granting far more than it needs. This lab is SIMULATED — a deterministic mock CLI, deliberately not real AWS or LocalStack (holding the 5 GB budget). You'll find a public bucket leaking a secret and a role with Action:* Resource:*.",
+        "hi": "अधिकांश क्लाउड सेंध मिसकॉन्फ़िगरेशन हैं, शोषण नहीं: एक बकेट विश्व-पठनीय छूटी, एक IAM रोल जरूरत से कहीं अधिक देती। यह लैब सिमुलेटेड है — जानबूझकर असली AWS/LocalStack नहीं।"
+      }
+    },
+    {
+      "id": "objectives", "type": "objectives", "title": { "en": "Learning Objectives", "hi": "सीखने के उद्देश्य" },
+      "items": [
+        { "en": "List buckets and spot the public-read one.", "hi": "बकेट सूचीबद्ध करें और public-read वाली पहचानें।" },
+        { "en": "Read a secret from the public bucket with no credentials.", "hi": "बिना क्रेडेंशियल सार्वजनिक बकेट से रहस्य पढ़ें।" },
+        { "en": "Identify the over-permissive IAM policy and its fix.", "hi": "अत्यधिक-अनुमति IAM नीति और उसका फिक्स पहचानें।" }
+      ]
+    },
+    {
+      "id": "attack-surface", "type": "content", "title": { "en": "Attack Surface", "hi": "अटैक सरफेस" },
+      "body": {
+        "en": "A mock CLI: 's3 ls' lists buckets (one is public-read), 's3 ls s3://nielit-public-assets' lists its files, 's3 cat s3://…/flag.txt' reads them with no auth, 'iam get-policy labrole' reveals a wildcard policy.",
+        "hi": "एक मॉक CLI: 's3 ls' बकेट सूचीबद्ध करता है (एक public-read), 's3 ls s3://nielit-public-assets' उसकी फ़ाइलें, 's3 cat …' बिना auth पढ़ता है, 'iam get-policy labrole' वाइल्डकार्ड नीति दिखाता है।"
+      }
+    },
+    {
+      "id": "exploitation", "type": "interactive", "widget": "cloud-console", "title": { "en": "Mock Cloud CLI", "hi": "मॉक क्लाउड CLI" },
+      "hints": [
+        { "en": "s3 ls   →   s3 ls s3://nielit-public-assets   →   s3 cat s3://nielit-public-assets/flag.txt", "hi": "s3 ls   →   s3 ls s3://nielit-public-assets   →   s3 cat s3://nielit-public-assets/flag.txt" },
+        { "en": "iam get-policy labrole reveals Action:* Resource:*.", "hi": "iam get-policy labrole Action:* Resource:* दिखाता है।" }
+      ]
+    },
+    {
+      "id": "root-cause", "type": "content", "title": { "en": "Root Cause Analysis", "hi": "मूल कारण विश्लेषण" },
+      "body": {
+        "en": "Two misconfigurations: the bucket ACL/policy allows public read (anyone on the internet), and the IAM role grants Action:* Resource:* (admin-equivalent) instead of the few permissions it needs. Fixes: enable Block Public Access and scope bucket policies; write least-privilege IAM (specific actions on specific ARNs); and monitor with config/GuardDuty-style checks.",
+        "hi": "दो मिसकॉन्फ़िगरेशन: बकेट सार्वजनिक पठन देती है, और IAM रोल Action:* Resource:* देती है। फिक्स: Block Public Access सक्षम करें, बकेट नीतियाँ सीमित करें; least-privilege IAM लिखें; निगरानी करें।"
+      }
+    },
+    {
+      "id": "secure-fix", "type": "code", "title": { "en": "Secure Fix", "hi": "सुरक्षित फिक्स" }, "language": "json",
+      "insecure": "{ \"Effect\": \"Allow\", \"Action\": \"*\", \"Resource\": \"*\" }",
+      "secure": "{ \"Effect\": \"Allow\",\n  \"Action\": [\"s3:GetObject\"],\n  \"Resource\": \"arn:aws:s3:::nielit-private-backups/reports/*\" }\n// + S3 Block Public Access ON, bucket policy scoped, no public ACLs"
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "How was the flag readable with no credentials?", "hi": "फ्लैग बिना क्रेडेंशियल कैसे पढ़ा गया?" },
+      "choices": [
+        { "id": "a", "label": { "en": "The bucket was configured public-read", "hi": "बकेट public-read कॉन्फ़िगर थी" } },
+        { "id": "b", "label": { "en": "The password was weak", "hi": "पासवर्ड कमज़ोर था" } },
+        { "id": "c", "label": { "en": "SQL injection", "hi": "SQL इंजेक्शन" } },
+        { "id": "d", "label": { "en": "A phishing email", "hi": "एक फ़िशिंग ईमेल" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "The IAM policy Action:* Resource:* is:", "hi": "IAM नीति Action:* Resource:* है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Least privilege", "hi": "least privilege" } },
+        { "id": "b", "label": { "en": "Over-permissive (admin-equivalent) — a misconfiguration", "hi": "अत्यधिक-अनुमति (admin-समान) — एक मिसकॉन्फ़िगरेशन" } },
+        { "id": "c", "label": { "en": "Required by AWS", "hi": "AWS द्वारा आवश्यक" } },
+        { "id": "d", "label": { "en": "Encrypted", "hi": "एन्क्रिप्टेड" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "The fixes are to:", "hi": "फिक्स हैं:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Make all buckets public for convenience", "hi": "सुविधा के लिए सभी बकेट सार्वजनिक करें" } },
+        { "id": "b", "label": { "en": "Grant every role full access", "hi": "हर रोल को पूर्ण पहुँच दें" } },
+        { "id": "c", "label": { "en": "Block Public Access + least-privilege IAM scoped to specific ARNs", "hi": "Block Public Access + विशिष्ट ARN तक सीमित least-privilege IAM" } },
+        { "id": "d", "label": { "en": "Disable logging", "hi": "लॉगिंग बंद करें" } }
+      ]
+    }
+  ],
+  "interviewQuestions": [
+    { "en": "How would you detect a public bucket across hundreds of accounts?", "hi": "सैकड़ों खातों में सार्वजनिक बकेट कैसे पहचानेंगे?" },
+    { "en": "Why is least privilege hard in practice, and how do you approach it?", "hi": "least privilege व्यवहार में कठिन क्यों है, और आप कैसे संपर्क करते हैं?" }
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "id": "secure-code-review",
+  "module": "appsec",
+  "executionTier": 0,
+  "category": "secure-development",
+  "title": { "en": "Secure Code Review", "hi": "सुरक्षित कोड समीक्षा" },
+  "summary": {
+    "en": "Read real Node.js snippets and spot the vulnerability class from the source alone. Tier 0 — no backend, no container.",
+    "hi": "असली Node.js स्निपेट पढ़ें और केवल स्रोत से भेद्यता वर्ग पहचानें। टियर 0 — कोई बैकएंड नहीं।"
+  },
+  "difficultyTiers": ["beginner", "intermediate", "advanced"],
+  "owasp": ["A03:2021 – Injection", "A01:2021 – Broken Access Control"],
+  "mitre": ["T1059 Command and Scripting Interpreter"],
+  "cves": ["CVE-2017-5941 (node-serialize RCE)"],
+  "lifecycle": [
+    {
+      "id": "intro",
+      "type": "content",
+      "title": { "en": "Introduction", "hi": "परिचय" },
+      "body": {
+        "en": "Most vulnerabilities are visible in the source before they are ever exploited. This lab trains the reviewer's eye: read each snippet, name the vulnerability class, and know the fix. Nothing runs — this is a Tier-0 static lab, proving the platform serves content-only labs for zero marginal memory.",
+        "hi": "अधिकांश भेद्यताएँ शोषण से पहले ही स्रोत में दिखती हैं। यह लैब समीक्षक की नज़र को प्रशिक्षित करती है: हर स्निपेट पढ़ें, भेद्यता वर्ग बताएँ, और फिक्स जानें। यह टियर-0 स्टैटिक लैब है।"
+      }
+    },
+    {
+      "id": "objectives",
+      "type": "objectives",
+      "title": { "en": "Learning Objectives", "hi": "सीखने के उद्देश्य" },
+      "items": [
+        { "en": "Recognise injection sinks (SQL, shell) from concatenated input.", "hi": "जुड़े इनपुट से इंजेक्शन सिंक पहचानें (SQL, शेल)।" },
+        { "en": "Spot path traversal from unvalidated filesystem paths.", "hi": "अप्रमाणित फ़ाइल पथ से पाथ ट्रैवर्सल पहचानें।" },
+        { "en": "Pick the correct structural fix, not a blocklist patch.", "hi": "ब्लॉकलिस्ट पैच नहीं, सही संरचनात्मक फिक्स चुनें।" }
+      ]
+    },
+    {
+      "id": "snippet-sql",
+      "type": "code",
+      "title": { "en": "Snippet A — user lookup", "hi": "स्निपेट A — यूज़र लुकअप" },
+      "language": "javascript",
+      "insecure": "app.get('/user', (req, res) => {\n  // input flows straight into the query string\n  const sql = `SELECT * FROM users WHERE id = ${req.query.id}`;\n  db.query(sql).then(r => res.json(r.rows));\n});",
+      "secure": "app.get('/user', (req, res) => {\n  db.query('SELECT * FROM users WHERE id = $1', [req.query.id])\n    .then(r => res.json(r.rows));\n});"
+    },
+    {
+      "id": "snippet-path",
+      "type": "code",
+      "title": { "en": "Snippet B — file download", "hi": "स्निपेट B — फ़ाइल डाउनलोड" },
+      "language": "javascript",
+      "insecure": "app.get('/files/:name', (req, res) => {\n  // '../../etc/passwd' walks out of the intended directory\n  res.sendFile('/srv/data/' + req.params.name);\n});",
+      "secure": "import path from 'node:path';\napp.get('/files/:name', (req, res) => {\n  const base = '/srv/data';\n  const target = path.resolve(base, req.params.name);\n  if (!target.startsWith(base + path.sep)) return res.sendStatus(400);\n  res.sendFile(target);\n});"
+    },
+    {
+      "id": "snippet-shell",
+      "type": "code",
+      "title": { "en": "Snippet C — image conversion", "hi": "स्निपेट C — इमेज रूपांतरण" },
+      "language": "javascript",
+      "insecure": "const { exec } = require('child_process');\napp.post('/convert', (req, res) => {\n  // shell metacharacters in req.body.file become commands\n  exec(`convert ${req.body.file} out.png`, () => res.sendStatus(200));\n});",
+      "secure": "const { execFile } = require('child_process');\napp.post('/convert', (req, res) => {\n  // args are passed as a vector — no shell, no metacharacter parsing\n  execFile('convert', [req.body.file, 'out.png'], () => res.sendStatus(200));\n});"
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q1",
+      "prompt": { "en": "Snippet A — what is the vulnerability class?", "hi": "स्निपेट A — भेद्यता वर्ग क्या है?" },
+      "choices": [
+        { "id": "a", "label": { "en": "Cross-Site Scripting", "hi": "क्रॉस-साइट स्क्रिप्टिंग" } },
+        { "id": "b", "label": { "en": "SQL Injection", "hi": "SQL इंजेक्शन" } },
+        { "id": "c", "label": { "en": "Path Traversal", "hi": "पाथ ट्रैवर्सल" } },
+        { "id": "d", "label": { "en": "CSRF", "hi": "CSRF" } }
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": { "en": "Snippet B lets an attacker request '../../etc/passwd'. This is:", "hi": "स्निपेट B हमलावर को '../../etc/passwd' माँगने देता है। यह है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Path Traversal", "hi": "पाथ ट्रैवर्सल" } },
+        { "id": "b", "label": { "en": "Open Redirect", "hi": "ओपन रीडायरेक्ट" } },
+        { "id": "c", "label": { "en": "Deserialization", "hi": "डीसीरियलाइज़ेशन" } },
+        { "id": "d", "label": { "en": "Race Condition", "hi": "रेस कंडीशन" } }
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": { "en": "Snippet C — the correct structural fix is to:", "hi": "स्निपेट C — सही संरचनात्मक फिक्स है:" },
+      "choices": [
+        { "id": "a", "label": { "en": "Block the ';' and '&' characters", "hi": "';' और '&' अक्षर ब्लॉक करें" } },
+        { "id": "b", "label": { "en": "Run the server as a non-root user", "hi": "सर्वर को नॉन-रूट यूज़र के रूप में चलाएँ" } },
+        { "id": "c", "label": { "en": "Use execFile with an argument vector (no shell)", "hi": "execFile को आर्ग्युमेंट वेक्टर के साथ उपयोग करें (कोई शेल नहीं)" } },
+        { "id": "d", "label": { "en": "Wrap the input in quotes", "hi": "इनपुट को कोट में लपेटें" } }
+      ]
+    }
+  ],
+  "interviewQuestions": [
+    { "en": "Why is an allowlist of expected filenames stronger than stripping '../'?", "hi": "'../' हटाने से अपेक्षित फ़ाइलनामों की allowlist क्यों मज़बूत है?" },
+    { "en": "When is exec() ever acceptable over execFile()?", "hi": "execFile() के बजाय exec() कब स्वीकार्य है?" }
+  ]
+}
