@@ -230,36 +230,45 @@ table th { padding: 4px 6px; color: var(--muted-c); font-weight: 700; text-trans
 
 /* ── Awareness simulation stage: realistic phone (left) + panel (right) ───── */
 .sim-stage {
-  display: flex; gap: 20px; align-items: stretch;
-  background: radial-gradient(120% 120% at 20% 0%, #101a2e, #070b14 60%);
-  border: 1px solid #1e293b; border-radius: 26px; padding: 22px;
-  aspect-ratio: 16 / 9; max-height: 620px; min-height: 480px;
+  display: flex; gap: 24px; align-items: stretch;
+  background: radial-gradient(130% 130% at 15% 0%, #12203a, #060a12 62%);
+  border: 1px solid #1e293b; border-radius: 28px; padding: 26px;
+  min-height: 720px;
 }
 .sim-left { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; }
 .sim-right { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow-y: auto;
-  background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 22px 24px; }
-.sim-right .sit-label { font-size: 10px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+  background: var(--panel); border: 1px solid var(--border); border-radius: 22px; padding: 30px 34px; }
+.sim-right .sit-label { font-size: 11px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
+/* group content so branches can center it themselves — no mid-panel voids */
+.panel-body { min-height: 100%; display: flex; flex-direction: column; gap: 18px; }
+.panel-body.center { justify-content: center; }
 
-/* the device — a proper tall phone with bezel, notch, status bar, home bar */
+/* the device — a proper big phone with bezel, notch, status bar, home bar */
 .device {
-  position: relative; height: 100%; aspect-ratio: 9 / 19.3; max-height: 560px; min-height: 380px;
-  background: #05070a; border: 11px solid #0d1526; border-radius: 42px; overflow: hidden;
+  position: relative; height: 668px; aspect-ratio: 9 / 18.6;
+  background: #05070a; border: 12px solid #0d1526; border-radius: 46px; overflow: hidden;
   display: flex; flex-direction: column;
-  box-shadow: 0 34px 70px rgba(0,0,0,.55), inset 0 0 0 2px #1e293b, 0 0 0 1px #000;
+  box-shadow: 0 40px 80px rgba(0,0,0,.6), inset 0 0 0 2px #1e293b, 0 0 0 1px #000;
 }
-.device .notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 42%; height: 22px; background: #0d1526; border-radius: 0 0 16px 16px; z-index: 6; }
-.device .statusbar { display: flex; justify-content: space-between; align-items: center; padding: 9px 22px 3px; font-size: 10px; font-weight: 700; color: #cbd5e1; z-index: 5; }
-.device .statusbar .bars { display: inline-flex; gap: 4px; align-items: center; }
+.device .notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 40%; height: 24px; background: #0d1526; border-radius: 0 0 18px 18px; z-index: 6; }
+.device .statusbar { display: flex; justify-content: space-between; align-items: center; padding: 11px 26px 4px; font-size: 11px; font-weight: 700; color: #cbd5e1; z-index: 5; }
+.device .statusbar .bars { display: inline-flex; gap: 5px; align-items: center; }
 .device .screen { flex: 1; min-height: 0; overflow: hidden; position: relative; display: flex; flex-direction: column; }
 .device .screen > * { flex: 1; min-height: 0; }
-.device .home { height: 5px; width: 36%; background: #475569; border-radius: 99px; margin: 6px auto 9px; }
+.device .home { height: 5px; width: 34%; background: #475569; border-radius: 99px; margin: 7px auto 11px; }
 .device .sms-app, .device .pay-app, .device .chat-screen { height: 100%; display: flex; flex-direction: column; }
 .device .sms-app .sms-thread, .device .chat-screen .chat-thread { flex: 1; overflow-y: auto; }
+.device .sms-in .body { font-size: 15px; }
 .device .vc-screen { aspect-ratio: auto; height: 100%; border-radius: 0; }
+.device .vc-caption { font-size: 14.5px; }
+.device .vc-avatar { width: 118px; height: 118px; font-size: 54px; }
+/* big decision choices that fill the wide panel */
+.choice-btn { text-align: left; padding: 20px 22px; text-transform: none; letter-spacing: 0; font-weight: 600; font-size: 15.5px; border-radius: 16px; line-height: 1.4; }
+.choice-btn:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, var(--panel)); }
 @media (max-width: 900px) {
-  .sim-stage { flex-direction: column; aspect-ratio: auto; max-height: none; align-items: center; }
+  .sim-stage { flex-direction: column; min-height: 0; align-items: center; }
   .sim-left { width: 100%; }
-  .device { height: 560px; }
+  .device { height: 620px; }
   .sim-right { width: 100%; }
 }
 

@@ -240,47 +240,45 @@ function Panel({ node, phase, flags, allFlags, reporting, onNext, onChoose }: {
     const total = node.redFlags?.length ?? 0;
     if (phase !== 'connected') {
       return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center', textAlign: 'center', gap: 12 }}>
-          <Phone size={34} style={{ margin: '0 auto', color: 'var(--accent)' }} />
-          <p className="muted">{isHi ? 'डिवाइस पर कॉल का उत्तर दें या अस्वीकार करें।' : 'Answer or decline the call on the device to continue.'}</p>
+        <div className="panel-body center" style={{ alignItems: 'center', textAlign: 'center' }}>
+          <div style={{ width: 68, height: 68, borderRadius: 22, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', display: 'grid', placeItems: 'center', color: 'var(--accent)' }}><Phone size={30} /></div>
+          <p className="muted" style={{ maxWidth: 360, fontSize: 15 }}>{isHi ? 'ठग वीडियो कॉल कर रहा है। डिवाइस पर कॉल का उत्तर दें या अस्वीकार करें।' : 'The scammer is video-calling you. Answer or decline on the device to continue.'}</p>
         </div>
       );
     }
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div className="panel-body">
         <div className="sit-label result-bad" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <AlertTriangle size={14} /> {t('redFlags')} <span style={{ marginLeft: 'auto', color: 'var(--muted-c)' }}>{flags.length}/{total}</span>
+          <AlertTriangle size={16} /> {t('redFlags')} <span style={{ marginLeft: 'auto', color: 'var(--muted-c)' }}>{flags.length}/{total}</span>
         </div>
-        <ul className="flag-list" style={{ marginTop: 12, flex: 1 }}>
+        <ul className="flag-list" style={{ flex: 1, margin: 0 }}>
           {flags.map((f, i) => (
-            <li key={i}><span className="flag-name">{f.flag.replace(/_/g, ' ')}</span>{f.note && <div className="muted" style={{ fontSize: 13 }}>{L(f.note, locale)}</div>}</li>
+            <li key={i} style={{ padding: '14px 16px' }}><span className="flag-name" style={{ fontSize: 15 }}>{f.flag.replace(/_/g, ' ')}</span>{f.note && <div className="muted" style={{ fontSize: 14, marginTop: 3 }}>{L(f.note, locale)}</div>}</li>
           ))}
         </ul>
-        <button className="primary" disabled={!allFlags} onClick={() => onNext(node.next)}>{t('next')} <ChevronRight size={14} style={{ verticalAlign: 'middle' }} /></button>
+        <button className="primary" disabled={!allFlags} onClick={() => onNext(node.next)}>{t('next')} <ChevronRight size={15} style={{ verticalAlign: 'middle' }} /></button>
       </div>
     );
   }
 
   if (node.type === 'narration') {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between', gap: 16 }}>
-        <div>
-          <div className="sit-label" style={{ color: 'var(--accent)' }}>{isHi ? 'स्थिति' : 'Situation'}</div>
-          <p style={{ marginTop: 10, lineHeight: 1.5 }}>{L(node.content, locale)}</p>
-        </div>
-        <button className="primary" onClick={() => onNext(node.next)}>{t('next')} <ChevronRight size={14} style={{ verticalAlign: 'middle' }} /></button>
+      <div className="panel-body center">
+        <div className="sit-label" style={{ color: 'var(--accent)' }}>{isHi ? 'स्थिति' : 'Situation'}</div>
+        <p style={{ margin: 0, lineHeight: 1.6, fontSize: 17 }}>{L(node.content, locale)}</p>
+        <button className="primary" style={{ alignSelf: 'flex-start', padding: '12px 22px' }} onClick={() => onNext(node.next)}>{t('next')} <ChevronRight size={15} style={{ verticalAlign: 'middle' }} /></button>
       </div>
     );
   }
 
   if (node.type === 'decision') {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div className="panel-body center">
         <div className="sit-label result-neutral">{isHi ? 'कार्रवाई आवश्यक' : 'Action Required'}</div>
-        <p style={{ margin: '10px 0 16px', fontWeight: 700, lineHeight: 1.5 }}>{L(node.prompt, locale)}</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 'auto' }}>
+        <p style={{ margin: 0, fontWeight: 700, lineHeight: 1.55, fontSize: 19 }}>{L(node.prompt, locale)}</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4 }}>
           {node.choices?.map((c, i) => (
-            <button key={i} style={{ textAlign: 'left', padding: '14px 16px', textTransform: 'none', letterSpacing: 0, fontWeight: 600 }} onClick={() => onChoose(c)}>{L(c.label, locale)}</button>
+            <button key={i} className="choice-btn" onClick={() => onChoose(c)}>{L(c.label, locale)}</button>
           ))}
         </div>
       </div>
@@ -290,36 +288,34 @@ function Panel({ node, phase, flags, allFlags, reporting, onNext, onChoose }: {
   if (node.type === 'consequence') {
     const cls = node.outcome === 'positive' ? 'result-good' : node.outcome === 'negative' ? 'result-bad' : 'result-neutral';
     return (
-      <div className={node.anim === 'shake' ? 'shake' : node.anim === 'check-pop' ? 'check-pop' : ''} style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between', gap: 16 }}>
-        <div>
-          <div className={`sit-label ${cls}`}>{isHi ? 'परिणाम' : 'Outcome'}</div>
-          <p className={cls} style={{ marginTop: 10, lineHeight: 1.5 }}>
-            {node.outcome === 'positive' ? '✓ ' : node.outcome === 'negative' ? '✗ ' : '• '}{L(node.content, locale)}
-          </p>
-          {node.technique && (
-            <div style={{ background: 'var(--panel-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, marginTop: 8 }}>
-              <div className="muted sit-label">{isHi ? 'धोखाधड़ी तकनीक' : 'Fraud technique'}</div>
-              <p style={{ margin: '6px 0 0', fontSize: 13.5 }}>{L(node.technique, locale)}</p>
-            </div>
-          )}
-        </div>
-        <button className="primary" onClick={() => onNext(node.next)}>{t('next')} <ChevronRight size={14} style={{ verticalAlign: 'middle' }} /></button>
+      <div className={`panel-body center ${node.anim === 'shake' ? 'shake' : node.anim === 'check-pop' ? 'check-pop' : ''}`}>
+        <div className={`sit-label ${cls}`}>{isHi ? 'परिणाम' : 'Outcome'}</div>
+        <p className={cls} style={{ margin: 0, lineHeight: 1.6, fontSize: 17 }}>
+          {node.outcome === 'positive' ? '✓ ' : node.outcome === 'negative' ? '✗ ' : '• '}{L(node.content, locale)}
+        </p>
+        {node.technique && (
+          <div style={{ background: 'var(--panel-2)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 18px' }}>
+            <div className="muted sit-label">{isHi ? 'धोखाधड़ी तकनीक' : 'Fraud technique'}</div>
+            <p style={{ margin: '8px 0 0', fontSize: 15 }}>{L(node.technique, locale)}</p>
+          </div>
+        )}
+        <button className="primary" style={{ alignSelf: 'flex-start', padding: '12px 22px' }} onClick={() => onNext(node.next)}>{t('next')} <ChevronRight size={15} style={{ verticalAlign: 'middle' }} /></button>
       </div>
     );
   }
 
   // checklist / feedback
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div className="sit-label result-good" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><ShieldCheck size={14} /> {L(node.title, locale)}</div>
-      <ul style={{ marginTop: 12 }}>{node.items?.map((it, i) => <li key={i} style={{ marginBottom: 6 }}>{L(it, locale)}</li>)}</ul>
+    <div className="panel-body center">
+      <div className="sit-label result-good" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><ShieldCheck size={16} /> {L(node.title, locale)}</div>
+      <ul style={{ margin: 0, paddingLeft: 20 }}>{node.items?.map((it, i) => <li key={i} style={{ marginBottom: 10, fontSize: 15.5, lineHeight: 1.5 }}>{L(it, locale)}</li>)}</ul>
       {reporting && (
-        <div className="row" style={{ fontSize: 13, marginTop: 4 }}>
+        <div className="row" style={{ fontSize: 13 }}>
           <span className="muted">{t('report')}:</span>
           {reporting.map((r) => <span key={r.value} className="chip">{L(r.label, locale)}: <b>{r.value}</b></span>)}
         </div>
       )}
-      <button className="primary" style={{ marginTop: 'auto' }} onClick={() => onNext(node.next)}>{t('quiz')} <ChevronRight size={14} style={{ verticalAlign: 'middle' }} /></button>
+      <button className="primary" style={{ alignSelf: 'flex-start', padding: '12px 22px' }} onClick={() => onNext(node.next)}>{t('quiz')} <ChevronRight size={15} style={{ verticalAlign: 'middle' }} /></button>
     </div>
   );
 }
