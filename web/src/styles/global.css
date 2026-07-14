@@ -190,6 +190,8 @@ table th { padding: 4px 6px; color: var(--muted-c); font-weight: 700; text-trans
   border-bottom: 1px solid var(--border); z-index: 25; flex-shrink: 0;
 }
 .mh-brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.mh-tagline { display: block; }
+@media (max-width: 820px) { .mh-tagline { display: none; } }
 
 /* accessibility strip that slides up from the bottom on scroll */
 .a11y-footer {
@@ -248,13 +250,13 @@ table th { padding: 4px 6px; color: var(--muted-c); font-weight: 700; text-trans
 
 /* ── Awareness simulation stage: realistic phone (left) + panel (right) ───── */
 .sim-stage {
-  display: flex; gap: 24px; align-items: stretch;
+  display: flex; gap: 24px; align-items: center;
   background: radial-gradient(130% 130% at 15% 0%, #12203a, #060a12 62%);
   border: 1px solid #1e293b; border-radius: 28px; padding: 26px;
   min-height: 720px;
 }
-.sim-left { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; }
-.sim-right { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow-y: auto;
+.sim-stage > .device { flex: 0 0 auto; }
+.sim-right { flex: 1; align-self: stretch; min-width: 0; display: flex; flex-direction: column; overflow-y: auto;
   background: var(--panel); border: 1px solid var(--border); border-radius: 22px; padding: 30px 34px; }
 .sim-right .sit-label { font-size: 11px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
 /* group content so branches can center it themselves — no mid-panel voids */
@@ -285,7 +287,6 @@ table th { padding: 4px 6px; color: var(--muted-c); font-weight: 700; text-trans
 .choice-btn:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, var(--panel)); }
 @media (max-width: 900px) {
   .sim-stage { flex-direction: column; min-height: 0; align-items: center; }
-  .sim-left { width: 100%; }
   .device { height: 620px; }
   .sim-right { width: 100%; }
 }

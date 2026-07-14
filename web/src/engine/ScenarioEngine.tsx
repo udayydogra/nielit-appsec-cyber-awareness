@@ -100,15 +100,13 @@ export function ScenarioEngine({ labId }: { labId: string }) {
       </div>
 
       <div className="sim-stage">
-        <div className="sim-left">
-          <Device>
-            <SceneView
-              scene={scene} phase={phase} elapsed={elapsed} declines={declines}
-              onAccept={() => setPhase('connecting')} onDecline={() => setDeclines((d) => d + 1)}
-              onHangup={() => go(scene?.next)}
-            />
-          </Device>
-        </div>
+        <Device>
+          <SceneView
+            scene={scene} phase={phase} elapsed={elapsed} declines={declines}
+            onAccept={() => setPhase('connecting')} onDecline={() => setDeclines((d) => d + 1)}
+            onHangup={() => go(scene?.next)}
+          />
+        </Device>
         <div className="sim-right">
           <Panel
             node={node} phase={phase} flags={flags} allFlags={allFlags}

@@ -77,7 +77,7 @@ function Shell({ user, onLogout }: { user: AuthedUser; onLogout: () => void }) {
             <div style={{ width: 1, height: 26, background: '#e2e8f0' }} />
             <img src="/brand/nielit-logo.png" alt="NIELIT" style={{ height: 30, width: 'auto' }} />
           </div>
-          <div className="lg-only" style={{ lineHeight: 1.15 }}>
+          <div className="mh-tagline" style={{ lineHeight: 1.15 }}>
             <div style={{ fontFamily: 'var(--cond)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 15 }}>
               {locale === 'hi' ? 'साइबर सुरक्षा प्रशिक्षण' : 'Cyber Security Training'}
             </div>
