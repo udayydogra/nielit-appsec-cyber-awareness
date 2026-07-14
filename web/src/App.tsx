@@ -73,7 +73,9 @@ function Shell({ user, onLogout }: { user: AuthedUser; onLogout: () => void }) {
         <aside className="sidebar" data-open={menuOpen}>
           <div className="dots bg-dot-pattern" />
           <div className="sidebar-brand">
-            <div className="logo"><ShieldCheck size={26} /></div>
+            <div className="logo" style={{ padding: '5px 9px' }}>
+              <img src="/brand/nielit-logo.png" alt="NIELIT" style={{ height: 28, width: 'auto', display: 'block' }} />
+            </div>
             <span className="name">AppSec</span>
           </div>
           <nav className="nav">

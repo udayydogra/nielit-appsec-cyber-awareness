@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ShieldCheck, LogIn } from 'lucide-react';
+import { LogIn } from 'lucide-react';
 import { api, type AuthedUser } from '../api/client';
 import { useT } from '../i18n';
 
@@ -21,14 +21,14 @@ export function Login({ onLogin }: { onLogin: (u: AuthedUser) => void }) {
   return (
     <div className="center-screen" style={{ background: 'radial-gradient(1200px 600px at 50% -10%, color-mix(in srgb, hsl(var(--primary)) 14%, transparent), transparent)' }}>
       <form className="card login-card" onSubmit={submit} style={{ padding: '32px 30px' }}>
-        <div className="row" style={{ gap: 12, marginBottom: 6 }}>
-          <div style={{ width: 46, height: 46, borderRadius: 14, background: 'hsl(var(--primary))', color: '#fff', display: 'grid', placeItems: 'center' }}>
-            <ShieldCheck size={26} />
+        <div style={{ marginBottom: 12 }}>
+          <div className="brand-lockup" style={{ display: 'inline-flex' }}>
+            <img src="/brand/emblem.svg" alt="National Emblem of India" style={{ height: 40, width: 'auto' }} />
+            <div style={{ width: 1, height: 32, background: '#e2e8f0' }} />
+            <img src="/brand/nielit-logo.png" alt="NIELIT" style={{ height: 36, width: 'auto' }} />
           </div>
-          <div>
-            <h1 style={{ fontSize: 24, margin: 0 }}>{t('appTitle')}</h1>
-            <p className="muted" style={{ margin: 0, fontSize: 12 }}>NIELIT · MeitY · AppSec + Cyber-Awareness</p>
-          </div>
+          <h1 style={{ fontSize: 24, margin: '12px 0 0' }}>{t('appTitle')}</h1>
+          <p className="muted" style={{ margin: 0, fontSize: 12 }}>NIELIT · MeitY, Govt. of India · AppSec + Cyber-Awareness</p>
         </div>
         <div style={{ height: 14 }} />
         <label className="muted" style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase' }}>{t('email')}</label>

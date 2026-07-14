@@ -200,7 +200,8 @@ table th { padding: 4px 6px; color: var(--muted-c); font-weight: 700; text-trans
 .official { border-bottom: 1px solid var(--border); background: color-mix(in srgb, var(--panel-2) 60%, transparent); }
 .official .util { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 5px 24px; font-size: 11px; }
 .official .brandrow { display: flex; align-items: center; gap: 14px; padding: 10px 24px; }
-.official .tricolor { width: 6px; height: 40px; border-radius: 4px; background: linear-gradient(#ff9933 33%, #ffffff 33% 66%, #138808 66%); border: 1px solid var(--border); }
+/* white lockup keeps the (dark) national emblem + NIELIT wordmark legible in both themes */
+.brand-lockup { display: flex; align-items: center; gap: 12px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 6px 14px; box-shadow: 0 1px 2px rgba(15,23,42,.05); }
 .icon-btn { display: inline-grid; place-items: center; padding: 8px; border-radius: 10px; background: transparent; border: 1px solid var(--border); color: var(--muted-c); }
 
 /* ── Lab launcher cards ─────────────────────────────────────────────────── */

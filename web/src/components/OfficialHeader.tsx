@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Sun, Moon, AArrowDown, AArrowUp, ALargeSmall, ShieldCheck } from 'lucide-react';
+import { Sun, Moon, AArrowDown, AArrowUp, ALargeSmall } from 'lucide-react';
 import { useLang, useT } from '../i18n';
 
 // MeitY / NIELIT official government portal header — utility bar (accessibility,
@@ -35,17 +35,23 @@ export function OfficialHeader() {
         </button>
       </div>
       <div className="brandrow">
-        <div className="tricolor" />
-        <div style={{ display: 'grid', placeItems: 'center', background: 'hsl(var(--primary))', color: '#fff', width: 40, height: 40, borderRadius: 12 }}>
-          <ShieldCheck size={22} />
+        <div className="brand-lockup">
+          <img src="/brand/emblem.svg" alt="National Emblem of India" style={{ height: 42, width: 'auto' }} />
+          <div style={{ width: 1, height: 34, background: '#e2e8f0' }} />
+          <img src="/brand/nielit-logo.png" alt="NIELIT" style={{ height: 38, width: 'auto', objectFit: 'contain' }} />
         </div>
-        <div>
-          <div style={{ fontFamily: 'var(--cond)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 18, lineHeight: 1 }}>
-            {t('appTitle')}
+        <div style={{ marginLeft: 2 }}>
+          <div style={{ fontFamily: 'var(--cond)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 16, lineHeight: 1.1 }}>
+            {locale === 'hi' ? 'साइबर सुरक्षा प्रशिक्षण' : 'Cyber Security Training'}
           </div>
-          <div className="muted" style={{ fontSize: 11, letterSpacing: '.04em' }}>
-            NIELIT · Ministry of Electronics & IT · {locale === 'hi' ? 'साइबर सुरक्षा प्रशिक्षण' : 'Cyber Security Training'}
+          <div className="muted" style={{ fontSize: 11, letterSpacing: '.03em' }}>
+            National Institute of Electronics &amp; IT · MeitY, Govt. of India
           </div>
+        </div>
+        <span className="spacer" style={{ flex: 1 }} />
+        <div className="lg-only" style={{ textAlign: 'right', lineHeight: 1.15 }}>
+          <div style={{ fontFamily: 'var(--cond)', fontWeight: 800, fontSize: 14, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--accent)' }}>AppSec Academy</div>
+          <div className="muted" style={{ fontSize: 10, letterSpacing: '.06em' }}>{t('appTitle')}</div>
         </div>
       </div>
     </div>
