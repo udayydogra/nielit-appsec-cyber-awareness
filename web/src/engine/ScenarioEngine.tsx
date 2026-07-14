@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Phone, PhoneOff, Video, ChevronRight, AlertTriangle, ShieldCheck, Signal, Wifi, BatteryFull } from 'lucide-react';
+import { Phone, PhoneOff, Video, ChevronRight, ChevronLeft, MoreVertical, AlertTriangle, ShieldCheck, Signal, Wifi, BatteryFull } from 'lucide-react';
 import { api, type LocalizedString } from '../api/client';
 import { L, useLang, useT } from '../i18n';
 import { Quiz, type QuizQuestion } from '../components/Quiz';
@@ -100,7 +100,7 @@ export function ScenarioEngine({ labId }: { labId: string }) {
       </div>
 
       <div className="sim-stage">
-        <Device>
+        <Device dark={scene?.channel === 'videocall' || scene?.channel === 'payment'}>
           <SceneView
             scene={scene} phase={phase} elapsed={elapsed} declines={declines}
             onAccept={() => setPhase('connecting')} onDecline={() => setDeclines((d) => d + 1)}
@@ -119,13 +119,14 @@ export function ScenarioEngine({ labId }: { labId: string }) {
 }
 
 // ── Device frame ──────────────────────────────────────────────────────────────
-function Device({ children }: { children: React.ReactNode }) {
+function Device({ children, dark }: { children: React.ReactNode; dark?: boolean }) {
   return (
-    <div className="device">
-      <div className="notch" />
+    <div className={`device${dark ? ' dark-screen' : ''}`}>
+      <div className="island" />
+      <div className="glare" />
       <div className="statusbar">
         <span>9:41</span>
-        <span className="bars"><Signal size={12} /><Wifi size={12} /><BatteryFull size={14} /></span>
+        <span className="bars"><Signal size={15} /><Wifi size={15} /><BatteryFull size={18} /></span>
       </div>
       <div className="screen">{children}</div>
       <div className="home" />
@@ -149,7 +150,12 @@ function SceneView({ scene, phase, elapsed, declines, onAccept, onDecline, onHan
   if (scene.channel === 'chat') {
     return (
       <div className="chat-screen">
-        <div className="chat-header"><div className="av">👤</div><div><div style={{ fontSize: 13, fontWeight: 700 }}>{t('unknownCaller')}</div><div style={{ fontSize: 10, color: '#63d3a6' }}>online</div></div></div>
+        <div className="chat-header">
+          <ChevronLeft size={20} />
+          <div className="av">👤</div>
+          <div style={{ flex: 1 }}><div style={{ fontSize: 14.5, fontWeight: 700 }}>{t('unknownCaller')}</div><div style={{ fontSize: 11, opacity: .85 }}>online</div></div>
+          <Video size={18} /><Phone size={17} />
+        </div>
         <div className="chat-thread"><div className="chat-bubble">{text}<div className="time">now ✓✓</div></div></div>
         <div className="sms-replybar"><span className="fakeinput">{t('tapReply')}</span><span>➤</span></div>
       </div>
@@ -158,8 +164,16 @@ function SceneView({ scene, phase, elapsed, declines, onAccept, onDecline, onHan
   // default: sms
   return (
     <div className="sms-app">
-      <div className="sms-header"><div className="sender-avatar">✉️</div><div><div className="sender-id">VM-GOVUPD</div><div className="sender-sub">{t('unknownSender')}</div></div></div>
-      <div className="sms-thread"><div className="sms-in"><div className="body">{text}</div><div className="stamp">now</div></div></div>
+      <div className="sms-header">
+        <ChevronLeft size={20} color="#94a3b8" />
+        <div className="sender-avatar">⚠️</div>
+        <div style={{ flex: 1 }}><div className="sender-id">VM-GOVUPD</div><div className="sender-sub">{t('unknownSender')}</div></div>
+        <MoreVertical size={18} color="#94a3b8" />
+      </div>
+      <div className="sms-thread">
+        <div className="sms-daysep">Today</div>
+        <div className="sms-in"><div className="body">{text}</div><div className="stamp">now · SMS</div></div>
+      </div>
       <div className="sms-replybar"><span className="fakeinput">{t('tapReply')}</span><span>➤</span></div>
     </div>
   );
