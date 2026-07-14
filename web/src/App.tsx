@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   LayoutDashboard, Terminal, ShieldAlert, Award, ShieldCheck, Bell, Menu, LogOut,
-  ChevronRight, Zap, ArrowLeft, Lock, Settings, HelpCircle, Radar,
+  ChevronRight, Zap, ArrowLeft, Lock, Settings, HelpCircle,
 } from 'lucide-react';
 import { api, type AuthedUser, type CatalogueEntry, type Locale } from './api/client';
 import { L, LanguageContext, useLang, useT } from './i18n';
 import { Login } from './components/Login';
-import { OfficialHeader } from './components/OfficialHeader';
+import { AccessibilityFooter } from './components/AccessibilityFooter';
 import { SpinLoader } from './components/SpinLoader';
 import { MentorWidget } from './components/MentorWidget';
 import { AppSecLab } from './labs/AppSecLab';
@@ -49,6 +49,7 @@ function Shell({ user, onLogout }: { user: AuthedUser; onLogout: () => void }) {
   const [view, setView] = useState<View>('dashboard');
   const [active, setActive] = useState<CatalogueEntry | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => { api.catalogue().then(setCatalogue).catch(() => {}); }, []);
 
@@ -67,7 +68,40 @@ function Shell({ user, onLogout }: { user: AuthedUser; onLogout: () => void }) {
 
   return (
     <div className="app-shell">
-      <OfficialHeader />
+      {/* Single merged header: NIELIT branding (left) + app controls (right). */}
+      <header className="mainheader">
+        <button className="icon-btn lg-hide" onClick={() => setMenuOpen(true)}><Menu size={18} /></button>
+        <div className="mh-brand">
+          <div className="brand-lockup">
+            <img src="/brand/emblem.svg" alt="National Emblem of India" style={{ height: 34, width: 'auto' }} />
+            <div style={{ width: 1, height: 26, background: '#e2e8f0' }} />
+            <img src="/brand/nielit-logo.png" alt="NIELIT" style={{ height: 30, width: 'auto' }} />
+          </div>
+          <div className="lg-only" style={{ lineHeight: 1.15 }}>
+            <div style={{ fontFamily: 'var(--cond)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 15 }}>
+              {locale === 'hi' ? 'साइबर सुरक्षा प्रशिक्षण' : 'Cyber Security Training'}
+            </div>
+            <div className="muted" style={{ fontSize: 10.5, letterSpacing: '.02em' }}>National Institute of Electronics &amp; IT · MeitY, Govt. of India</div>
+          </div>
+        </div>
+        <span className="spacer" style={{ flex: 1 }} />
+        <span className="chip"><Zap size={12} /> {catalogue.length} Missions</span>
+        <div className="lang-toggle row" style={{ gap: 4 }}>
+          <button className={locale === 'en' ? 'active' : ''} onClick={() => setLocale('en')}>EN</button>
+          <button className={locale === 'hi' ? 'active' : ''} onClick={() => setLocale('hi')}>हिं</button>
+        </div>
+        <button className="icon-btn" style={{ position: 'relative' }}><Bell size={17} /><span style={{ position: 'absolute', top: 4, right: 4, width: 7, height: 7, borderRadius: 999, background: 'var(--bad)' }} /></button>
+        <div className="row" style={{ gap: 10 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 11, background: 'var(--accent)', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 800, fontSize: 13 }}>
+            {user.displayName.slice(0, 2).toUpperCase()}
+          </div>
+          <div className="lg-only" style={{ lineHeight: 1.2 }}>
+            <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '-.01em' }}>{user.displayName}</div>
+            <button onClick={logout} style={{ border: 'none', background: 'none', padding: 0, color: 'var(--bad)', fontSize: 9, letterSpacing: '.12em' }}><LogOut size={10} style={{ verticalAlign: 'middle' }} /> Log out</button>
+          </div>
+        </div>
+      </header>
+
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
         {menuOpen && <div onClick={() => setMenuOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(2,6,23,.5)', zIndex: 30 }} />}
         <aside className="sidebar" data-open={menuOpen}>
@@ -91,49 +125,25 @@ function Shell({ user, onLogout }: { user: AuthedUser; onLogout: () => void }) {
           </div>
         </aside>
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-          <header className="topbar">
-            <button className="icon-btn lg-hide" onClick={() => setMenuOpen(true)}><Menu size={18} /></button>
-            <span className="brand" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Radar size={16} color="var(--accent)" />
-              {active ? L(active.title, locale) : nav.find((n) => n.key === view)?.label}
-            </span>
-            <span className="spacer" />
-            <span className="chip"><Zap size={12} /> {catalogue.length} Missions</span>
-            <div className="lang-toggle row" style={{ gap: 4 }}>
-              <button className={locale === 'en' ? 'active' : ''} onClick={() => setLocale('en')}>EN</button>
-              <button className={locale === 'hi' ? 'active' : ''} onClick={() => setLocale('hi')}>हिं</button>
-            </div>
-            <button className="icon-btn" style={{ position: 'relative' }}><Bell size={17} /><span style={{ position: 'absolute', top: 4, right: 4, width: 7, height: 7, borderRadius: 999, background: 'var(--bad)' }} /></button>
-            <div className="row" style={{ gap: 10 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 11, background: 'var(--accent)', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 800, fontSize: 13 }}>
-                {user.displayName.slice(0, 2).toUpperCase()}
-              </div>
-              <div className="lg-only" style={{ lineHeight: 1.2 }}>
-                <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '-.01em' }}>{user.displayName}</div>
-                <button onClick={logout} style={{ border: 'none', background: 'none', padding: 0, color: 'var(--bad)', fontSize: 9, letterSpacing: '.12em' }}><LogOut size={10} style={{ verticalAlign: 'middle' }} /> Log out</button>
-              </div>
-            </div>
-          </header>
-
-          <main className="content" id="main">
-            <div className="content-inner">
-              {active ? (
-                <LabView entry={active} onBack={() => setActive(null)} />
-              ) : view === 'dashboard' ? (
-                <Dashboard user={user} catalogue={catalogue} onOpen={open} onModule={(m) => goto(m === 'appsec' ? 'appsec' : 'awareness')} />
-              ) : view === 'appsec' ? (
-                <Catalogue title={t('appsec')} subtitle="On-demand vulnerable targets for hands-on offensive testing." labs={appsec} onOpen={open} />
-              ) : view === 'awareness' ? (
-                <Catalogue title={t('awareness')} subtitle="Branching fraud-recognition scenarios — UPI, digital arrest, phishing & more." labs={awareness} onOpen={open} />
-              ) : (
-                <Profile user={user} />
-              )}
-            </div>
-          </main>
-        </div>
+        <main className="content" id="main" style={{ flex: 1, minWidth: 0 }}
+          onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 60)}>
+          <div className="content-inner">
+            {active ? (
+              <LabView entry={active} onBack={() => setActive(null)} />
+            ) : view === 'dashboard' ? (
+              <Dashboard user={user} catalogue={catalogue} onOpen={open} onModule={(m) => goto(m === 'appsec' ? 'appsec' : 'awareness')} />
+            ) : view === 'appsec' ? (
+              <Catalogue title={t('appsec')} subtitle="On-demand vulnerable targets for hands-on offensive testing." labs={appsec} onOpen={open} />
+            ) : view === 'awareness' ? (
+              <Catalogue title={t('awareness')} subtitle="Branching fraud-recognition scenarios — UPI, digital arrest, phishing & more." labs={awareness} onOpen={open} />
+            ) : (
+              <Profile user={user} />
+            )}
+          </div>
+        </main>
       </div>
 
+      <AccessibilityFooter show={scrolled} />
       <MentorWidget labId={active?.id ?? null} />
     </div>
   );
