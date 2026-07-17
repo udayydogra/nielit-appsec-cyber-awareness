@@ -27,7 +27,9 @@ mentorRouter.post(
     if (typeof labId !== 'string' || typeof question !== 'string') {
       return res.status(400).json({ error: 'labId and question required' });
     }
-    const loc = locale === 'hi' ? 'hi' : req.user!.locale;
+    // Honour the explicitly requested locale (the UI language toggle); fall back
+    // to the user's stored default only when the request doesn't specify one.
+    const loc: 'en' | 'hi' = locale === 'hi' ? 'hi' : locale === 'en' ? 'en' : req.user!.locale;
 
     await emit({ userId: req.user!.id, labId, type: 'hint_requested', outcome: 'neutral' });
 

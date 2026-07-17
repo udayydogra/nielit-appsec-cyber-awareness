@@ -49,7 +49,7 @@ export const config = {
     },
     ollama: {
       base: str('MENTOR_OLLAMA_BASE', 'http://localhost:11434'),
-      model: str('MENTOR_OLLAMA_MODEL', 'llama3.2:3b'),
+      model: str('MENTOR_OLLAMA_MODEL', 'qwen2.5:3b'),
     },
   },
 };

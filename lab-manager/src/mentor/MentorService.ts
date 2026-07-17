@@ -27,13 +27,24 @@ class Semaphore {
   }
 }
 
+// Provider selection: an explicit MENTOR_PROVIDER=ollama always uses Ollama.
+// Otherwise use the hosted API only when an API key is present; if there is no
+// key, fall back to a local Ollama so the mentor works out-of-the-box.
+function pickProvider(): MentorProvider {
+  if (config.mentor.provider === 'ollama') return new OllamaProvider();
+  if (config.mentor.api.key) return new ApiProvider();
+  return new OllamaProvider();
+}
+
 export class MentorService {
   private provider: MentorProvider;
   private sem: Semaphore;
 
   constructor() {
-    this.provider = config.mentor.provider === 'ollama' ? new OllamaProvider() : new ApiProvider();
+    this.provider = pickProvider();
     this.sem = new Semaphore(config.mentor.maxConcurrent);
+    console.log(`[mentor] provider = ${this.provider.name}` +
+      (config.mentor.provider === 'api' && !config.mentor.api.key ? ' (no API key → fell back to ollama)' : ''));
   }
 
   get providerName(): string { return this.provider.name; }

@@ -9,6 +9,7 @@ import { labsRouter } from './routes/labs.js';
 import { meRouter } from './routes/me.js';
 import { mentorRouter } from './routes/mentor.js';
 import { verifyCertificate } from './certs/certificates.js';
+import { mentorService } from './mentor/MentorService.js';
 import { ah, errorHandler } from './middleware/asyncHandler.js';
 import { loadAllManifests } from './manifests.js';
 import { startReaper } from './containers/reaper.js';
@@ -32,7 +33,7 @@ app.get('/health', ah(async (_req, res) => {
   try {
     await pool.query('SELECT 1');
     await redis.ping();
-    res.json({ ok: true, mentor: config.mentor.provider });
+    res.json({ ok: true, mentor: mentorService.providerName });
   } catch (err) {
     res.status(503).json({ ok: false, error: (err as Error).message });
   }
