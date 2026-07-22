@@ -12,6 +12,34 @@
   "owasp": ["A03:2021 – Injection"],
   "mitre": ["T1190 Exploit Public-Facing Application"],
   "cves": ["CVE-2012-2661 (Rails SQLi)", "CVE-2019-8446 (Jira SQLi)"],
+  "impact": {
+    "en": "SQL injection routinely leads to full database theft — credentials, payment data, PII — and often authentication bypass or remote code execution. It's behind some of the largest breaches on record (e.g. the 2011 Sony Pictures and 2015 TalkTalk incidents) and sits at OWASP A03.",
+    "hi": "SQL इंजेक्शन अक्सर पूरे डेटाबेस की चोरी — क्रेडेंशियल, भुगतान डेटा, PII — और प्रमाणीकरण बायपास या रिमोट कोड निष्पादन तक ले जाता है। यह इतिहास की सबसे बड़ी सेंधों के पीछे रहा है और OWASP A03 पर है।"
+  },
+  "commonMistakes": [
+    { "en": "Building queries by string concatenation / template literals with user input.", "hi": "उपयोगकर्ता इनपुट के साथ स्ट्रिंग जोड़कर क्वेरी बनाना।" },
+    { "en": "Trusting client-side validation or an escaping helper instead of parameterization.", "hi": "पैरामीटराइज़ेशन के बजाय क्लाइंट-साइड सत्यापन/एस्केप पर भरोसा।" },
+    { "en": "Blocklisting keywords like SELECT/UNION (trivially bypassed).", "hi": "SELECT/UNION जैसे कीवर्ड ब्लॉकलिस्ट करना (आसानी से बायपास)।" },
+    { "en": "Assuming an ORM is automatically safe (raw fragments still inject).", "hi": "मानना कि ORM स्वतः सुरक्षित है (रॉ फ़्रैगमेंट अब भी इंजेक्ट होते हैं)।" }
+  ],
+  "bestPractices": [
+    { "en": "Use parameterized / prepared statements everywhere — bind values as data.", "hi": "हर जगह पैरामीटराइज़्ड / प्रिपेयर्ड स्टेटमेंट उपयोग करें — मानों को डेटा के रूप में बाँधें।" },
+    { "en": "Prefer an ORM/query builder, but never interpolate into raw SQL.", "hi": "ORM/क्वेरी बिल्डर पसंद करें, पर रॉ SQL में कभी इंटरपोलेट न करें।" },
+    { "en": "Apply least-privilege DB accounts; disable multi-statements where possible.", "hi": "least-privilege DB खाते; जहाँ संभव हो multi-statement बंद करें।" },
+    { "en": "Validate input by type/allow-list as defense-in-depth (not the primary fix).", "hi": "प्रकार/allow-list से इनपुट सत्यापित करें (प्राथमिक फिक्स नहीं)।" }
+  ],
+  "mitigation": [
+    { "en": "Replace all concatenated queries with parameterized statements.", "hi": "सभी जुड़ी क्वेरी को पैरामीटराइज़्ड स्टेटमेंट से बदलें।" },
+    { "en": "Audit ORM raw() / template usage across the codebase.", "hi": "कोडबेस में ORM raw()/टेम्पलेट उपयोग ऑडिट करें।" },
+    { "en": "Run a DB user with only the privileges the app needs.", "hi": "केवल आवश्यक विशेषाधिकार वाला DB यूज़र चलाएँ।" },
+    { "en": "Add a WAF + query logging/alerting as detection, not prevention.", "hi": "पहचान के रूप में WAF + क्वेरी लॉगिंग जोड़ें।" }
+  ],
+  "missions": [
+    { "id": "read", "title": { "en": "Understand the login query", "hi": "लॉगिन क्वेरी समझें" }, "hint": { "en": "The Attack Surface section shows the exact SELECT that concatenates your input.", "hi": "अटैक सरफेस भाग वह SELECT दिखाता है।" } },
+    { "id": "bypass", "title": { "en": "Bypass the login with a tautology", "hi": "टॉटोलॉजी से लॉगिन बायपास करें" }, "hint": { "en": "Make the WHERE clause always true — a quote plus OR '1'='1.", "hi": "WHERE को हमेशा सत्य बनाएँ — एक कोट और OR '1'='1।" }, "signal": "exploit" },
+    { "id": "exfil", "title": { "en": "Exfiltrate the admin secret / flag", "hi": "admin रहस्य / फ्लैग निकालें" }, "hint": { "en": "UNION SELECT extra columns from the accounts table.", "hi": "accounts टेबल से UNION SELECT करें।" }, "signal": "flag" },
+    { "id": "fix", "title": { "en": "State the parameterized-query fix", "hi": "पैरामीटराइज़्ड-क्वेरी फिक्स बताएँ" }, "hint": { "en": "Review the Secure Fix on the lesson page, then mark done.", "hi": "पाठ का सुरक्षित फिक्स देखें, फिर पूर्ण करें।" } }
+  ],
   "target": {
     "kind": "shared-multitenant",
     "resetRoute": "/labs/sqli/reset",

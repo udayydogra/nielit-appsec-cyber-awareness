@@ -12,6 +12,34 @@
   "owasp": ["A03:2021 – Injection"],
   "mitre": ["T1059 Command and Scripting Interpreter", "T1190 Exploit Public-Facing Application"],
   "cves": ["CVE-2014-6271 (Shellshock)", "CVE-2021-44228-adjacent RCE patterns"],
+  "impact": {
+    "en": "Command injection gives an attacker arbitrary code execution on the server — full host takeover, data theft, pivoting into the internal network, and persistence. It is one of the highest-severity web flaws (OWASP A03) and powered incidents like Shellshock across millions of systems.",
+    "hi": "कमांड इंजेक्शन हमलावर को सर्वर पर मनमाना कोड निष्पादन देता है — पूर्ण होस्ट कब्ज़ा, डेटा चोरी, आंतरिक नेटवर्क में पिवट, और स्थायित्व। यह सबसे उच्च-गंभीरता वेब खामियों में से एक है (OWASP A03)।"
+  },
+  "commonMistakes": [
+    { "en": "Passing user input into a shell (system()/exec with shell=True/backticks).", "hi": "उपयोगकर्ता इनपुट को शेल में देना (shell=True/backticks)।" },
+    { "en": "Trying to escape or blocklist metacharacters (; | & $() ` ) instead of avoiding the shell.", "hi": "शेल से बचने के बजाय मेटाकैरेक्टर एस्केप/ब्लॉकलिस्ट करना।" },
+    { "en": "Assuming an internal/admin-only feature doesn't need input validation.", "hi": "मानना कि आंतरिक फ़ीचर को इनपुट सत्यापन नहीं चाहिए।" }
+  ],
+  "bestPractices": [
+    { "en": "Never invoke a shell with untrusted data — pass an argument vector (execFile / exec array).", "hi": "अविश्वसनीय डेटा के साथ शेल कभी न चलाएँ — आर्ग्युमेंट वेक्टर दें (execFile)।" },
+    { "en": "Validate input against a strict allow-list (e.g. an IP/hostname pattern).", "hi": "इनपुट को सख़्त allow-list से सत्यापित करें।" },
+    { "en": "Prefer a native library/API over shelling out entirely.", "hi": "शेल-आउट के बजाय नेटिव लाइब्रेरी/API पसंद करें।" },
+    { "en": "Run the service as a low-privilege user, read-only, no network egress, sandboxed.", "hi": "सेवा low-privilege यूज़र, read-only, बिना egress, sandboxed चलाएँ।" }
+  ],
+  "mitigation": [
+    { "en": "Replace shell calls with execFile/argument arrays; remove shell=True.", "hi": "शेल कॉल को execFile/आर्ग्युमेंट ऐरे से बदलें।" },
+    { "en": "Allow-list & canonicalize input; reject anything unexpected.", "hi": "इनपुट allow-list व canonicalize करें।" },
+    { "en": "Drop capabilities, use seccomp/gVisor, and lock down egress.", "hi": "क्षमताएँ हटाएँ, seccomp/gVisor उपयोग करें, egress लॉक करें।" },
+    { "en": "Alert on unexpected child processes from the web service.", "hi": "वेब सेवा से अप्रत्याशित चाइल्ड प्रोसेस पर अलर्ट करें।" }
+  ],
+  "missions": [
+    { "id": "recon", "title": { "en": "Explore the target box", "hi": "टारगेट बॉक्स का अन्वेषण करें" }, "hint": { "en": "Run:  id   (and  cat /challenge/README ). Tip: press Tab to auto-complete.", "hi": "चलाएँ:  id  (और  cat /challenge/README )। टिप: ऑटो-कम्प्लीट के लिए Tab दबाएँ।" }, "detect": "uid=\\d+\\(" },
+    { "id": "inject", "title": { "en": "Trigger command injection", "hi": "कमांड इंजेक्शन ट्रिगर करें" }, "hint": { "en": "vulnping runs  sh -c \"ping -c1 $INPUT\"  — inject a 2nd command:  vulnping \"127.0.0.1; id\"", "hi": "vulnping  sh -c \"ping -c1 $INPUT\"  चलाता है — दूसरी कमांड इंजेक्ट करें:  vulnping \"127.0.0.1; id\"" }, "detect": "packets transmitted[\\s\\S]{0,300}uid=\\d" },
+    { "id": "flag", "title": { "en": "Read the flag via RCE", "hi": "RCE से फ्लैग पढ़ें" }, "hint": { "en": "Inject:  vulnping \"127.0.0.1; cat /challenge/flag.txt\"", "hi": "इंजेक्ट करें: vulnping \"127.0.0.1; cat /challenge/flag.txt\"" }, "signal": "flag" },
+    { "id": "escape", "title": { "en": "Confirm the sandbox holds", "hi": "पुष्टि करें कि सैंडबॉक्स रोकता है" }, "hint": { "en": "Try to reach the internet:  ping -c1 8.8.8.8  — it should fail (no egress).", "hi": "इंटरनेट तक पहुँचें:  ping -c1 8.8.8.8  — विफल होना चाहिए (कोई egress नहीं)।" }, "detect": "Network (is )?unreachable|bad address|can't connect|sendto:" },
+    { "id": "fix", "title": { "en": "State the execFile / no-shell fix", "hi": "execFile / no-shell फिक्स बताएँ" }, "hint": { "en": "Review the Secure Fix on the lesson page, then mark done.", "hi": "पाठ का सुरक्षित फिक्स देखें।" } }
+  ],
   "target": { "kind": "ephemeral-container", "image": "nielit/command-injection:latest" },
   "lifecycle": [
     {
