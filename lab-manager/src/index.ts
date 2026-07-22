@@ -8,10 +8,12 @@ import { authRouter } from './routes/auth.js';
 import { labsRouter } from './routes/labs.js';
 import { meRouter } from './routes/me.js';
 import { mentorRouter } from './routes/mentor.js';
+import { adminRouter } from './routes/admin.js';
 import { verifyCertificate } from './certs/certificates.js';
 import { mentorService } from './mentor/MentorService.js';
 import { ah, errorHandler } from './middleware/asyncHandler.js';
 import { loadAllManifests } from './manifests.js';
+import { syncAuthored } from './modules/store.js';
 import { startReaper } from './containers/reaper.js';
 import { attachTerminal } from './terminal/terminal.js';
 import { redis } from './redis.js';
@@ -50,13 +52,18 @@ app.use('/auth', authRouter);
 app.use('/labs', labsRouter);
 app.use('/me', meRouter);
 app.use('/mentor', mentorRouter);
+app.use('/admin', adminRouter);
 
 // Last-resort error handler — turns an uncaught async error into a 500, not a crash.
 app.use(errorHandler);
 
-// Validate all manifests at boot (fail fast on a bad content file).
+// Validate all built-in manifests at boot (fail fast on a bad content file), then
+// pull admin-authored modules from the DB into the same cache.
 const manifests = loadAllManifests();
 console.log(`[boot] loaded ${manifests.length} lab manifest(s): ${manifests.map((m) => m.id).join(', ')}`);
+syncAuthored()
+  .then((n) => n && console.log(`[boot] synced ${n} authored module(s) from the database`))
+  .catch((e) => console.error('[boot] authored-module sync failed', e));
 
 const reaper = startReaper();
 

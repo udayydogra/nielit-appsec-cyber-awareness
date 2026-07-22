@@ -6,7 +6,8 @@ import { requireAuth } from '../auth/session.js';
 import { requirePermission, containerOwnerScope } from '../authz/requirePermission.js';
 import { rateLimit } from '../middleware/rateLimit.js';
 import { ah } from '../middleware/asyncHandler.js';
-import { getManifest, loadAllManifests, publicManifest } from '../manifests.js';
+import { getManifest, publicManifest } from '../manifests.js';
+import { listCatalogue } from '../modules/store.js';
 import { emit } from '../telemetry/pipeline.js';
 import { gradeQuiz } from '../scoring/scoring.js';
 import { issueCertificate } from '../certs/certificates.js';
@@ -29,13 +30,14 @@ import { config } from '../config.js';
 export const labsRouter = Router();
 
 // Catalogue — public metadata for both modules.
-labsRouter.get('/', (_req, res) => {
-  const all = loadAllManifests().map((m) => ({
+labsRouter.get('/', ah(async (_req, res) => {
+  // Enabled built-in + authored modules, in admin-defined order.
+  const all = (await listCatalogue(true)).map((m) => ({
     id: m.id, module: m.module, executionTier: m.executionTier,
     category: m.category, title: m.title, summary: m.summary,
   }));
   res.json(all);
-});
+}));
 
 // Full manifest (safe to ship — answer keys live only in quiz_keys).
 labsRouter.get('/:id', requireAuth, requirePermission('lab:access'), (req, res) => {
