@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   LayoutDashboard, Terminal, ShieldAlert, Award, ShieldCheck, Bell, Menu, LogOut,
-  ChevronRight, Zap, ArrowLeft, Lock, Settings as SettingsIcon, HelpCircle, ShieldEllipsis,
+  ChevronRight, Zap, ArrowLeft, Settings as SettingsIcon, HelpCircle, ShieldEllipsis,
 } from 'lucide-react';
 import { api, type AuthedUser, type CatalogueEntry, type Locale } from './api/client';
+import { labIcon } from './labIcons';
 import { L, LanguageContext, useLang, useT } from './i18n';
 import { Login } from './components/Login';
 import { AccessibilityFooter } from './components/AccessibilityFooter';
@@ -173,7 +174,7 @@ function LabView({ entry, onBack }: { entry: CatalogueEntry; onBack: () => void 
 function LabCard({ c, onOpen }: { c: CatalogueEntry; onOpen: (c: CatalogueEntry) => void }) {
   const { locale } = useLang();
   const meta = tierMeta(c.executionTier);
-  const Icon = c.module === 'appsec' ? (c.executionTier === 3 ? Lock : Terminal) : ShieldAlert;
+  const Icon = labIcon(c.id, c.module, c.executionTier);
   return (
     <button className="lab-card" onClick={() => onOpen(c)}>
       <div className="row" style={{ gap: 18, flexWrap: 'nowrap' }}>
