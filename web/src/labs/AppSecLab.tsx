@@ -1,7 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Terminal } from '@xterm/xterm';
-import { FitAddon } from '@xterm/addon-fit';
-import '@xterm/xterm/css/xterm.css';
+import { useEffect, useState, type ReactNode } from 'react';
 import { FlaskConical, ShieldAlert, AlertTriangle, CheckCircle2, ClipboardCheck, ChevronRight } from 'lucide-react';
 import { api, ApiError, type LocalizedString } from '../api/client';
 import { L, useLang, useT } from '../i18n';
@@ -59,7 +56,7 @@ export function AppSecLab({ labId }: { labId: string }) {
         labId={labId}
         title={L(m.title, locale)}
         tier={m.executionTier}
-        widget={m.executionTier === 3 ? null : <LabWidget section={labSection} labId={labId} />}
+        widget={m.executionTier === 3 ? null : <LabWidget section={labSection} />}
         missions={missions}
         onExit={() => setMode('lesson')}
       />
@@ -141,7 +138,7 @@ function defaultMissions(_locale: 'en' | 'hi'): Mission[] {
 
 // Dispatches an interactive lifecycle section to its exploit console. Used by the
 // LAB workspace (Tier 1/2). Tier-3 uses the workspace's own container terminal.
-export function LabWidget({ section: s, labId }: { section: LifecycleSection; labId: string }) {
+function LabWidget({ section: s }: { section: LifecycleSection }) {
   const { locale } = useLang();
   const title = L(s.title, locale);
   const hints = s.hints ?? [];
@@ -159,14 +156,13 @@ export function LabWidget({ section: s, labId }: { section: LifecycleSection; la
     case 'llm-console': return <LlmConsole title={title} hints={hints} />;
     case 'fileupload-console': return <FileUploadConsole title={title} hints={hints} />;
     case 'cloud-console': return <CloudConsole title={title} hints={hints} />;
-    case 'terminal': return <TerminalConsole labId={labId} title={title} hints={hints} />;
     default: return null;
   }
 }
 
 function Section({ s, labId }: { s: LifecycleSection; labId: string }) {
   const { locale } = useLang();
-  if (s.type === 'interactive') return <LabWidget section={s} labId={labId} />;
+  if (s.type === 'interactive') return <LabWidget section={s} />;
   return (
     <div className="card">
       <h2>{L(s.title, locale)}</h2>
@@ -847,93 +843,6 @@ function CloudConsole({ title, hints }: { title: string; hints: LocalizedString[
           <div key={i} className={l.includes('flag{') ? 'result-bad' : l.startsWith('$ ') ? 'result-neutral' : undefined}>{l || ' '}</div>
         ))}</pre>
       )}
-    </div>
-  );
-}
-
-// Tier-3 live terminal: spawns (via /start) a per-user ephemeral container, opens
-// an xterm ↔ WebSocket ↔ docker-exec shell, heartbeats to keep it alive, and stops
-// it on unmount. The WS is authenticated by the session cookie + container ownership
-// server-side. No pty → the client does line editing (echo, backspace, send on Enter).
-function TerminalConsole({ labId, title, hints }: { labId: string; title: string; hints: LocalizedString[] }) {
-  const { locale } = useLang();
-  const [phase, setPhase] = useState<'starting' | 'queued' | 'ready' | 'error'>('starting');
-  const [showHint, setShowHint] = useState(false);
-  const mountRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    let disposed = false;
-    let ws: WebSocket | null = null;
-    let term: Terminal | null = null;
-    let hb: ReturnType<typeof setInterval> | null = null;
-    let retry: ReturnType<typeof setTimeout> | null = null;
-
-    async function boot() {
-      try {
-        const r = await api.start(labId);
-        if (disposed) return;
-        if (r.status === 'queued') {
-          setPhase('queued');
-          retry = setTimeout(boot, 3000); // capacity full — wait for a free slot
-          return;
-        }
-        setPhase('ready');
-        openTerminal();
-      } catch {
-        if (!disposed) setPhase('error');
-      }
-    }
-
-    function openTerminal() {
-      if (disposed || !mountRef.current) return;
-      term = new Terminal({ fontSize: 13, cursorBlink: true, theme: { background: '#0b0f14' }, convertEol: true });
-      const fit = new FitAddon();
-      term.loadAddon(fit);
-      term.open(mountRef.current);
-      try { fit.fit(); } catch { /* not laid out yet */ }
-
-      const base = (import.meta.env.VITE_API_BASE as string) || '/api';
-      const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-      ws = new WebSocket(`${proto}://${location.host}${base}/labs/${labId}/terminal`);
-
-      ws.onmessage = (e) => term?.write(typeof e.data === 'string' ? e.data : '');
-      ws.onclose = () => term?.write('\r\n\x1b[33m# session closed (container stopped or reaped)\x1b[0m\r\n');
-      ws.onerror = () => term?.write('\r\n\x1b[31m# terminal connection error\x1b[0m\r\n');
-
-      // Client-side line discipline (no server pty).
-      let line = '';
-      term.onData((d) => {
-        if (!ws || ws.readyState !== WebSocket.OPEN) return;
-        if (d === '\r') { ws.send(line + '\n'); term!.write('\r\n'); line = ''; }
-        else if (d === '') { if (line) { line = line.slice(0, -1); term!.write('\b \b'); } }
-        else if (d === '') { term!.write('^C\r\n'); line = ''; ws.send('\x03'); }
-        else { line += d; term!.write(d); }
-      });
-
-      hb = setInterval(() => api.heartbeat(labId).catch(() => {}), 45000);
-    }
-
-    boot();
-    return () => {
-      disposed = true;
-      if (hb) clearInterval(hb);
-      if (retry) clearTimeout(retry);
-      ws?.close();
-      term?.dispose();
-      api.stop(labId).catch(() => {}); // free the slot immediately on leave
-    };
-  }, [labId]);
-
-  return (
-    <div className="card">
-      <h2>{title}</h2>
-      <div className="row" style={{ marginBottom: 8 }}>
-        <span className="chip">{phase === 'ready' ? '● container running' : phase === 'queued' ? '… queued (at capacity)' : phase === 'error' ? '✗ failed to start' : '… spawning container'}</span>
-        <button onClick={() => setShowHint((h) => !h)}>hint</button>
-      </div>
-      {showHint && <ul className="muted">{hints.map((h, i) => <li key={i} className="mono" style={{ wordBreak: 'break-all' }}>{L(h, locale)}</li>)}</ul>}
-      <div ref={mountRef} style={{ height: 320, background: '#0b0f14', borderRadius: 8, border: '1px solid var(--border)', padding: 6 }} />
-      {phase === 'error' && <p className="result-bad">Could not start the container — is the Docker daemon reachable? (Tier-3 needs it.)</p>}
     </div>
   );
 }
