@@ -4,7 +4,7 @@ import {
   ChevronRight, Zap, ArrowLeft, Settings as SettingsIcon, HelpCircle, ShieldEllipsis,
 } from 'lucide-react';
 import { api, type AuthedUser, type CatalogueEntry, type Locale } from './api/client';
-import { labIcon } from './labIcons';
+import { labIcon, labGrad } from './labIcons';
 import { L, LanguageContext, useLang, useT } from './i18n';
 import { Login } from './components/Login';
 import { AccessibilityFooter } from './components/AccessibilityFooter';
@@ -171,14 +171,28 @@ function LabView({ entry, onBack }: { entry: CatalogueEntry; onBack: () => void 
   );
 }
 
+function LabGlyph({ id, module, tier, size = 52 }: { id: string; module: 'appsec' | 'awareness'; tier: number; size?: number }) {
+  const Icon = labIcon(id, module, tier);
+  const [from, to] = labGrad(id, module, tier);
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: size * 0.29, flexShrink: 0,
+      background: `linear-gradient(145deg, ${from}, ${to})`,
+      display: 'grid', placeItems: 'center',
+      boxShadow: `0 8px 18px -6px ${from}88, inset 0 1.5px 0 rgba(255,255,255,.45), inset 0 -3px 8px rgba(0,0,0,.14)`,
+    }}>
+      <Icon size={size * 0.5} color="#fff" strokeWidth={2.1} style={{ filter: 'drop-shadow(0 1px 1.5px rgba(0,0,0,.28))' }} />
+    </div>
+  );
+}
+
 function LabCard({ c, onOpen }: { c: CatalogueEntry; onOpen: (c: CatalogueEntry) => void }) {
   const { locale } = useLang();
   const meta = tierMeta(c.executionTier);
-  const Icon = labIcon(c.id, c.module, c.executionTier);
   return (
     <button className="lab-card" onClick={() => onOpen(c)}>
       <div className="row" style={{ gap: 18, flexWrap: 'nowrap' }}>
-        <div className="ico"><Icon size={26} /></div>
+        <LabGlyph id={c.id} module={c.module} tier={c.executionTier} />
         <div>
           <div className="row" style={{ gap: 10 }}>
             <span className="chip">{c.category}</span>
