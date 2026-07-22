@@ -1,10 +1,13 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, lazy, Suspense, type ReactNode } from 'react';
 import { FlaskConical, ShieldAlert, AlertTriangle, CheckCircle2, ClipboardCheck, ChevronRight } from 'lucide-react';
 import { api, ApiError, type LocalizedString } from '../api/client';
 import { L, useLang, useT } from '../i18n';
 import { Quiz, type QuizQuestion } from '../components/Quiz';
-import { LabWorkspace } from './workspace/LabWorkspace';
 import type { Mission } from './workspace/Missions';
+
+// The immersive workspace (windowed desktop + xterm.js) is only needed once a learner
+// hits "Go to Lab", so it's a lazy chunk — keeps xterm out of the initial bundle.
+const LabWorkspace = lazy(() => import('./workspace/LabWorkspace').then((m) => ({ default: m.LabWorkspace })));
 
 interface LifecycleSection {
   id: string; type: 'content' | 'objectives' | 'interactive' | 'code';
@@ -52,14 +55,16 @@ export function AppSecLab({ labId }: { labId: string }) {
   // ── LAB MODE — the immersive "Kali-style" workspace ──
   if (mode === 'lab' && labSection) {
     return (
-      <LabWorkspace
-        labId={labId}
-        title={L(m.title, locale)}
-        tier={m.executionTier}
-        widget={m.executionTier === 3 ? null : <LabWidget section={labSection} />}
-        missions={missions}
-        onExit={() => setMode('lesson')}
-      />
+      <Suspense fallback={<div style={{ position: 'fixed', inset: 0, background: '#0b1220', color: '#93a4c3', display: 'grid', placeItems: 'center', zIndex: 36, font: '600 14px system-ui' }}>Loading lab workspace…</div>}>
+        <LabWorkspace
+          labId={labId}
+          title={L(m.title, locale)}
+          tier={m.executionTier}
+          widget={m.executionTier === 3 ? null : <LabWidget section={labSection} />}
+          missions={missions}
+          onExit={() => setMode('lesson')}
+        />
+      </Suspense>
     );
   }
 
