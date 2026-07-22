@@ -13,8 +13,9 @@ import { AppSecLab } from './labs/AppSecLab';
 import { ScenarioEngine } from './engine/ScenarioEngine';
 import { Admin } from './admin/Admin';
 import { Settings } from './components/Settings';
+import { Support } from './components/Support';
 
-type View = 'dashboard' | 'appsec' | 'awareness' | 'profile' | 'settings' | 'admin';
+type View = 'dashboard' | 'appsec' | 'awareness' | 'profile' | 'settings' | 'admin' | 'support';
 const ADMIN_PERMS = ['user:manage', 'cohort:assign', 'module:edit'];
 
 export function App() {
@@ -126,7 +127,7 @@ function Shell({ user, onLogout, onUser }: { user: AuthedUser; onLogout: () => v
           </nav>
           <div style={{ padding: 18, borderTop: '1px solid rgba(255,255,255,.12)', position: 'relative' }}>
             <button className={`nav-item ${view === 'settings' && !active ? 'active' : ''}`} style={{ fontSize: 10 }} onClick={() => goto('settings')}><SettingsIcon size={15} /> Settings</button>
-            <button className="nav-item" style={{ fontSize: 10 }}><HelpCircle size={15} /> Support</button>
+            <button className={`nav-item ${view === 'support' && !active ? 'active' : ''}`} style={{ fontSize: 10 }} onClick={() => goto('support')}><HelpCircle size={15} /> Support</button>
           </div>
         </aside>
 
@@ -145,6 +146,8 @@ function Shell({ user, onLogout, onUser }: { user: AuthedUser; onLogout: () => v
               <Admin user={user} />
             ) : view === 'settings' ? (
               <Settings user={user} onUser={onUser} />
+            ) : view === 'support' ? (
+              <Support />
             ) : (
               <Profile user={user} onUser={onUser} />
             )}
