@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   LayoutDashboard, Terminal, ShieldAlert, Award, ShieldCheck, Bell, Menu, LogOut,
-  ChevronRight, Zap, ArrowLeft, Lock, Settings, HelpCircle,
+  ChevronRight, Zap, ArrowLeft, Lock, Settings as SettingsIcon, HelpCircle, ShieldEllipsis,
 } from 'lucide-react';
 import { api, type AuthedUser, type CatalogueEntry, type Locale } from './api/client';
 import { L, LanguageContext, useLang, useT } from './i18n';
@@ -11,8 +11,11 @@ import { SpinLoader } from './components/SpinLoader';
 import { MentorWidget } from './components/MentorWidget';
 import { AppSecLab } from './labs/AppSecLab';
 import { ScenarioEngine } from './engine/ScenarioEngine';
+import { Admin } from './admin/Admin';
+import { Settings } from './components/Settings';
 
-type View = 'dashboard' | 'appsec' | 'awareness' | 'profile';
+type View = 'dashboard' | 'appsec' | 'awareness' | 'profile' | 'settings' | 'admin';
+const ADMIN_PERMS = ['user:manage', 'cohort:assign', 'module:edit'];
 
 export function App() {
   const [locale, setLocale] = useState<Locale>('en');
@@ -29,7 +32,7 @@ export function App() {
   return (
     <LanguageContext.Provider value={ctx}>
       {user
-        ? <Shell user={user} onLogout={() => setUser(null)} />
+        ? <Shell user={user} onLogout={() => setUser(null)} onUser={setUser} />
         : <Login onLogin={(u) => { setUser(u); setLocale(u.locale); }} />}
     </LanguageContext.Provider>
   );
@@ -42,7 +45,7 @@ function tierMeta(tier: number) {
   return { label: 'Advanced', cls: 'diff-hard' };
 }
 
-function Shell({ user, onLogout }: { user: AuthedUser; onLogout: () => void }) {
+function Shell({ user, onLogout, onUser }: { user: AuthedUser; onLogout: () => void; onUser: (u: AuthedUser) => void }) {
   const { locale, setLocale } = useLang();
   const t = useT();
   const [catalogue, setCatalogue] = useState<CatalogueEntry[]>([]);
@@ -55,6 +58,7 @@ function Shell({ user, onLogout }: { user: AuthedUser; onLogout: () => void }) {
 
   const appsec = catalogue.filter((c) => c.module === 'appsec');
   const awareness = catalogue.filter((c) => c.module === 'awareness');
+  const isAdmin = ADMIN_PERMS.some((p) => (user.permissions ?? []).includes(p));
   async function logout() { await api.logout().catch(() => {}); onLogout(); }
   function goto(v: View) { setView(v); setActive(null); setMenuOpen(false); }
   function open(c: CatalogueEntry) { setActive(c); setMenuOpen(false); }
@@ -64,6 +68,7 @@ function Shell({ user, onLogout }: { user: AuthedUser; onLogout: () => void }) {
     { key: 'appsec', label: t('appsec'), icon: Terminal },
     { key: 'awareness', label: t('awareness'), icon: ShieldAlert },
     { key: 'profile', label: 'Profile', icon: Award },
+    ...(isAdmin ? [{ key: 'admin' as View, label: 'Admin', icon: ShieldEllipsis }] : []),
   ];
 
   return (
@@ -120,7 +125,7 @@ function Shell({ user, onLogout }: { user: AuthedUser; onLogout: () => void }) {
             ))}
           </nav>
           <div style={{ padding: 18, borderTop: '1px solid rgba(255,255,255,.12)', position: 'relative' }}>
-            <button className="nav-item" style={{ fontSize: 10 }}><Settings size={15} /> Settings</button>
+            <button className={`nav-item ${view === 'settings' && !active ? 'active' : ''}`} style={{ fontSize: 10 }} onClick={() => goto('settings')}><SettingsIcon size={15} /> Settings</button>
             <button className="nav-item" style={{ fontSize: 10 }}><HelpCircle size={15} /> Support</button>
           </div>
         </aside>
@@ -136,8 +141,12 @@ function Shell({ user, onLogout }: { user: AuthedUser; onLogout: () => void }) {
               <Catalogue title={t('appsec')} subtitle="On-demand vulnerable targets for hands-on offensive testing." labs={appsec} onOpen={open} />
             ) : view === 'awareness' ? (
               <Catalogue title={t('awareness')} subtitle="Branching fraud-recognition scenarios — UPI, digital arrest, phishing & more." labs={awareness} onOpen={open} />
+            ) : view === 'admin' && isAdmin ? (
+              <Admin user={user} />
+            ) : view === 'settings' ? (
+              <Settings user={user} onUser={onUser} />
             ) : (
-              <Profile user={user} />
+              <Profile user={user} onUser={onUser} />
             )}
           </div>
         </main>
@@ -254,7 +263,20 @@ function Dashboard({ user, catalogue, onOpen, onModule }: {
   );
 }
 
-function Profile({ user }: { user: AuthedUser }) {
+function Profile({ user, onUser }: { user: AuthedUser; onUser: (u: AuthedUser) => void }) {
+  const [name, setName] = useState(user.displayName);
+  const [msg, setMsg] = useState('');
+  const dirty = name.trim() !== user.displayName && name.trim().length > 0;
+
+  async function save() {
+    setMsg('');
+    try {
+      const r = await api.updateProfile({ displayName: name.trim() });
+      onUser({ ...user, displayName: r.displayName });
+      setMsg('Saved');
+    } catch (e) { setMsg((e as Error).message); }
+  }
+
   return (
     <div>
       <h1 style={{ fontSize: 34, margin: '0 0 18px' }}>Profile</h1>
@@ -270,6 +292,18 @@ function Profile({ user }: { user: AuthedUser }) {
           </div>
         </div>
       </div>
+
+      <div className="card">
+        <h2 style={{ marginTop: 0 }}>Edit profile</h2>
+        <label className="muted" style={{ fontSize: 11 }}>Display name</label>
+        <div className="row" style={{ marginTop: 4 }}>
+          <input value={name} onChange={(e) => setName(e.target.value)} style={{ flex: 1, maxWidth: 360 }} />
+          <button className="good" disabled={!dirty} onClick={save}>Save</button>
+          {msg && <span className="muted" style={{ fontSize: 12 }}>{msg}</span>}
+        </div>
+        <p className="muted" style={{ fontSize: 12, marginBottom: 0 }}>Change your password and language in <strong>Settings</strong>.</p>
+      </div>
+
       <div className="card">
         <h2>Certificates</h2>
         <p className="muted" style={{ marginTop: 0 }}>

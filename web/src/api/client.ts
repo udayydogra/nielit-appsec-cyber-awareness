@@ -134,7 +134,60 @@ export const api = {
   score: (id: string) => req<{ score: number; max_score: number }>(`/me/scores/${id}`),
   certificate: (id: string) => req<{ id: string; score: number; issuedAt: string }>(`/me/certificates/${id}`),
   mentorProvider: () => req<{ provider: string }>('/mentor/provider'),
+
+  // ── Self-service profile & password ──
+  updateProfile: (p: { displayName?: string; locale?: Locale }) =>
+    req<{ displayName: string; locale: Locale }>('/me/profile', { method: 'PATCH', body: JSON.stringify(p) }),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    req<{ ok: true }>('/me/password', { method: 'POST', body: JSON.stringify({ currentPassword, newPassword }) }),
+
+  // ── Admin console ──
+  admin: {
+    roles: () => req<string[]>('/admin/roles'),
+    users: () => req<AdminUser[]>('/admin/users'),
+    createUser: (u: { email: string; displayName: string; password: string; locale?: Locale; roles?: string[] }) =>
+      req<{ id: string }>('/admin/users', { method: 'POST', body: JSON.stringify(u) }),
+    updateUser: (id: string, p: { displayName?: string; locale?: Locale; roles?: string[] }) =>
+      req<{ ok: true }>(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify(p) }),
+    deactivateUser: (id: string) => req<{ ok: true }>(`/admin/users/${id}/deactivate`, { method: 'POST' }),
+    reactivateUser: (id: string) => req<{ ok: true }>(`/admin/users/${id}/reactivate`, { method: 'POST' }),
+    deleteUser: (id: string) => req<{ ok: true }>(`/admin/users/${id}`, { method: 'DELETE' }),
+
+    cohorts: () => req<AdminCohort[]>('/admin/cohorts'),
+    createCohort: (name: string) => req<{ id: string }>('/admin/cohorts', { method: 'POST', body: JSON.stringify({ name }) }),
+    addMember: (cohortId: string, userId: string, role: 'learner' | 'instructor' = 'learner') =>
+      req<{ ok: true }>(`/admin/cohorts/${cohortId}/members`, { method: 'POST', body: JSON.stringify({ userId, role }) }),
+    removeMember: (cohortId: string, userId: string) =>
+      req<{ ok: true }>(`/admin/cohorts/${cohortId}/members/${userId}`, { method: 'DELETE' }),
+    suspendCohort: (id: string) => req<{ ok: true }>(`/admin/cohorts/${id}/suspend`, { method: 'POST' }),
+    reactivateCohort: (id: string) => req<{ ok: true }>(`/admin/cohorts/${id}/reactivate`, { method: 'POST' }),
+    deleteCohort: (id: string) => req<{ ok: true }>(`/admin/cohorts/${id}`, { method: 'DELETE' }),
+
+    modules: () => req<ModuleRow[]>('/admin/modules'),
+    module: (id: string) => req<{ manifest: unknown; source: 'builtin' | 'authored' }>(`/admin/modules/${id}`),
+    createModule: (manifest: unknown) => req<{ id: string }>('/admin/modules', { method: 'POST', body: JSON.stringify(manifest) }),
+    updateModule: (id: string, manifest: unknown) => req<{ ok: true }>(`/admin/modules/${id}`, { method: 'PUT', body: JSON.stringify(manifest) }),
+    moduleSettings: (id: string, s: { enabled?: boolean; sortOrder?: number }) =>
+      req<{ ok: true }>(`/admin/modules/${id}/settings`, { method: 'PATCH', body: JSON.stringify(s) }),
+    deleteModule: (id: string) => req<{ ok: true }>(`/admin/modules/${id}`, { method: 'DELETE' }),
+  },
 };
+
+export interface AdminUser {
+  id: string; email: string; displayName: string; locale: Locale;
+  status: 'active' | 'deactivated'; createdAt: string; roles: string[]; cohorts: string[];
+}
+export interface CohortMember {
+  userId: string; displayName: string; email: string; role: 'learner' | 'instructor'; status: 'active' | 'deactivated';
+}
+export interface AdminCohort {
+  id: string; name: string; status: 'active' | 'suspended'; createdAt: string; members: CohortMember[];
+}
+export interface ModuleRow {
+  id: string; module: 'appsec' | 'awareness'; executionTier: 0 | 1 | 2 | 3;
+  category?: string; title: LocalizedString; summary: LocalizedString;
+  enabled: boolean; sortOrder: number; source: 'builtin' | 'authored';
+}
 
 // Mentor SSE — streams tokens. Returns an async iterator of text chunks.
 export async function* mentorAsk(labId: string, question: string, locale: Locale): AsyncGenerator<string> {
