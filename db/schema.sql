@@ -8,12 +8,14 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;   -- gen_random_uuid()
 
 -- ── Identity ──────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS users (
-  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email         TEXT NOT NULL UNIQUE,
-  password_hash TEXT NOT NULL,              -- bcrypt; NEVER plaintext
-  display_name  TEXT NOT NULL,
-  locale        TEXT NOT NULL DEFAULT 'en', -- 'en' | 'hi'
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email          TEXT NOT NULL UNIQUE,
+  password_hash  TEXT NOT NULL,              -- bcrypt; NEVER plaintext
+  display_name   TEXT NOT NULL,
+  locale         TEXT NOT NULL DEFAULT 'en', -- 'en' | 'hi'
+  status         TEXT NOT NULL DEFAULT 'active', -- active | deactivated
+  deactivated_at TIMESTAMPTZ,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- ── RBAC ── roles are additive; permissions live in a table so grants are data ─
@@ -41,9 +43,29 @@ CREATE TABLE IF NOT EXISTS user_roles (
 
 -- ── Cohorts ── the NIELIT batch = the scope boundary object for instructors ────
 CREATE TABLE IF NOT EXISTS cohorts (
-  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name       TEXT NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name         TEXT NOT NULL,
+  status       TEXT NOT NULL DEFAULT 'active', -- active | suspended (course complete)
+  suspended_at TIMESTAMPTZ,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ── Admin-authored modules ── built-ins stay as JSON files; these live in the DB
+CREATE TABLE IF NOT EXISTS modules (
+  id          TEXT PRIMARY KEY,
+  module      TEXT NOT NULL,                 -- 'appsec' | 'awareness'
+  manifest    JSONB NOT NULL,                -- the full unified manifest
+  created_by  UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ── Visibility / ordering overlay for ANY module id (built-in or authored) ─────
+CREATE TABLE IF NOT EXISTS module_settings (
+  module_id   TEXT PRIMARY KEY,
+  enabled     BOOLEAN NOT NULL DEFAULT true,
+  sort_order  INT NOT NULL DEFAULT 100,
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- learners belong to cohorts; instructors are assigned to cohorts they may scope over
