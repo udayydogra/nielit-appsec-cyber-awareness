@@ -37,7 +37,11 @@ services:
           memory: 64m
 
   lab-manager:
-    build: ./lab-manager
+    build:
+      context: ./lab-manager
+      # node-pty compiles a native addon and node-gyp must fetch Node headers — the
+      # default build sandbox has no egress here, so build on the host network.
+      network: host
     env_file: .env
     environment:
       PGHOST: postgres

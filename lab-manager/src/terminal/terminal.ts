@@ -1,10 +1,11 @@
 // Browser-terminal transport: xterm.js ↔ WebSocket ↔ `docker exec`. The WS upgrade
 // is authenticated from the SAME signed session cookie (never a client header), and
 // authorised by container OWNERSHIP — a student cannot attach to another student's
-// Tier-3 container (infra-level IDOR). We use `docker exec -i sh` (no pty; the
-// client does line editing) so no native pty dependency is needed.
+// Tier-3 container (infra-level IDOR). We allocate a real pty (node-pty) and run
+// `docker exec -it`, so the in-container shell is fully interactive: Tab-completion,
+// history, arrow keys and Ctrl-C are handled by the shell itself, not faked client-side.
 import type { Server } from 'node:http';
-import { spawn } from 'node:child_process';
+import * as pty from 'node-pty';
 import { WebSocketServer, WebSocket } from 'ws';
 import jwt from 'jsonwebtoken';
 import { config } from '../config.js';
@@ -58,20 +59,30 @@ export function attachTerminal(server: Server): void {
 }
 
 function bridge(ws: WebSocket, containerId: string, userId: string, labId: string): void {
-  // Interactive shell inside the already-hardened container.
-  const proc = spawn('docker', ['exec', '-i', containerId, '/bin/sh'], { stdio: ['pipe', 'pipe', 'pipe'] });
+  // A real pty around `docker exec -it` → the container's shell runs interactively.
+  const proc = pty.spawn('docker', ['exec', '-it', containerId, '/bin/sh'], {
+    name: 'xterm-color',
+    cols: 80,
+    rows: 24,
+    cwd: process.cwd(),
+    env: process.env as Record<string, string>,
+  });
   emit({ userId, labId, type: 'lab_started', outcome: 'neutral', payload: { terminal: true } }).catch(() => {});
 
-  proc.stdout.on('data', (d) => ws.readyState === WebSocket.OPEN && ws.send(d.toString()));
-  proc.stderr.on('data', (d) => ws.readyState === WebSocket.OPEN && ws.send(d.toString()));
-  proc.on('exit', () => ws.readyState === WebSocket.OPEN && ws.close());
+  const onData = proc.onData((d) => ws.readyState === WebSocket.OPEN && ws.send(d));
+  const onExit = proc.onExit(() => ws.readyState === WebSocket.OPEN && ws.close());
 
+  // Client → server is JSON-framed: {i:"keystrokes"} for input, {r:[cols,rows]} to resize.
   ws.on('message', (data) => {
-    if (proc.stdin.writable) proc.stdin.write(data.toString());
+    let msg: { i?: string; r?: [number, number] };
+    try { msg = JSON.parse(data.toString()); } catch { return; }
+    if (typeof msg.i === 'string') proc.write(msg.i);
+    else if (Array.isArray(msg.r)) { try { proc.resize(msg.r[0], msg.r[1]); } catch { /* not ready */ } }
   });
-  ws.on('close', () => { try { proc.stdin.end(); proc.kill('SIGKILL'); } catch { /* gone */ } });
-  ws.on('error', () => { try { proc.kill('SIGKILL'); } catch { /* gone */ } });
+  const cleanup = () => { try { onData.dispose(); onExit.dispose(); proc.kill(); } catch { /* gone */ } };
+  ws.on('close', cleanup);
+  ws.on('error', cleanup);
 
-  // Greet with the challenge README so the terminal isn't a blank box.
+  // Greet with a hint so the terminal isn't a blank box; the shell prompt follows.
   ws.send('\x1b[36m# connected to your ephemeral container — try:  cat /challenge/README\x1b[0m\r\n');
 }
