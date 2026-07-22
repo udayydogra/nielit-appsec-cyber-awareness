@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   LayoutDashboard, Terminal, ShieldAlert, Award, ShieldCheck, Bell, Menu, LogOut,
   ChevronRight, Zap, ArrowLeft, Settings as SettingsIcon, HelpCircle, ShieldEllipsis,
+  PanelLeftClose, PanelLeftOpen,
 } from 'lucide-react';
 import { api, type AuthedUser, type CatalogueEntry, type Locale } from './api/client';
 import { labIcon, labGrad } from './labIcons';
@@ -55,6 +56,8 @@ function Shell({ user, onLogout, onUser }: { user: AuthedUser; onLogout: () => v
   const [active, setActive] = useState<CatalogueEntry | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem('sbCollapsed') === '1');
+  const toggleSidebar = () => setCollapsed((c) => { localStorage.setItem('sbCollapsed', c ? '0' : '1'); return !c; });
 
   useEffect(() => { api.catalogue().then(setCatalogue).catch(() => {}); }, []);
 
@@ -78,6 +81,9 @@ function Shell({ user, onLogout, onUser }: { user: AuthedUser; onLogout: () => v
       {/* Single merged header: NIELIT branding (left) + app controls (right). */}
       <header className="mainheader">
         <button className="icon-btn lg-hide" onClick={() => setMenuOpen(true)}><Menu size={18} /></button>
+        <button className="icon-btn sb-toggle" title={collapsed ? 'Show sidebar' : 'Hide sidebar'} aria-label={collapsed ? 'Show sidebar' : 'Hide sidebar'} onClick={toggleSidebar}>
+          {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+        </button>
         <div className="mh-brand">
           <div className="brand-lockup">
             <img src="/brand/emblem.svg" alt="National Emblem of India" style={{ height: 34, width: 'auto' }} />
@@ -111,7 +117,7 @@ function Shell({ user, onLogout, onUser }: { user: AuthedUser; onLogout: () => v
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
         {menuOpen && <div onClick={() => setMenuOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(2,6,23,.5)', zIndex: 30 }} />}
-        <aside className="sidebar" data-open={menuOpen}>
+        <aside className="sidebar" data-open={menuOpen} data-collapsed={collapsed}>
           <div className="dots bg-dot-pattern" />
           <div className="sidebar-brand">
             <div className="logo" style={{ padding: '5px 9px' }}>
@@ -176,7 +182,7 @@ function LabGlyph({ id, module, tier, size = 52 }: { id: string; module: 'appsec
   const [from, to] = labGrad(id, module, tier);
   return (
     <div style={{
-      width: size, height: size, borderRadius: size * 0.29, flexShrink: 0,
+      width: size, height: size, borderRadius: size * 0.23, flexShrink: 0,
       background: `linear-gradient(145deg, ${from}, ${to})`,
       display: 'grid', placeItems: 'center',
       boxShadow: `0 8px 18px -6px ${from}88, inset 0 1.5px 0 rgba(255,255,255,.45), inset 0 -3px 8px rgba(0,0,0,.14)`,
