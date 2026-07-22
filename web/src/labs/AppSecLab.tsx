@@ -1,10 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
+import { FlaskConical, ShieldAlert, AlertTriangle, CheckCircle2, ClipboardCheck, ChevronRight } from 'lucide-react';
 import { api, ApiError, type LocalizedString } from '../api/client';
 import { L, useLang, useT } from '../i18n';
 import { Quiz, type QuizQuestion } from '../components/Quiz';
+import { LabWorkspace } from './workspace/LabWorkspace';
+import type { Mission } from './workspace/Missions';
 
 interface LifecycleSection {
   id: string; type: 'content' | 'objectives' | 'interactive' | 'code';
@@ -17,28 +20,60 @@ interface AppSecManifest {
   owasp?: string[]; mitre?: string[]; cves?: string[];
   lifecycle?: LifecycleSection[]; quiz: QuizQuestion[];
   interviewQuestions?: LocalizedString[];
+  // ── new: education-first enrichment + guided missions (all optional) ──
+  impact?: LocalizedString;
+  commonMistakes?: LocalizedString[];
+  bestPractices?: LocalizedString[];
+  mitigation?: LocalizedString[];
+  missions?: Mission[];
 }
 
-// The executionTier lab renderer — walks the 17-step lifecycle, mounts the
-// interactive widget (here: the SQLi console), then the server-graded quiz.
+// Education-first renderer. LESSON mode is the primary experience (overview,
+// impact, root cause, secure vs vulnerable code, mistakes, best practices,
+// mitigation, knowledge check). "Go to Lab" launches the immersive LAB workspace
+// where the exploit widget / live container terminal lives, guided by missions.
 export function AppSecLab({ labId }: { labId: string }) {
   const { locale } = useLang();
   const t = useT();
   const [m, setM] = useState<AppSecManifest | null>(null);
+  const [mode, setMode] = useState<'lesson' | 'lab'>('lesson');
 
   useEffect(() => {
     let alive = true;
-    api.manifest<AppSecManifest>(labId).then((x) => {
-      if (!alive) return;
-      setM(x);
-      // Tier 0-2: start here (routing + telemetry). Tier 3: the terminal widget
-      // owns spawn/heartbeat/stop so we don't double-spawn the container.
-      if (x.executionTier <= 2) api.start(labId).catch(() => {});
-    });
+    setMode('lesson');
+    api.manifest<AppSecManifest>(labId).then((x) => { if (alive) setM(x); });
     return () => { alive = false; };
   }, [labId]);
 
   if (!m) return <div className="content"><p className="muted">Loading…</p></div>;
+
+  const lifecycle = m.lifecycle ?? [];
+  const labSection = lifecycle.find((s) => s.type === 'interactive');
+  const lessonSections = lifecycle.filter((s) => s.type !== 'interactive');
+  const missions = m.missions ?? defaultMissions(locale);
+
+  // ── LAB MODE — the immersive "Kali-style" workspace ──
+  if (mode === 'lab' && labSection) {
+    return (
+      <LabWorkspace
+        labId={labId}
+        title={L(m.title, locale)}
+        tier={m.executionTier}
+        widget={m.executionTier === 3 ? null : <LabWidget section={labSection} labId={labId} />}
+        missions={missions}
+        onExit={() => setMode('lesson')}
+      />
+    );
+  }
+
+  // ── LESSON MODE — the educational content is the primary experience ──
+  const list = (title: string, items: LocalizedString[] | undefined, icon: ReactNode, accent: string) =>
+    items && items.length ? (
+      <div className="card">
+        <h2 style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ color: accent }}>{icon}</span>{title}</h2>
+        <ul style={{ margin: 0, paddingLeft: 20 }}>{items.map((it, i) => <li key={i} style={{ marginBottom: 6 }}>{L(it, locale)}</li>)}</ul>
+      </div>
+    ) : null;
 
   return (
     <div>
@@ -54,7 +89,18 @@ export function AppSecLab({ labId }: { labId: string }) {
         </div>
       </div>
 
-      {m.lifecycle?.map((s) => <Section key={s.id} s={s} labId={labId} />)}
+      {m.impact && (
+        <div className="card">
+          <h2 style={{ display: 'flex', alignItems: 'center', gap: 8 }}><ShieldAlert size={18} color="var(--bad)" />{locale === 'hi' ? 'वास्तविक प्रभाव' : 'Real-world impact'}</h2>
+          <p style={{ margin: 0 }}>{L(m.impact, locale)}</p>
+        </div>
+      )}
+
+      {lessonSections.map((s) => <Section key={s.id} s={s} labId={labId} />)}
+
+      {list(locale === 'hi' ? 'सामान्य डेवलपर गलतियाँ' : 'Common developer mistakes', m.commonMistakes, <AlertTriangle size={18} />, 'var(--warn)')}
+      {list(locale === 'hi' ? 'सर्वोत्तम अभ्यास' : 'Best practices', m.bestPractices, <CheckCircle2 size={18} />, 'var(--good)')}
+      {list(locale === 'hi' ? 'शमन चेकलिस्ट' : 'Mitigation checklist', m.mitigation, <ClipboardCheck size={18} />, 'var(--accent)')}
 
       <Quiz labId={labId} questions={m.quiz} />
 
@@ -64,54 +110,63 @@ export function AppSecLab({ labId }: { labId: string }) {
           <ul>{m.interviewQuestions.map((q, i) => <li key={i} className="muted">{L(q, locale)}</li>)}</ul>
         </div>
       )}
+
+      {labSection && (
+        <div className="card" style={{ textAlign: 'center', background: 'linear-gradient(120deg, hsl(222,47%,12%), #0b1220)', borderColor: 'transparent', color: '#fff', padding: '28px' }}>
+          <FlaskConical size={30} style={{ color: '#60a5fa' }} />
+          <h2 style={{ color: '#fff', margin: '10px 0 4px' }}>{locale === 'hi' ? 'अब अभ्यास करें' : 'Ready to practise?'}</h2>
+          <p style={{ opacity: .8, maxWidth: 520, margin: '0 auto 16px' }}>
+            {m.executionTier === 3
+              ? (locale === 'hi' ? 'आपका अपना पृथक कंटेनर एक असली टर्मिनल के साथ खुलेगा। मिशन पूरे करें।' : 'Launch your own isolated container with a real terminal. Complete the missions — the answer isn’t handed to you.')
+              : (locale === 'hi' ? 'एक इमर्सिव लैब वर्कस्पेस में असली शोषण करें। मिशन पूरे करें।' : 'Run the real exploit in an immersive lab workspace and complete the guided missions.')}
+          </p>
+          <button className="primary" style={{ fontSize: 14, padding: '14px 30px', letterSpacing: '.14em' }} onClick={() => setMode('lab')}>
+            {locale === 'hi' ? 'लैब में जाएँ' : 'Go to Lab'} <ChevronRight size={16} style={{ verticalAlign: 'middle' }} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
+// Generic guided objectives for any exploit lab that doesn't ship its own.
+function defaultMissions(_locale: 'en' | 'hi'): Mission[] {
+  return [
+    { id: 'recon', title: { en: 'Understand the target & attack surface', hi: 'लक्ष्य और अटैक सरफेस समझें' }, hint: { en: 'Read the intro on the lesson page first.', hi: 'पहले पाठ पृष्ठ पर परिचय पढ़ें।' } },
+    { id: 'exploit', title: { en: 'Trigger the vulnerability', hi: 'भेद्यता ट्रिगर करें' }, hint: { en: 'Ask Sathi for a hint if stuck — it won’t spoil it.', hi: 'अटकें तो Sathi से संकेत माँगें।' }, signal: 'exploit' },
+    { id: 'extract', title: { en: 'Extract the sensitive data / flag', hi: 'संवेदनशील डेटा / फ्लैग निकालें' }, hint: { en: 'Look for a flag{...} or a secret you shouldn’t see.', hi: 'flag{...} या कोई रहस्य खोजें।' }, signal: 'flag' },
+    { id: 'fix', title: { en: 'Identify the correct fix', hi: 'सही फिक्स पहचानें' }, hint: { en: 'Review the secure-code section from the lesson.', hi: 'पाठ का सुरक्षित-कोड भाग देखें।' } },
+  ];
+}
+
+// Dispatches an interactive lifecycle section to its exploit console. Used by the
+// LAB workspace (Tier 1/2). Tier-3 uses the workspace's own container terminal.
+export function LabWidget({ section: s, labId }: { section: LifecycleSection; labId: string }) {
+  const { locale } = useLang();
+  const title = L(s.title, locale);
+  const hints = s.hints ?? [];
+  switch (s.widget) {
+    case 'sqli-console': return <SqliConsole title={title} hints={hints} />;
+    case 'idor-console': return <IdorConsole title={title} hints={hints} />;
+    case 'xss-console': return <XssConsole title={title} hints={hints} />;
+    case 'csrf-console': return <CsrfConsole title={title} hints={hints} />;
+    case 'auth-console': return <AuthConsole title={title} hints={hints} />;
+    case 'session-console': return <SessionConsole title={title} hints={hints} />;
+    case 'bola-console': return <BolaConsole title={title} hints={hints} />;
+    case 'bizlogic-console': return <BizLogicConsole title={title} hints={hints} />;
+    case 'race-console': return <RaceConsole title={title} hints={hints} />;
+    case 'api-console': return <ApiConsole title={title} hints={hints} />;
+    case 'llm-console': return <LlmConsole title={title} hints={hints} />;
+    case 'fileupload-console': return <FileUploadConsole title={title} hints={hints} />;
+    case 'cloud-console': return <CloudConsole title={title} hints={hints} />;
+    case 'terminal': return <TerminalConsole labId={labId} title={title} hints={hints} />;
+    default: return null;
+  }
+}
+
 function Section({ s, labId }: { s: LifecycleSection; labId: string }) {
   const { locale } = useLang();
-  if (s.type === 'interactive' && s.widget === 'sqli-console') {
-    return <SqliConsole title={L(s.title, locale)} hints={s.hints ?? []} />;
-  }
-  if (s.type === 'interactive' && s.widget === 'idor-console') {
-    return <IdorConsole title={L(s.title, locale)} hints={s.hints ?? []} />;
-  }
-  if (s.type === 'interactive' && s.widget === 'xss-console') {
-    return <XssConsole title={L(s.title, locale)} hints={s.hints ?? []} />;
-  }
-  if (s.type === 'interactive' && s.widget === 'csrf-console') {
-    return <CsrfConsole title={L(s.title, locale)} hints={s.hints ?? []} />;
-  }
-  if (s.type === 'interactive' && s.widget === 'auth-console') {
-    return <AuthConsole title={L(s.title, locale)} hints={s.hints ?? []} />;
-  }
-  if (s.type === 'interactive' && s.widget === 'session-console') {
-    return <SessionConsole title={L(s.title, locale)} hints={s.hints ?? []} />;
-  }
-  if (s.type === 'interactive' && s.widget === 'bola-console') {
-    return <BolaConsole title={L(s.title, locale)} hints={s.hints ?? []} />;
-  }
-  if (s.type === 'interactive' && s.widget === 'bizlogic-console') {
-    return <BizLogicConsole title={L(s.title, locale)} hints={s.hints ?? []} />;
-  }
-  if (s.type === 'interactive' && s.widget === 'race-console') {
-    return <RaceConsole title={L(s.title, locale)} hints={s.hints ?? []} />;
-  }
-  if (s.type === 'interactive' && s.widget === 'api-console') {
-    return <ApiConsole title={L(s.title, locale)} hints={s.hints ?? []} />;
-  }
-  if (s.type === 'interactive' && s.widget === 'llm-console') {
-    return <LlmConsole title={L(s.title, locale)} hints={s.hints ?? []} />;
-  }
-  if (s.type === 'interactive' && s.widget === 'fileupload-console') {
-    return <FileUploadConsole title={L(s.title, locale)} hints={s.hints ?? []} />;
-  }
-  if (s.type === 'interactive' && s.widget === 'terminal') {
-    return <TerminalConsole labId={labId} title={L(s.title, locale)} hints={s.hints ?? []} />;
-  }
-  if (s.type === 'interactive' && s.widget === 'cloud-console') {
-    return <CloudConsole title={L(s.title, locale)} hints={s.hints ?? []} />;
-  }
+  if (s.type === 'interactive') return <LabWidget section={s} labId={labId} />;
   return (
     <div className="card">
       <h2>{L(s.title, locale)}</h2>
@@ -146,7 +201,12 @@ function SqliConsole({ title, hints }: { title: string; hints: LocalizedString[]
   const [res, setRes] = useState<Awaited<ReturnType<typeof api.sqliLogin>> | null>(null);
   const [showHint, setShowHint] = useState(false);
 
-  async function run() { setRes(await api.sqliLogin(username, password)); }
+  async function run() {
+    const r = await api.sqliLogin(username, password);
+    setRes(r);
+    if (r.exploit) window.dispatchEvent(new CustomEvent('lab-signal', { detail: { labId: 'sqli', type: 'exploit', kind: r.exploit } }));
+    if (r.rows.some((x) => (x.secret_note ?? '').includes('flag{'))) window.dispatchEvent(new CustomEvent('lab-signal', { detail: { labId: 'sqli', type: 'flag' } }));
+  }
   async function reset() { await api.sqliReset(); setRes(null); }
 
   return (
