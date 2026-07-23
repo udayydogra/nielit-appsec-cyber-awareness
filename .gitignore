@@ -10,3 +10,6 @@ coverage/
 web/dist/
 lab-manager/dist/
 *.tsbuildinfo
+
+# editor lock files
+.~lock.*#
