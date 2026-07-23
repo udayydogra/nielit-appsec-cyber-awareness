@@ -60,7 +60,10 @@ export function attachTerminal(server: Server): void {
 
 function bridge(ws: WebSocket, containerId: string, userId: string, labId: string): void {
   // A real pty around `docker exec -it` → the container's shell runs interactively.
-  const proc = pty.spawn('docker', ['exec', '-it', containerId, '/bin/sh'], {
+  // Exec as root (-u 0) so students can `apt install` tools on their own box; host
+  // privilege-escalation is still blocked by cap-drop + no-new-privileges (+ gVisor
+  // in prod). Prefer bash where present, fall back to sh for the minimal images.
+  const proc = pty.spawn('docker', ['exec', '-it', '-u', '0', containerId, '/bin/sh', '-c', 'exec bash 2>/dev/null || exec sh'], {
     name: 'xterm-color',
     cols: 80,
     rows: 24,

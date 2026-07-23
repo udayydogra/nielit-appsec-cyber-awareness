@@ -57,12 +57,21 @@ export async function startContainer(
     `--memory=${config.containers.memoryMb}m`,
     `--memory-swap=${config.containers.memoryMb}m`,
     `--cpus=${config.containers.cpus}`,
-    '--read-only',
+    // Writable rootfs so `apt install` works (/tmp lives on it too — a separate tmpfs
+    // would eat the memory cap and OOM installs). Growth is bounded by the memory cap
+    // and the reaper (exit / 30-min max life wipes the container + its installs).
+    '--pids-limit=128',
+    // Drop ALL caps, then add back ONLY what dpkg/apt and ping need — no SYS_ADMIN,
+    // NET_ADMIN, SYS_MODULE, SYS_PTRACE, etc. With no-new-privileges this is a tight
+    // box in which the student can install tools but cannot escalate on the host.
     '--cap-drop=ALL',
-    '--pids-limit=64',
-    '--tmpfs', '/tmp:rw,size=16m,noexec',
-    '--network', 'none',                         // egress locked down by default
-    `--runtime=${config.containers.runtime}`,    // runsc (gVisor) for escape labs
+    '--cap-add=CHOWN', '--cap-add=DAC_OVERRIDE', '--cap-add=FOWNER',
+    '--cap-add=FSETID', '--cap-add=SETUID', '--cap-add=SETGID', '--cap-add=NET_RAW',
+    '--security-opt=no-new-privileges',
+    // Internal lab network: reaches ONLY the apt proxy, never the internet (egress
+    // to arbitrary hosts still fails — the "sandbox holds" lesson is preserved).
+    '--network', config.containers.network,
+    `--runtime=${config.containers.runtime}`,    // runsc (gVisor) in prod for host isolation
     '--label', `nielit.slot=${slot}`,
     '--label', `nielit.owner=${userId}`,
     image,

@@ -40,11 +40,15 @@ cp .env.example .env                 # pick Profile A (api) / B (off-VM ollama) 
 #   openssl rand -hex 32   → JWT_SECRET, CERT_SIGNING_SECRET
 # build the Tier-3 target images the lab-manager spawns (id → nielit/<id>:latest).
 # NOTE: brace ${tag} — bare $tag:latest triggers zsh's :l modifier and mis-tags.
+# --network=host: the images are Debian-based and apt-install a couple of tools at
+# BUILD time (the default build sandbox has no egress here).
 for pair in cmdi-python:command-injection ssrf:ssrf xxe:xxe \
             deserialization:deserialization path-traversal:path-traversal; do
-  docker build -t "nielit/${pair##*:}:latest" "lab-images/${pair%%:*}"
+  docker build --network=host -t "nielit/${pair##*:}:latest" "lab-images/${pair%%:*}"
 done
 docker compose up --build            # add --profile local-llm ONLY for Profile C
+# `docker compose up` also starts the apt-proxy (apt-cacher-ng) + the internal
+# `nielit-labnet`, which give Tier-3 lab boxes `apt install` with NO direct internet.
 # web:  http://localhost:8080
 # api:  http://localhost:4000/health
 ```

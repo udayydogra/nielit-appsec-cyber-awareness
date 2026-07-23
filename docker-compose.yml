@@ -75,6 +75,24 @@ services:
         limits:
           memory: 48m
 
+  # Caching APT proxy. Tier-3 lab containers reach ONLY this proxy (they sit on the
+  # `internal` labnet with no internet route), so students can `apt install` tools
+  # while direct egress to the internet stays blocked. The proxy itself is on the
+  # default network to fetch + cache upstream packages.
+  apt-proxy:
+    image: sameersbn/apt-cacher-ng:3.7.4-20220421
+    container_name: nielit-apt-proxy
+    restart: unless-stopped
+    networks:
+      - default
+      - labnet
+    volumes:
+      - aptcache:/var/cache/apt-cacher-ng
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
   # Profile C ONLY (in-VM last resort). Start with:  docker compose --profile local-llm up
   ollama:
     image: ollama/ollama:latest
@@ -86,6 +104,15 @@ services:
         limits:
           memory: 3g
 
+networks:
+  # Lab containers attach here. `internal: true` = NO route to the internet; the only
+  # thing reachable is the apt-proxy, so apt works but arbitrary egress does not.
+  labnet:
+    name: nielit-labnet
+    driver: bridge
+    internal: true
+
 volumes:
   pgdata:
   ollama:
+  aptcache:
