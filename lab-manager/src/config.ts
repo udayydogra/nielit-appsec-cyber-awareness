@@ -15,6 +15,8 @@ export const config = {
   certSigningSecret: str('CERT_SIGNING_SECRET', 'dev-only-change-me'),
   sessionCookieName: str('SESSION_COOKIE_NAME', 'nielit_sid'),
 
+  frontendOrigin: str('FRONTEND_ORIGIN', 'http://localhost:8080'),
+
   pg: {
     host: str('PGHOST', 'localhost'),
     port: num('PGPORT', 5432),
@@ -23,20 +25,46 @@ export const config = {
     database: str('PGDATABASE', 'nielit'),
   },
 
+  // Locked-down role used ONLY to run the deliberately-injectable lab query. It has
+  // no privileges on any application table, so an injection cannot escape the lab.
+  pgLab: {
+    user: str('PGUSER_LAB', 'nielit_lab'),
+    password: str('PGPASSWORD_LAB', ''),
+  },
+
   redisUrl: str('REDIS_URL', 'redis://localhost:6379'),
 
   containers: {
     maxConcurrent: num('MAX_CONCURRENT_CONTAINERS', 12),
-    memoryMb: num('CONTAINER_MEMORY_MB', 128),
+    memoryMb: num('CONTAINER_MEMORY_MB', 192),
     cpus: str('CONTAINER_CPUS', '0.5'),
     idleTimeoutSec: num('CONTAINER_IDLE_TIMEOUT_SEC', 360),
     maxLifetimeSec: num('CONTAINER_MAX_LIFETIME_SEC', 1800),
     runtime: str('CONTAINER_RUNTIME', 'runc'), // "runsc" for gVisor on escape labs
+    // Internal network reaching only the apt proxy (set to 'none' to fully isolate).
+    network: str('CONTAINER_NETWORK', 'nielit-labnet'),
   },
 
   rateLimits: {
+    loginPerMin: num('RATE_LOGIN_PER_MIN', 10),
     labStartPerMin: num('RATE_LAB_START_PER_MIN', 10),
     mentorPerMin: num('RATE_MENTOR_PER_MIN', 20),
+  },
+
+  // Bulk-import: how long an emailed temporary password stays valid. Requested at
+  // 8 minutes; keep it env-tunable because email delivery can exceed a tight window.
+  tempPasswordTtlMin: num('TEMP_PASSWORD_TTL_MIN', 8),
+
+  // Outbound email (nodemailer). If SMTP_HOST is unset, the mailer falls back to a
+  // no-send transport and the import endpoint returns the generated credentials so
+  // an admin can distribute them manually — offline-friendly, nothing is lost.
+  smtp: {
+    host: str('SMTP_HOST', ''),
+    port: num('SMTP_PORT', 587),
+    secure: str('SMTP_SECURE', 'false') === 'true', // true for port 465
+    user: str('SMTP_USER', ''),
+    pass: str('SMTP_PASS', ''),
+    from: str('SMTP_FROM', 'NIELIT Training <no-reply@nielit.gov.in>'),
   },
 
   mentor: {
@@ -55,3 +83,19 @@ export const config = {
 };
 
 export type Config = typeof config;
+
+// Fail fast in production if a signing secret was left at its dev default — an
+// unrotated secret means anyone with the source can forge sessions and certificates.
+const DEV_DEFAULT = 'dev-only-change-me';
+if (config.env === 'production') {
+  const weak: string[] = [];
+  if (config.jwtSecret === DEV_DEFAULT || config.jwtSecret.length < 24) weak.push('JWT_SECRET');
+  if (config.certSigningSecret === DEV_DEFAULT || config.certSigningSecret.length < 24) weak.push('CERT_SIGNING_SECRET');
+  if (!config.pgLab.password) weak.push('PGPASSWORD_LAB');
+  if (weak.length) {
+    throw new Error(
+      `[config] refusing to start in production with unset/weak secrets: ${weak.join(', ')}. ` +
+      `Set strong random values (e.g. \`openssl rand -hex 32\`).`,
+    );
+  }
+}

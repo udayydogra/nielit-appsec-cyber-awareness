@@ -8,15 +8,19 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;   -- gen_random_uuid()
 
 -- ── Identity ──────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS users (
-  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email          TEXT NOT NULL UNIQUE,
-  password_hash  TEXT NOT NULL,              -- bcrypt; NEVER plaintext
-  display_name   TEXT NOT NULL,
-  locale         TEXT NOT NULL DEFAULT 'en', -- 'en' | 'hi'
-  status         TEXT NOT NULL DEFAULT 'active', -- active | deactivated
-  deactivated_at TIMESTAMPTZ,
-  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email                TEXT NOT NULL UNIQUE,
+  username             TEXT,                       -- login handle (bulk-import "unique id"); login accepts email OR username
+  password_hash        TEXT NOT NULL,              -- bcrypt; NEVER plaintext
+  display_name         TEXT NOT NULL,
+  locale               TEXT NOT NULL DEFAULT 'en', -- 'en' | 'hi'
+  status               TEXT NOT NULL DEFAULT 'active', -- active | deactivated
+  deactivated_at       TIMESTAMPTZ,
+  password_expires_at  TIMESTAMPTZ,                -- NULL = never; set for emailed temp passwords
+  must_change_password BOOLEAN NOT NULL DEFAULT false,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users (lower(username)) WHERE username IS NOT NULL;
 
 -- ── RBAC ── roles are additive; permissions live in a table so grants are data ─
 CREATE TABLE IF NOT EXISTS roles (

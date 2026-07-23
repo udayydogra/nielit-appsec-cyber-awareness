@@ -1,7 +1,7 @@
 // Admin console API — user lifecycle, batches (cohorts), and module authoring.
 // Every route is permission-gated (deny-by-default) and every privileged write is
 // audited. Identity is always from the session, never the URL.
-import { Router } from 'express';
+import { Router, json } from 'express';
 import bcrypt from 'bcryptjs';
 import { query, one } from '../db.js';
 import { requireAuth } from '../auth/session.js';
@@ -11,6 +11,8 @@ import { audit } from '../authz/audit.js';
 import {
   listCatalogue, getEditable, createModule, updateModule, deleteModule, setSettings,
 } from '../modules/store.js';
+import { importUsers } from '../admin/bulkImport.js';
+import { mailEnabled } from '../mail/mailer.js';
 import type { LabManifest } from '../types.js';
 
 export const adminRouter = Router();
@@ -24,13 +26,42 @@ adminRouter.get('/roles', requireAuth, requirePermission('user:manage'), ah(asyn
   res.json(rows.rows.map((r) => r.name));
 }));
 
+// Whether outbound email is configured (so the UI can warn the admin to distribute
+// credentials manually when it isn't).
+adminRouter.get('/mail-status', requireAuth, requirePermission('user:manage'), (_req, res) => {
+  res.json({ mailConfigured: mailEnabled });
+});
+
+// ── Bulk import (CSV / Excel) ──────────────────────────────────────────────────
+// The file arrives base64-encoded in a JSON body (a few MB max — its own body limit,
+// larger than the 256kb app-wide default). Creates users, optionally into a batch,
+// generates temporary passwords, and emails credentials.
+adminRouter.post('/users/import', json({ limit: '8mb' }), requireAuth, requirePermission('user:manage'), ah(async (req, res) => {
+  const { filename, contentBase64, cohortName, cohortId, sendEmail } = req.body ?? {};
+  if (typeof filename !== 'string' || typeof contentBase64 !== 'string' || !contentBase64) {
+    return bad(res, 'filename and contentBase64 are required');
+  }
+  let buffer: Buffer;
+  try { buffer = Buffer.from(contentBase64, 'base64'); } catch { return bad(res, 'contentBase64 is not valid base64'); }
+  if (!buffer.length) return bad(res, 'file is empty');
+  if (buffer.length > 6 * 1024 * 1024) return bad(res, 'file too large (max 6 MB)');
+  try {
+    const summary = await importUsers(req.user!.id, { filename, buffer }, {
+      cohortName: typeof cohortName === 'string' ? cohortName : undefined,
+      cohortId: typeof cohortId === 'string' ? cohortId : undefined,
+      sendEmail: sendEmail !== false,
+    });
+    res.json(summary);
+  } catch (e) { return bad(res, (e as Error).message); }
+}));
+
 // ── Users ────────────────────────────────────────────────────────────────────
 adminRouter.get('/users', requireAuth, requirePermission('user:manage'), ah(async (_req, res) => {
   const rows = await query<{
-    id: string; email: string; display_name: string; locale: string;
+    id: string; email: string; username: string | null; display_name: string; locale: string;
     status: string; created_at: string; roles: string[]; cohorts: string[];
   }>(
-    `SELECT u.id, u.email, u.display_name, u.locale, u.status, u.created_at,
+    `SELECT u.id, u.email, u.username, u.display_name, u.locale, u.status, u.created_at,
             COALESCE(ARRAY_AGG(DISTINCT r.name) FILTER (WHERE r.name IS NOT NULL), '{}') AS roles,
             COALESCE(ARRAY_AGG(DISTINCT c.name) FILTER (WHERE c.name IS NOT NULL), '{}') AS cohorts
        FROM users u
@@ -42,7 +73,7 @@ adminRouter.get('/users', requireAuth, requirePermission('user:manage'), ah(asyn
       ORDER BY u.created_at DESC`,
   );
   res.json(rows.rows.map((u) => ({
-    id: u.id, email: u.email, displayName: u.display_name, locale: u.locale,
+    id: u.id, email: u.email, username: u.username, displayName: u.display_name, locale: u.locale,
     status: u.status, createdAt: u.created_at, roles: u.roles, cohorts: u.cohorts,
   })));
 }));
@@ -216,7 +247,18 @@ adminRouter.get('/modules/:id', requireAuth, requirePermission('module:edit'), a
   res.json(m);
 }));
 
+// A Tier-3 module spawns a container, so authoring one is a more privileged act than
+// authoring content (security review #7): require an admin-level permission for it.
+const tier3NeedsAdmin = (req: import('express').Request, res: import('express').Response): boolean => {
+  if (Number(req.body?.executionTier) === 3 && !req.user!.permissions.includes('user:manage')) {
+    res.status(403).json({ error: 'only administrators may author Tier-3 (container-backed) modules' });
+    return true;
+  }
+  return false;
+};
+
 adminRouter.post('/modules', requireAuth, requirePermission('module:edit'), ah(async (req, res) => {
+  if (tier3NeedsAdmin(req, res)) return;
   try {
     const created = await createModule(req.user!.id, req.body as LabManifest);
     res.status(201).json({ id: created.id });
@@ -224,6 +266,7 @@ adminRouter.post('/modules', requireAuth, requirePermission('module:edit'), ah(a
 }));
 
 adminRouter.put('/modules/:id', requireAuth, requirePermission('module:edit'), ah(async (req, res) => {
+  if (tier3NeedsAdmin(req, res)) return;
   try {
     await updateModule(req.user!.id, req.params.id, req.body as LabManifest);
     res.json({ ok: true });

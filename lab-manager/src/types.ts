@@ -114,8 +114,10 @@ export type EventType =
 export interface AuthedUser {
   id: string;
   email: string;
+  username?: string | null;
   displayName: string;
   locale: 'en' | 'hi';
   roles: string[];
   permissions: string[];
+  mustChangePassword?: boolean;
 }

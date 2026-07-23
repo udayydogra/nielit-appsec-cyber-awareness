@@ -3,7 +3,7 @@
 // query is DELIBERATELY injectable — that is the lab. Multi-tenancy is enforced by
 // pinning owner_id to the session user, so one student's exploit only reaches their
 // own seeded rows (the exploit is real; the blast radius is contained).
-import { query, pool } from '../db.js';
+import { query, pool, labPool } from '../db.js';
 import { emit } from '../telemetry/pipeline.js';
 
 const DEFAULT_ACCOUNTS = [
@@ -59,7 +59,7 @@ export async function sqliLogin(
   password: string,
 ): Promise<SqliResult> {
   // ⚠️ INTENTIONALLY VULNERABLE: username/password concatenated unescaped into the
-  // query against the per-user `accounts` view.
+  // query against the per-user `accounts` temp table.
   const injected = `SELECT username, role, secret_note FROM accounts ` +
     `WHERE username = '${username}' AND password = '${password}'`;
 
@@ -68,17 +68,30 @@ export async function sqliLogin(
     payload: { username, password }, outcome: 'neutral',
   });
 
-  const client = await pool.connect();
+  // Read THIS user's seeded rows on the PRIVILEGED pool — parameterised, safe.
+  const seed = await query<{ username: string; password: string; role: string; secret_note: string | null }>(
+    `SELECT username, password, role, secret_note FROM lab_sqli_accounts WHERE owner_id = $1`,
+    [userId],
+  );
+
+  // Run the DELIBERATELY-INJECTABLE query on the LOCKED-DOWN `nielit_lab` role, which
+  // has NO privileges on any application table. The auth-bypass tautology and
+  // `UNION SELECT ... FROM accounts` still work against the temp table (the lesson),
+  // but `UNION SELECT ... FROM users` / `quiz_keys` and any stacked write/DDL fail
+  // with "permission denied" — the injection is real, but sealed to this session's
+  // temp table. (Regression fix for the sandbox-escape found in the security review.)
+  const client = await labPool.connect();
   try {
     await client.query('BEGIN');
-    // Per-user tenant view, dropped at COMMIT. Populated via a PARAMETERIZED copy
-    // (the platform's own code never concatenates — only the lab target does).
     await client.query(
-      `CREATE TEMP TABLE accounts ON COMMIT DROP AS
-         SELECT username, password, role, secret_note
-           FROM lab_sqli_accounts WHERE owner_id = $1`,
-      [userId],
+      `CREATE TEMP TABLE accounts (username text, password text, role text, secret_note text) ON COMMIT DROP`,
     );
+    for (const a of seed.rows) {
+      await client.query(
+        `INSERT INTO accounts (username, password, role, secret_note) VALUES ($1, $2, $3, $4)`,
+        [a.username, a.password, a.role, a.secret_note],
+      );
+    }
     const r = await client.query<{ username: string; role: string; secret_note: string | null }>(injected);
     await client.query('COMMIT');
 

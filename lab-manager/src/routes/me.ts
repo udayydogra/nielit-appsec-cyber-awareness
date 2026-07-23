@@ -35,7 +35,11 @@ meRouter.post('/password', requireAuth, ah(async (req, res) => {
   const row = await one<{ password_hash: string }>(`SELECT password_hash FROM users WHERE id = $1`, [req.user!.id]);
   const ok = row ? await bcrypt.compare(String(currentPassword ?? ''), row.password_hash) : false;
   if (!ok) return res.status(403).json({ error: 'current password is incorrect' });
-  await query(`UPDATE users SET password_hash = $2 WHERE id = $1`, [req.user!.id, await bcrypt.hash(newPassword, 10)]);
+  // Setting a real password clears any temporary-password expiry and the change prompt.
+  await query(
+    `UPDATE users SET password_hash = $2, password_expires_at = NULL, must_change_password = false WHERE id = $1`,
+    [req.user!.id, await bcrypt.hash(newPassword, 10)],
+  );
   await audit(req.user!.id, 'user.password_change', req.user!.id, {});
   res.json({ ok: true });
 }));

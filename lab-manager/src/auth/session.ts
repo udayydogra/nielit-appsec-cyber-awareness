@@ -47,19 +47,24 @@ export async function sessionMiddleware(req: Request, _res: Response, next: Next
   if (!token) return next();
   try {
     const claims = jwt.verify(token, config.jwtSecret) as SessionClaims;
-    const row = await one<{ id: string; email: string; display_name: string; locale: string }>(
-      `SELECT id, email, display_name, locale FROM users WHERE id = $1`,
+    const row = await one<{ id: string; email: string; username: string | null; display_name: string; locale: string; status: string; must_change_password: boolean }>(
+      `SELECT id, email, username, display_name, locale, status, must_change_password FROM users WHERE id = $1`,
       [claims.sub],
     );
     if (!row) return next();
+    // A deactivated account's live token must not keep working (security review #3):
+    // enforce status on EVERY request, not only at login.
+    if (row.status === 'deactivated') return next();
     const { roles, permissions } = await loadRolesAndPermissions(row.id);
     req.user = {
       id: row.id,
       email: row.email,
+      username: row.username,
       displayName: row.display_name,
       locale: (row.locale === 'hi' ? 'hi' : 'en'),
       roles,
       permissions,
+      mustChangePassword: row.must_change_password,
     };
   } catch {
     // invalid/expired token → treated as anonymous

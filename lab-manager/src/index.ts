@@ -24,7 +24,11 @@ app.use(express.json({ limit: '256kb' }));
 app.use(cookieParser());
 app.use(
   cors({
-    origin: config.env === 'production' ? true : ['http://localhost:5173', 'http://localhost:8080'],
+    // Explicit allowlist even in production (security review #5): never reflect an
+    // arbitrary Origin while sending credentials.
+    origin: config.env === 'production'
+      ? [config.frontendOrigin]
+      : ['http://localhost:5173', 'http://localhost:8080', config.frontendOrigin],
     credentials: true,
   }),
 );
