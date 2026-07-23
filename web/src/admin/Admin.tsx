@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Users, Boxes, Layers, Plus, Ban, RotateCcw, Trash2, Pencil, ShieldCheck } from 'lucide-react';
-import { api, type AdminUser, type AdminCohort, type ModuleRow, type AuthedUser, type Locale } from '../api/client';
+import { useEffect, useRef, useState } from 'react';
+import { Users, Boxes, Layers, Plus, Ban, RotateCcw, Trash2, Pencil, ShieldCheck, Upload, Mail, AlertTriangle } from 'lucide-react';
+import { api, type AdminUser, type AdminCohort, type ModuleRow, type AuthedUser, type Locale, type ImportSummary } from '../api/client';
 import { L, useLang } from '../i18n';
 import { ModuleEditor } from './ModuleEditor';
 
@@ -88,18 +88,21 @@ function UsersTab({ me }: { me: AuthedUser }) {
         <Banner msg={err} kind="bad" /><Banner msg={ok} kind="good" />
       </div>
 
+      <ImportPanel onImported={load} />
+
       <div className="card" style={{ overflowX: 'auto' }}>
         <h2 style={{ marginTop: 0 }}>Users ({users.length})</h2>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ textAlign: 'left', color: 'var(--muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.08em' }}>
-              <th style={{ padding: '8px 6px' }}>Name</th><th>Email</th><th>Roles</th><th>Batches</th><th>Status</th><th style={{ textAlign: 'right' }}>Actions</th>
+              <th style={{ padding: '8px 6px' }}>Name</th><th>Username</th><th>Email</th><th>Roles</th><th>Batches</th><th>Status</th><th style={{ textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {users.map((u) => (
               <tr key={u.id} style={{ borderTop: '1px solid var(--border)' }}>
                 <td style={{ padding: '9px 6px', fontWeight: 700 }}>{u.displayName}</td>
+                <td className="muted" style={{ fontSize: 12 }}>{u.username || '—'}</td>
                 <td className="muted">{u.email}</td>
                 <td>{u.roles.map((r) => <span key={r} className="chip" style={{ marginRight: 4 }}>{r}</span>)}</td>
                 <td className="muted" style={{ fontSize: 12 }}>{u.cohorts.join(', ') || '—'}</td>
@@ -122,6 +125,115 @@ function UsersTab({ me }: { me: AuthedUser }) {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+// ── Bulk import from CSV / Excel ──────────────────────────────────────────────
+function ImportPanel({ onImported }: { onImported: () => void }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [cohorts, setCohorts] = useState<AdminCohort[]>([]);
+  const [cohortId, setCohortId] = useState('');   // '' = none, '__new' = create
+  const [cohortName, setCohortName] = useState('');
+  const [sendEmail, setSendEmail] = useState(true);
+  const [mailConfigured, setMailConfigured] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const [summary, setSummary] = useState<ImportSummary | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    api.admin.cohorts().then(setCohorts).catch(() => {});
+    api.admin.mailStatus().then((s) => setMailConfigured(s.mailConfigured)).catch(() => {});
+  }, []);
+
+  async function run() {
+    setErr(''); setSummary(null);
+    if (!file) { setErr('Choose a .csv or .xlsx file first'); return; }
+    setBusy(true);
+    try {
+      const buf = await file.arrayBuffer();
+      let bin = ''; const bytes = new Uint8Array(buf);
+      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      const contentBase64 = btoa(bin);
+      const res = await api.admin.importUsers({
+        filename: file.name, contentBase64, sendEmail,
+        cohortId: cohortId && cohortId !== '__new' ? cohortId : undefined,
+        cohortName: cohortId === '__new' ? cohortName.trim() : undefined,
+      });
+      setSummary(res);
+      if (inputRef.current) inputRef.current.value = '';
+      setFile(null);
+      onImported();
+    } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
+  }
+
+  return (
+    <div className="card">
+      <h2 style={{ marginTop: 0 }}><Upload size={16} style={{ verticalAlign: '-2px' }} /> Import users from CSV / Excel</h2>
+      <p className="muted" style={{ marginTop: 0, fontSize: 13 }}>
+        File columns: <b>email</b>, <b>name</b>, and a unique id (used as the login <b>username</b>). Each new user gets a
+        temporary password and — if email is configured — an invitation with their credentials.
+      </p>
+      {mailConfigured === false && (
+        <p className="result-bad" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <AlertTriangle size={15} /> Email is not configured (SMTP). Users will be created and their temporary passwords shown below so you can distribute them.
+        </p>
+      )}
+      <div className="grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, alignItems: 'center' }}>
+        <input ref={inputRef} type="file" accept=".csv,.xlsx,.xls,text/csv" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+        <select value={cohortId} onChange={(e) => setCohortId(e.target.value)}>
+          <option value="">— no batch —</option>
+          <option value="__new">+ create a new batch…</option>
+          {cohorts.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        {cohortId === '__new' && (
+          <input placeholder="new batch name" value={cohortName} onChange={(e) => setCohortName(e.target.value)} />
+        )}
+        <label className="row" style={{ gap: 8, fontSize: 13 }}>
+          <input type="checkbox" checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} style={{ width: 'auto' }} />
+          <Mail size={14} /> Email credentials to each user
+        </label>
+      </div>
+      <div className="row" style={{ marginTop: 12 }}>
+        <button className="good" onClick={run} disabled={busy}>{busy ? 'Importing…' : 'Import'}</button>
+      </div>
+      <Banner msg={err} kind="bad" />
+
+      {summary && (
+        <div style={{ marginTop: 14 }}>
+          <p style={{ margin: '0 0 8px' }}>
+            <b>{summary.created}</b> created · <b>{summary.skipped}</b> skipped · <b>{summary.errored}</b> errored
+            {summary.cohort && <> · added to batch <b>{summary.cohort.name}</b></>}
+            {sendEmail && <> · <b>{summary.emailsSent}</b> email(s) sent</>}
+          </p>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
+              <thead><tr style={{ textAlign: 'left', color: 'var(--muted)', fontSize: 11, textTransform: 'uppercase' }}>
+                <th style={{ padding: '6px' }}>Email</th><th>Username</th><th>Result</th><th>Temp password</th>
+              </tr></thead>
+              <tbody>
+                {summary.rows.map((r, i) => (
+                  <tr key={i} style={{ borderTop: '1px solid var(--border)' }}>
+                    <td style={{ padding: '6px' }}>{r.email}</td>
+                    <td className="muted">{r.username}</td>
+                    <td>
+                      <span className="chip" style={{ color: r.status === 'created' ? 'var(--good)' : r.status === 'error' ? 'var(--bad)' : 'var(--muted)' }}>{r.status}</span>
+                      {r.reason && <span className="muted" style={{ fontSize: 11, marginLeft: 6 }}>{r.reason}</span>}
+                    </td>
+                    <td className="mono" style={{ fontFamily: 'monospace' }}>{r.tempPassword ?? (r.emailed ? '✉ emailed' : '')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {summary.rows.some((r) => r.tempPassword) && (
+            <p className="muted" style={{ fontSize: 12, marginBottom: 0 }}>
+              Temporary passwords are shown only here (not stored in plaintext). Distribute them now — they expire shortly.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

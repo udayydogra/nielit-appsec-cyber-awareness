@@ -6,8 +6,20 @@ export interface LocalizedString { en: string; hi: string; }
 export type Locale = 'en' | 'hi';
 
 export interface AuthedUser {
-  id: string; email: string; displayName: string; locale: Locale;
-  roles: string[]; permissions: string[];
+  id: string; email: string; username?: string | null; displayName: string; locale: Locale;
+  roles: string[]; permissions: string[]; mustChangePassword?: boolean;
+}
+
+export interface ImportResultRow {
+  email: string; username: string;
+  status: 'created' | 'skipped' | 'error';
+  reason?: string; emailed?: boolean; tempPassword?: string;
+}
+export interface ImportSummary {
+  created: number; skipped: number; errored: number;
+  emailsSent: number; mailConfigured: boolean;
+  cohort?: { id: string; name: string };
+  rows: ImportResultRow[];
 }
 
 export interface CatalogueEntry {
@@ -145,6 +157,9 @@ export const api = {
   admin: {
     roles: () => req<string[]>('/admin/roles'),
     users: () => req<AdminUser[]>('/admin/users'),
+    mailStatus: () => req<{ mailConfigured: boolean }>('/admin/mail-status'),
+    importUsers: (p: { filename: string; contentBase64: string; cohortName?: string; cohortId?: string; sendEmail?: boolean }) =>
+      req<ImportSummary>('/admin/users/import', { method: 'POST', body: JSON.stringify(p) }),
     createUser: (u: { email: string; displayName: string; password: string; locale?: Locale; roles?: string[] }) =>
       req<{ id: string }>('/admin/users', { method: 'POST', body: JSON.stringify(u) }),
     updateUser: (id: string, p: { displayName?: string; locale?: Locale; roles?: string[] }) =>
@@ -174,7 +189,7 @@ export const api = {
 };
 
 export interface AdminUser {
-  id: string; email: string; displayName: string; locale: Locale;
+  id: string; email: string; username?: string | null; displayName: string; locale: Locale;
   status: 'active' | 'deactivated'; createdAt: string; roles: string[]; cohorts: string[];
 }
 export interface CohortMember {

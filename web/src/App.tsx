@@ -133,14 +133,31 @@ function Shell({ user, onLogout, onUser }: { user: AuthedUser; onLogout: () => v
             ))}
           </nav>
           <div style={{ padding: 18, borderTop: '1px solid rgba(255,255,255,.12)', position: 'relative' }}>
+            <div className="sidebar-user lg-hide" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(255,255,255,.15)', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 800, fontSize: 12 }}>
+                {user.displayName.slice(0, 2).toUpperCase()}
+              </div>
+              <div style={{ lineHeight: 1.2, minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.displayName}</div>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</div>
+              </div>
+            </div>
             <button className={`nav-item ${view === 'settings' && !active ? 'active' : ''}`} style={{ fontSize: 10 }} onClick={() => goto('settings')}><SettingsIcon size={15} /> Settings</button>
             <button className={`nav-item ${view === 'support' && !active ? 'active' : ''}`} style={{ fontSize: 10 }} onClick={() => goto('support')}><HelpCircle size={15} /> Support</button>
+            <button className="nav-item" style={{ fontSize: 10, color: '#fecaca' }} onClick={logout}><LogOut size={15} /> Log out</button>
           </div>
         </aside>
 
         <main className="content" id="main" style={{ flex: 1, minWidth: 0 }}
           onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 60)}>
           <div className="content-inner">
+            {user.mustChangePassword && view !== 'settings' && !active && (
+              <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'hsla(38,92%,50%,.1)', borderColor: 'hsla(38,92%,50%,.4)' }}>
+                <SettingsIcon size={18} style={{ color: 'var(--warn)' }} />
+                <span style={{ flex: 1, fontSize: 14 }}>You signed in with a temporary password. Please set a permanent one now.</span>
+                <button className="good" onClick={() => goto('settings')}>Change password</button>
+              </div>
+            )}
             {active ? (
               <LabView entry={active} onBack={() => setActive(null)} />
             ) : view === 'dashboard' ? (
