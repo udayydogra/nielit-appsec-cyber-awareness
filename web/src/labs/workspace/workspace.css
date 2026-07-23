@@ -13,7 +13,8 @@
   --ws-glass: 1px solid hsla(0, 0%, 100%, 0.1);
 
   position: fixed; inset: 0; z-index: 36;
-  background: var(--ws-desktop);
+  /* NIELIT Haridwar cyber-lab wallpaper, tinted darker so windows stay legible. */
+  background: linear-gradient(hsla(222,47%,6%,.55), hsla(222,47%,6%,.55)), url('/lab-wallpaper.jpg') center / cover no-repeat, var(--ws-desktop);
   color: var(--ws-text);
   overflow: hidden;
   font-family: var(--sans);
@@ -21,10 +22,8 @@
 }
 @keyframes wsFade { from { opacity: 0; } to { opacity: 1; } }
 
-.lab-workspace .ws-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
-.lab-workspace .ws-glow { position: absolute; border-radius: 50%; filter: blur(100px); opacity: .16; }
-.lab-workspace .ws-glow.g1 { width: 620px; height: 620px; background: var(--ws-accent); top: -120px; left: -120px; }
-.lab-workspace .ws-glow.g2 { width: 820px; height: 820px; background: #8b5cf6; bottom: -220px; right: -220px; }
+/* Wallpaper carries the visual interest now — drop the blur blobs. */
+.lab-workspace .ws-bg { display: none; }
 
 /* top strip: lab identity + exit */
 .lab-workspace .ws-topbar {
@@ -43,10 +42,11 @@
 /* windows */
 .lab-workspace .ws-win {
   position: absolute; display: flex; flex-direction: column; border-radius: 12px; overflow: hidden;
-  background: var(--ws-window); box-shadow: 0 20px 50px hsla(0,0%,0%,.5), 0 0 0 1px hsla(0,0%,0%,.3);
-  border: var(--ws-glass); min-width: 320px; min-height: 200px;
+  background: var(--ws-window); border: none; min-width: 320px; min-height: 200px;
+  /* no white outline — just depth + a dark hairline edge */
+  box-shadow: 0 24px 60px hsla(0,0%,0%,.6), 0 0 0 1px hsla(222,47%,4%,.9);
 }
-.lab-workspace .ws-win.active { box-shadow: 0 26px 64px hsla(0,0%,0%,.6), 0 0 0 1px hsla(217,91%,60%,.5); }
+.lab-workspace .ws-win.active { box-shadow: 0 30px 72px hsla(0,0%,0%,.7), 0 0 0 1px hsla(217,91%,60%,.6); }
 .lab-workspace .ws-win-head {
   display: flex; align-items: center; gap: 8px; padding: 8px 10px; cursor: grab;
   background: var(--ws-window-head); color: var(--ws-text); user-select: none; flex-shrink: 0;
@@ -57,7 +57,7 @@
 .lab-workspace .ws-win-ctrls button:hover { background: hsla(0,0%,100%,.18); }
 .lab-workspace .ws-win-ctrls button.close:hover { background: var(--ws-danger); }
 .lab-workspace .ws-win-body { flex: 1; min-height: 0; overflow: auto; background: #f6f8fb; color: #0f172a; }
-.lab-workspace .ws-win-body.dark { background: #0d1117; color: #c9d1d9; overflow: hidden; }
+.lab-workspace .ws-win-body.dark { background: #0e1626; color: #e2e8f0; overflow: hidden; }
 /* our light exploit widgets sit inside a window body; strip their outer card chrome */
 .lab-workspace .ws-win-body .card { margin: 0; border: none; box-shadow: none; border-radius: 0; background: transparent; }
 
@@ -66,18 +66,20 @@
 .lab-workspace .ws-term .xterm { height: 100%; }
 
 /* missions panel */
-.lab-workspace .ws-missions { padding: 16px 18px; }
-.lab-workspace .ws-missions h3 { font-family: var(--cond); text-transform: uppercase; letter-spacing: .04em; margin: 0 0 4px; }
-.lab-workspace .ws-mprogress { height: 6px; background: #e2e8f0; border-radius: 99px; overflow: hidden; margin: 8px 0 14px; }
+.lab-workspace .ws-missions { padding: 16px 18px; height: 100%; overflow: auto; }
+.lab-workspace .ws-missions h3 { font-family: var(--cond); text-transform: uppercase; letter-spacing: .04em; margin: 0 0 4px; color: #e2e8f0; }
+.lab-workspace .ws-missions > div:nth-child(2) { color: #94a3b8 !important; }
+.lab-workspace .ws-mprogress { height: 6px; background: #1e293b; border-radius: 99px; overflow: hidden; margin: 8px 0 14px; }
 .lab-workspace .ws-mprogress > i { display: block; height: 100%; background: var(--ws-success); transition: width .4s ease; }
-.lab-workspace .ws-mission { display: flex; gap: 10px; padding: 11px 12px; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 9px; align-items: flex-start; background: #fff; }
-.lab-workspace .ws-mission.done { border-color: hsla(142,71%,45%,.5); background: hsla(142,71%,45%,.06); }
-.lab-workspace .ws-mission .dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #cbd5e1; flex-shrink: 0; display: grid; place-items: center; font-size: 12px; margin-top: 1px; }
+.lab-workspace .ws-mission { display: flex; gap: 10px; padding: 11px 12px; border: 1px solid #1e293b; border-radius: 12px; margin-bottom: 9px; align-items: flex-start; background: #111a2e; }
+.lab-workspace .ws-mission.done { border-color: hsla(142,71%,45%,.45); background: hsla(142,71%,45%,.12); }
+.lab-workspace .ws-mission .dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #334155; flex-shrink: 0; display: grid; place-items: center; font-size: 12px; margin-top: 1px; }
 .lab-workspace .ws-mission.done .dot { border-color: var(--ws-success); background: var(--ws-success); color: #fff; }
-.lab-workspace .ws-mission .mt { font-weight: 700; font-size: 14px; }
-.lab-workspace .ws-mission .mh { font-size: 12.5px; color: #64748b; margin-top: 3px; }
-.lab-workspace .ws-mission .mauto { font-size: 11px; color: var(--ws-accent); margin-top: 5px; font-weight: 600; opacity: .85; }
-.lab-workspace .ws-mission .mark { margin-left: auto; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; border: 1px solid #e5e7eb; background: #fff; border-radius: 8px; padding: 5px 9px; cursor: pointer; align-self: center; }
+.lab-workspace .ws-mission .mt { font-weight: 700; font-size: 14px; color: #e2e8f0; }
+.lab-workspace .ws-mission .mh { font-size: 12.5px; color: #94a3b8; margin-top: 3px; }
+.lab-workspace .ws-mission .mauto { font-size: 11px; color: #60a5fa; margin-top: 5px; font-weight: 600; opacity: .9; }
+.lab-workspace .ws-mission .mark { margin-left: auto; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; border: 1px solid #334155; background: #1a2438; color: #cbd5e1; border-radius: 8px; padding: 5px 9px; cursor: pointer; align-self: center; }
+.lab-workspace .ws-mission .mark:hover { background: #24314d; }
 
 /* taskbar */
 .lab-workspace .ws-taskbar {
@@ -93,3 +95,68 @@
 .lab-workspace .ws-taskbar .tb-win { max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; height: 34px; padding: 0 12px; border-radius: 9px; border: 1px solid transparent; background: hsla(0,0%,100%,.05); color: var(--ws-muted); font-size: 12px; cursor: pointer; }
 .lab-workspace .ws-taskbar .tb-win.active { background: hsla(217,91%,60%,.18); color: #fff; border-color: hsla(217,91%,60%,.35); }
 .lab-workspace .ws-taskbar .tb-clock { margin-left: auto; font-size: 12px; color: var(--ws-muted); font-variant-numeric: tabular-nums; padding-right: 6px; }
+
+/* ── OS apps: taskbar tray + start menu ─────────────────────────────────────── */
+.lab-workspace .ws-taskbar .tb-start.active { background: hsla(217,91%,60%,.4); color: #fff; }
+.lab-workspace .ws-taskbar .tb-app.running { box-shadow: inset 0 -2px 0 var(--ws-accent); }
+.lab-workspace .ws-taskbar .tb-clock { margin-left: 0; text-align: right; line-height: 1.1; }
+.lab-workspace .ws-taskbar .tb-clock .tb-date { font-size: 9.5px; opacity: .7; }
+.lab-workspace .ws-taskbar .tb-tray { display: flex; gap: 10px; align-items: center; color: var(--ws-muted); margin-left: auto; padding: 0 8px; }
+
+.lab-workspace .ws-appmenu-scrim { position: absolute; inset: 0; z-index: 45; }
+.lab-workspace .ws-appmenu {
+  position: absolute; left: 12px; bottom: 56px; width: 340px; z-index: 46;
+  background: hsla(222,47%,10%,.96); backdrop-filter: blur(18px);
+  border: 1px solid hsla(0,0%,100%,.1); border-radius: 16px; box-shadow: 0 24px 60px hsla(0,0%,0%,.6);
+  overflow: hidden; color: var(--ws-text);
+}
+.lab-workspace .ws-appmenu-head { display: flex; gap: 12px; align-items: center; padding: 16px 18px; background: hsla(217,91%,60%,.16); color: #fff; }
+.lab-workspace .ws-appmenu-head .am-title { font-family: var(--cond); font-weight: 800; text-transform: uppercase; letter-spacing: .04em; font-size: 14px; }
+.lab-workspace .ws-appmenu-head .am-sub { font-size: 11px; color: var(--ws-muted); }
+.lab-workspace .ws-appmenu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 14px; }
+.lab-workspace .am-app { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 8px; border: none; border-radius: 12px; background: transparent; color: var(--ws-text); cursor: pointer; }
+.lab-workspace .am-app:hover { background: hsla(0,0%,100%,.08); }
+.lab-workspace .am-app .am-ico { color: var(--ws-accent); }
+.lab-workspace .am-app .am-lbl { font-size: 11.5px; }
+.lab-workspace .ws-appmenu-foot { padding: 10px 14px; border-top: 1px solid hsla(0,0%,100%,.08); }
+.lab-workspace .am-power { display: inline-flex; align-items: center; gap: 7px; background: hsla(0,84%,60%,.16); color: #fca5a5; border: 1px solid hsla(0,84%,60%,.3); border-radius: 9px; padding: 7px 13px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; cursor: pointer; }
+
+/* ── Browser ────────────────────────────────────────────────────────────────── */
+.lab-workspace .ws-browser { display: flex; flex-direction: column; height: 100%; background: #0e1626; }
+.lab-workspace .ws-br-tabs { display: flex; padding: 6px 8px 0; background: #0b1220; }
+.lab-workspace .ws-br-tab { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #cbd5e1; background: #1a2438; padding: 8px 14px; border-radius: 9px 9px 0 0; max-width: 220px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.lab-workspace .ws-br-bar { display: flex; align-items: center; gap: 6px; padding: 8px; background: #1a2438; }
+.lab-workspace .ws-br-bar button { width: 30px; height: 30px; border: none; border-radius: 8px; background: transparent; color: #cbd5e1; display: grid; place-items: center; cursor: pointer; }
+.lab-workspace .ws-br-bar button:hover:not(:disabled) { background: hsla(0,0%,100%,.1); }
+.lab-workspace .ws-br-bar button:disabled { opacity: .35; cursor: default; }
+.lab-workspace .ws-br-addr { flex: 1; display: flex; align-items: center; gap: 8px; background: #0b1220; border: 1px solid #334155; border-radius: 999px; padding: 0 12px; color: #64748b; }
+.lab-workspace .ws-br-addr input { flex: 1; border: none; background: transparent; color: #e2e8f0; font-size: 13px; padding: 8px 0; outline: none; }
+.lab-workspace .ws-br-marks { display: flex; gap: 6px; padding: 6px 10px; background: #16203a; border-bottom: 1px solid #0b1220; }
+.lab-workspace .ws-br-marks button { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; color: #cbd5e1; background: transparent; border: none; padding: 4px 8px; border-radius: 7px; cursor: pointer; }
+.lab-workspace .ws-br-marks button:hover { background: hsla(0,0%,100%,.08); }
+.lab-workspace .ws-br-view { flex: 1; width: 100%; border: none; background: #0b1220; }
+
+/* ── File manager ───────────────────────────────────────────────────────────── */
+.lab-workspace .ws-files { display: flex; height: 100%; background: #0e1626; color: #e2e8f0; }
+.lab-workspace .ws-files-side { width: 172px; flex-shrink: 0; background: #0b1220; border-right: 1px solid #1e293b; padding: 10px 8px; }
+.lab-workspace .ws-files-side-h { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #64748b; padding: 6px 8px; }
+.lab-workspace .ws-files-side button { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; border: none; background: transparent; color: #cbd5e1; font-size: 13px; padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+.lab-workspace .ws-files-side button:hover { background: #1a2438; }
+.lab-workspace .ws-files-side button.active { background: hsla(217,91%,60%,.16); color: #93c5fd; font-weight: 700; }
+.lab-workspace .ws-files-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.lab-workspace .ws-files-crumb { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid #1e293b; }
+.lab-workspace .ws-files-crumb button { width: 28px; height: 28px; border: 1px solid #334155; border-radius: 8px; background: #1a2438; display: grid; place-items: center; cursor: pointer; color: #cbd5e1; }
+.lab-workspace .ws-files-crumb button:disabled { opacity: .4; cursor: default; }
+.lab-workspace .ws-files-crumb .crumb { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #94a3b8; font-family: var(--mono, monospace); }
+.lab-workspace .ws-files-grid { flex: 1; overflow: auto; padding: 14px; display: grid; grid-template-columns: repeat(auto-fill, 92px); gap: 8px; align-content: start; }
+.lab-workspace .ws-file { display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 12px 6px; border: 1px solid transparent; border-radius: 10px; background: transparent; cursor: pointer; }
+.lab-workspace .ws-file:hover { background: #1a2438; border-color: #334155; }
+.lab-workspace .ws-file span { font-size: 11.5px; color: #cbd5e1; text-align: center; word-break: break-word; line-height: 1.2; }
+.lab-workspace .ws-file .fi-dir { color: #f59e0b; } .lab-workspace .ws-file .fi-code { color: #6366f1; }
+.lab-workspace .ws-file .fi-zip { color: #a16207; } .lab-workspace .ws-file .fi-txt { color: #64748b; }
+.lab-workspace .ws-files-empty { color: #64748b; font-size: 13px; padding: 20px; }
+
+/* ── Notepad & text viewer ──────────────────────────────────────────────────── */
+.lab-workspace .ws-notepad { width: 100%; height: 100%; border: none; resize: none; outline: none; padding: 14px 16px; font-family: var(--mono, monospace); font-size: 13px; line-height: 1.6; color: #d7e3f4; background: #0e1626; caret-color: #60a5fa; }
+.lab-workspace .ws-textview { width: 100%; height: 100%; margin: 0; overflow: auto; padding: 16px; font-family: var(--mono, monospace); font-size: 13px; line-height: 1.6; color: #d7e3f4; background: #0e1626; white-space: pre-wrap; word-break: break-word; }
+.lab-workspace .ws-textview-empty { color: #64748b; display: grid; place-items: center; }

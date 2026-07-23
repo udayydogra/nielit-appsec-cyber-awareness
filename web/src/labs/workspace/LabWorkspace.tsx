@@ -1,11 +1,12 @@
-import { useEffect, useRef, type ReactNode } from 'react';
-import { LogOut, Target, TerminalSquare, Bug } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { LogOut, Target, TerminalSquare, Bug, Globe, FolderClosed, StickyNote, FileText } from 'lucide-react';
 import { api } from '../../api/client';
 import { WindowManager, useWM, type Win } from './wm';
 import { DraggableWindow } from './DraggableWindow';
 import { Taskbar, type AppDef } from './Taskbar';
 import { LabTerminal } from './LabTerminal';
 import { Missions, type Mission } from './Missions';
+import { Browser, FileManager, Notepad, TextViewer } from './DesktopApps';
 import './workspace.css';
 
 // The immersive lab workspace launched by "Go to Lab". A windowed desktop with a
@@ -48,21 +49,25 @@ export function LabWorkspace({ labId, title, tier, widget, missions, onExit }: {
     };
   }, [labId, isContainer]);
 
-  const panes: Record<string, { icon: ReactNode; dark?: boolean; node: ReactNode }> = {
-    missions: { icon: <Target size={13} />, node: <Missions missions={missions} /> },
-    ...(isContainer
-      ? { terminal: { icon: <TerminalSquare size={13} />, dark: true, node: <LabTerminal labId={labId} /> } }
-      : { exploit: { icon: <Bug size={13} />, node: widget } }),
-  };
+  // The primary exercise window (id + label) depends on the tier.
+  const primary: AppDef = isContainer
+    ? { id: 'terminal', title: 'Terminal', icon: <TerminalSquare size={17} />, w: 780, h: 520, pinned: true }
+    : { id: 'exploit', title: 'Exploit Console', icon: <Bug size={17} />, w: 780, h: 560, pinned: true };
+
+  // The full app registry for this desktop — pinned apps sit on the taskbar, all of
+  // them appear in the app (start) menu; the text viewer is opened on demand.
   const apps: AppDef[] = [
-    { id: 'missions', title: 'Missions', icon: <Target size={17} />, w: 400, h: 540 },
-    isContainer
-      ? { id: 'terminal', title: 'Terminal', icon: <TerminalSquare size={17} />, w: 780, h: 520 }
-      : { id: 'exploit', title: 'Exploit Console', icon: <Bug size={17} />, w: 780, h: 560 },
+    primary,
+    { id: 'missions', title: 'Missions', icon: <Target size={17} />, w: 400, h: 560, pinned: true },
+    { id: 'browser', title: 'Browser', icon: <Globe size={17} />, w: 860, h: 580, pinned: true },
+    { id: 'files', title: 'Files', icon: <FolderClosed size={17} />, w: 720, h: 460, pinned: true },
+    { id: 'notes', title: 'Notepad', icon: <StickyNote size={17} />, w: 460, h: 420, pinned: true },
+    { id: 'text', title: 'Text Viewer', icon: <FileText size={17} />, w: 560, h: 420, hidden: true },
   ];
+
   const initial = [
-    { t: 'open' as const, id: apps[1].id, title: apps[1].title, w: apps[1].w, h: apps[1].h },
-    { t: 'open' as const, id: 'missions', title: 'Missions', w: 400, h: 540 },
+    { t: 'open' as const, id: primary.id, title: primary.title, w: primary.w, h: primary.h },
+    { t: 'open' as const, id: 'missions', title: 'Missions', w: 400, h: 560 },
   ];
 
   return (
@@ -74,14 +79,36 @@ export function LabWorkspace({ labId, title, tier, widget, missions, onExit }: {
         <button className="ws-exit" onClick={onExit}><LogOut size={14} /> Exit Lab</button>
       </div>
       <WindowManager initial={initial}>
-        <Desktop panes={panes} apps={apps} />
+        <Desktop labId={labId} labTitle={title} isContainer={isContainer} widget={widget} missions={missions} apps={apps} onExit={onExit} />
       </WindowManager>
     </div>
   );
 }
 
-function Desktop({ panes, apps }: { panes: Record<string, { icon: ReactNode; dark?: boolean; node: ReactNode }>; apps: AppDef[] }) {
+function Desktop({ labId, labTitle, isContainer, widget, missions, apps, onExit }: {
+  labId: string; labTitle: string; isContainer: boolean; widget: ReactNode | null;
+  missions: Mission[]; apps: AppDef[]; onExit: () => void;
+}) {
   const wm = useWM();
+  const [text, setText] = useState<{ title: string; content: string } | null>(null);
+  const openText = (fileTitle: string, content: string) => {
+    setText({ title: fileTitle, content });
+    wm.dispatch({ t: 'open', id: 'text', title: fileTitle, w: 560, h: 420 });
+  };
+
+  // The node + chrome for each window id.
+  const panes: Record<string, { icon: ReactNode; dark?: boolean; node: ReactNode }> = {
+    // All the "OS apps" share one dark theme matching the terminal + desktop.
+    missions: { icon: <Target size={13} />, dark: true, node: <Missions missions={missions} /> },
+    browser: { icon: <Globe size={13} />, dark: true, node: <Browser labTitle={labTitle} /> },
+    files: { icon: <FolderClosed size={13} />, dark: true, node: <FileManager onOpenFile={openText} /> },
+    notes: { icon: <StickyNote size={13} />, dark: true, node: <Notepad /> },
+    text: { icon: <FileText size={13} />, dark: true, node: <TextViewer data={text} /> },
+    ...(isContainer
+      ? { terminal: { icon: <TerminalSquare size={13} />, dark: true, node: <LabTerminal labId={labId} /> } }
+      : { exploit: { icon: <Bug size={13} />, node: widget } }),
+  };
+
   return (
     <>
       <div className="ws-windows">
@@ -91,7 +118,7 @@ function Desktop({ panes, apps }: { panes: Record<string, { icon: ReactNode; dar
           </DraggableWindow>
         ))}
       </div>
-      <Taskbar apps={apps} />
+      <Taskbar apps={apps} labTitle={labTitle} onExit={onExit} />
     </>
   );
 }

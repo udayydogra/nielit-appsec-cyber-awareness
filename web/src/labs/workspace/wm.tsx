@@ -30,7 +30,7 @@ function reducer(s: State, a: Action): State {
       const z = s.topZ + 1;
       if (existing) {
         return { ...s, topZ: z, activeId: a.id,
-          windows: s.windows.map((w) => (w.id === a.id ? { ...w, minimized: false, z } : w)) };
+          windows: s.windows.map((w) => (w.id === a.id ? { ...w, title: a.title, minimized: false, z } : w)) };
       }
       const n = s.windows.length;
       const win: Win = {
