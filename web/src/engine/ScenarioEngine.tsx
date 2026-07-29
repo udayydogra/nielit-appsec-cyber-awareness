@@ -31,6 +31,7 @@ export function ScenarioEngine({ labId }: { labId: string }) {
   const [m, setM] = useState<ScenarioManifest | null>(null);
   const [nodeId, setNodeId] = useState<string | null>(null);
   const [scene, setScene] = useState<ScenarioNode | null>(null); // persistent device scene
+  const [sceneKey, setSceneKey] = useState<string | null>(null);  // node key of the device scene (for media lookup)
   const [phase, setPhase] = useState<CallPhase>('ringing');
   const [declines, setDeclines] = useState(0);
   const [flags, setFlags] = useState<RedFlag[]>([]);
@@ -44,7 +45,7 @@ export function ScenarioEngine({ labId }: { labId: string }) {
       if (!alive) return;
       setM(x); setNodeId(x.start);
       const s = x.nodes[x.start];
-      if (s?.type === 'narration') setScene(s);
+      if (s?.type === 'narration') { setScene(s); setSceneKey(x.start); }
     });
     return () => { alive = false; };
   }, [labId]);
@@ -54,7 +55,7 @@ export function ScenarioEngine({ labId }: { labId: string }) {
     if (!m || !nodeId) return;
     const node = m.nodes[nodeId];
     if (node?.type === 'narration') {
-      setScene(node);
+      setScene(node); setSceneKey(nodeId);
       if (node.channel === 'videocall') { setPhase('ringing'); setDeclines(0); setFlags([]); setElapsed(0); }
     }
   }, [nodeId, m]);
@@ -82,6 +83,12 @@ export function ScenarioEngine({ labId }: { labId: string }) {
   const node = m.nodes[nodeId];
   if (!node) return <p className="result-bad">Broken graph: node “{nodeId}” missing.</p>;
 
+  // If the CURRENT node itself carries a talking-head clip (e.g. a decision where the
+  // scammer keeps speaking, like the "transfer ₹50,000" demand), play it on the device;
+  // otherwise keep showing the persistent scene.
+  const deviceScene = node.media ? node : scene;
+  const deviceKey = node.media ? nodeId : sceneKey;
+
   const go = (to?: string) => setNodeId(to ?? 'quiz');
   async function choose(c: Choice) {
     await api.decision(labId, c.goto).catch(() => {});
@@ -100,9 +107,12 @@ export function ScenarioEngine({ labId }: { labId: string }) {
       </div>
 
       <div className="sim-stage">
-        <Device dark={scene?.channel === 'videocall' || scene?.channel === 'payment'}>
+        {deviceScene && deviceScene.channel !== 'videocall' && !deviceScene.media && deviceKey && (
+          <MessageAudio src={`/awareness-media/voices/${labId}/${deviceKey}.${locale}.wav`} />
+        )}
+        <Device dark={deviceScene?.channel === 'videocall' || !!deviceScene?.media || deviceScene?.channel === 'payment'}>
           <SceneView
-            scene={scene} phase={phase} elapsed={elapsed} declines={declines}
+            scene={deviceScene} sceneKey={deviceKey} labId={labId} phase={phase} elapsed={elapsed} declines={declines}
             onAccept={() => setPhase('connecting')} onDecline={() => setDeclines((d) => d + 1)}
             onHangup={() => go(scene?.next)}
           />
@@ -134,8 +144,8 @@ function Device({ children, dark }: { children: React.ReactNode; dark?: boolean 
   );
 }
 
-function SceneView({ scene, phase, elapsed, declines, onAccept, onDecline, onHangup }: {
-  scene: ScenarioNode | null; phase: CallPhase; elapsed: number; declines: number;
+function SceneView({ scene, sceneKey, labId, phase, elapsed, declines, onAccept, onDecline, onHangup }: {
+  scene: ScenarioNode | null; sceneKey: string | null; labId: string; phase: CallPhase; elapsed: number; declines: number;
   onAccept: () => void; onDecline: () => void; onHangup: () => void;
 }) {
   const { locale } = useLang();
@@ -143,8 +153,8 @@ function SceneView({ scene, phase, elapsed, declines, onAccept, onDecline, onHan
   if (!scene) return <div style={{ display: 'grid', placeItems: 'center', height: '100%', color: '#334155' }}><ShieldCheck size={40} /></div>;
   const text = L(scene.content, locale);
 
-  if (scene.channel === 'videocall') {
-    return <CallScreen scene={scene} phase={phase} elapsed={elapsed} declines={declines} onAccept={onAccept} onDecline={onDecline} onHangup={onHangup} />;
+  if (scene.channel === 'videocall' || scene.media) {
+    return <CallScreen scene={scene} sceneKey={sceneKey} labId={labId} phase={phase} elapsed={elapsed} declines={declines} onAccept={onAccept} onDecline={onDecline} onHangup={onHangup} />;
   }
   if (scene.channel === 'payment') return <PaymentScreen text={text} />;
   if (scene.channel === 'chat') {
@@ -179,8 +189,8 @@ function SceneView({ scene, phase, elapsed, declines, onAccept, onDecline, onHan
   );
 }
 
-function CallScreen({ scene, phase, elapsed, declines, onAccept, onDecline, onHangup }: {
-  scene: ScenarioNode; phase: CallPhase; elapsed: number; declines: number;
+function CallScreen({ scene, sceneKey, labId, phase, elapsed, declines, onAccept, onDecline, onHangup }: {
+  scene: ScenarioNode; sceneKey: string | null; labId: string; phase: CallPhase; elapsed: number; declines: number;
   onAccept: () => void; onDecline: () => void; onHangup: () => void;
 }) {
   const { locale } = useLang();
@@ -190,7 +200,9 @@ function CallScreen({ scene, phase, elapsed, declines, onAccept, onDecline, onHa
 
   return (
     <div className="vc-screen">
-      <div className="vc-video"><div className="vc-avatar">👮</div></div>
+      <div className="vc-video">
+        <CallVideo labId={labId} sceneKey={sceneKey} locale={locale} play={phase === 'connected' && !!scene.media} />
+      </div>
       <div className="vc-topbar">
         <span className="sim-marker">{t('simulation')}</span>
         {phase === 'connected'
@@ -215,6 +227,34 @@ function CallScreen({ scene, phase, elapsed, declines, onAccept, onDecline, onHa
         )}
       </div>
     </div>
+  );
+}
+
+// A message scene (SMS/chat/email/UPI): read the scam text aloud, starting 2s after it loads.
+// Autoplay is best-effort — if the browser blocks it (no prior gesture), it fails silently.
+function MessageAudio({ src }: { src: string }) {
+  const ref = useRef<HTMLAudioElement | null>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const t = window.setTimeout(() => { el.currentTime = 0; el.play().catch(() => {}); }, 2000);
+    return () => { clearTimeout(t); el.pause(); };
+  }, [src]);
+  return <audio ref={ref} src={src} preload="auto" />;
+}
+
+// Plays the pre-rendered talking-head clip (voice already muxed in) once the call connects.
+// Falls back to the avatar while ringing, or if no clip exists for this lab/node/language.
+function CallVideo({ labId, sceneKey, locale, play }: { labId: string; sceneKey: string | null; locale: string; play: boolean }) {
+  const [err, setErr] = useState(false);
+  const src = sceneKey ? `/awareness-media/videos/${labId}/${sceneKey}.${locale}.mp4` : '';
+  useEffect(() => setErr(false), [src]);
+  if (!play || !src || err) return <div className="vc-avatar">👮</div>;
+  return (
+    <video
+      key={src} src={src} autoPlay playsInline onError={() => setErr(true)}
+      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit', background: '#000' }}
+    />
   );
 }
 
@@ -255,6 +295,15 @@ function Panel({ node, phase, flags, allFlags, reporting, onNext, onChoose }: {
         <div className="panel-body center" style={{ alignItems: 'center', textAlign: 'center' }}>
           <div style={{ width: 68, height: 68, borderRadius: 22, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', display: 'grid', placeItems: 'center', color: 'var(--accent)' }}><Phone size={30} /></div>
           <p className="muted" style={{ maxWidth: 360, fontSize: 15 }}>{isHi ? 'ठग वीडियो कॉल कर रहा है। डिवाइस पर कॉल का उत्तर दें या अस्वीकार करें।' : 'The scammer is video-calling you. Answer or decline on the device to continue.'}</p>
+        </div>
+      );
+    }
+    if (total === 0) {
+      return (
+        <div className="panel-body center">
+          <div className="sit-label" style={{ color: 'var(--accent)' }}>{isHi ? 'स्थिति' : 'Situation'}</div>
+          <p style={{ margin: 0, lineHeight: 1.6, fontSize: 17 }}>{L(node.content, locale)}</p>
+          <button className="primary" style={{ alignSelf: 'flex-start', padding: '12px 22px' }} onClick={() => onNext(node.next)}>{t('next')} <ChevronRight size={15} style={{ verticalAlign: 'middle' }} /></button>
         </div>
       );
     }
