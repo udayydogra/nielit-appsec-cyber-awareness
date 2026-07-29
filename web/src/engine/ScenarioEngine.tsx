@@ -108,10 +108,10 @@ export function ScenarioEngine({ labId }: { labId: string }) {
 
       <div className="sim-stage">
         {deviceScene && deviceScene.channel !== 'videocall' && !deviceScene.media && deviceKey && (
-          <MessageAudio src={`/awareness-media/voices/${labId}/${deviceKey}.${locale}.wav`} />
+          <MessageAudio src={`/awareness-media/voices/${labId}/${deviceKey}.${locale}.mp3`} />
         )}
         {node.type === 'consequence' && (
-          <MessageAudio src={`/awareness-media/voices/${labId}/${nodeId}.${locale}.wav`} />
+          <MessageAudio src={`/awareness-media/voices/${labId}/${nodeId}.${locale}.mp3`} />
         )}
         <Device dark={deviceScene?.channel === 'videocall' || !!deviceScene?.media || deviceScene?.channel === 'payment'}>
           <SceneView
