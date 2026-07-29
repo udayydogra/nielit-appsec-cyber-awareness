@@ -15,10 +15,13 @@
   ],
   "nodes": {
     "n1": {
-      "type": "narration", "channel": "sms", "anim": "sms-slide-in",
+      "type": "narration",
+      "channel": "videocall",
+      "anim": "videocall-connect",
+      "media": { "clip": "otp-sim-swap-n1" },
       "content": {
-        "en": "Call: 'I'm from your telecom operator. To upgrade your SIM to 5G for free, I've sent an OTP to your number. Please read it out to verify the request.'",
-        "hi": "कॉल: 'मैं आपके टेलीकॉम ऑपरेटर से हूँ। आपकी SIM मुफ़्त 5G में अपग्रेड करने को OTP भेजा है। कृपया पढ़कर बताएँ ताकि अनुरोध सत्यापित हो।'"
+        "en": "I'm from your telecom operator. To upgrade your SIM to 5G for free, I've sent an OTP to your number. Please read it out to verify the request.",
+        "hi": "मैं आपके टेलीकॉम ऑपरेटर से हूँ। आपकी SIM मुफ़्त 5G में अपग्रेड करने को OTP भेजा है। कृपया पढ़कर बताएँ ताकि अनुरोध सत्यापित हो।"
       },
       "next": "n2"
     },

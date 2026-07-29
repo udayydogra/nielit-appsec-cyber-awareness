@@ -15,10 +15,13 @@
   ],
   "nodes": {
     "n1": {
-      "type": "narration", "channel": "sms", "anim": "sms-slide-in",
+      "type": "narration",
+      "channel": "videocall",
+      "anim": "videocall-connect",
+      "media": { "clip": "courier-customs-n1" },
       "content": {
-        "en": "Call: 'This is FedEx Customs. A parcel booked in YOUR name and Aadhaar contains illegal drugs. It is a police matter. To clear your name, pay a ₹15,000 verification fee immediately or a case will be filed.'",
-        "hi": "कॉल: 'यह FedEx कस्टम है। आपके नाम और आधार पर बुक एक पार्सल में अवैध ड्रग्स हैं। यह पुलिस मामला है। नाम साफ़ करने को तुरंत ₹15,000 वेरिफिकेशन फीस भरें वरना केस दर्ज होगा।'"
+        "en": "This is FedEx Customs. A parcel booked in YOUR name and Aadhaar contains illegal drugs. It is a police matter. To clear your name, pay a ₹15,000 verification fee immediately or a case will be filed.",
+        "hi": "यह FedEx कस्टम है। आपके नाम और आधार पर बुक एक पार्सल में अवैध ड्रग्स हैं। यह पुलिस मामला है। नाम साफ़ करने को तुरंत ₹15,000 वेरिफिकेशन फीस भरें वरना केस दर्ज होगा।"
       },
       "next": "n2"
     },

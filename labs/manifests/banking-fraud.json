@@ -15,10 +15,13 @@
   ],
   "nodes": {
     "n1": {
-      "type": "narration", "channel": "sms", "anim": "sms-slide-in",
+      "type": "narration",
+      "channel": "videocall",
+      "anim": "videocall-connect",
+      "media": { "clip": "banking-fraud-n1" },
       "content": {
-        "en": "Call: 'Sir, I'm calling from your bank's security cell. Your debit card is BLOCKED due to suspicious activity. To reactivate, I'll send an OTP — please read it back to me.'",
-        "hi": "कॉल: 'सर, मैं आपके बैंक की सुरक्षा सेल से बोल रहा हूँ। संदिग्ध गतिविधि के कारण आपका डेबिट कार्ड ब्लॉक है। पुनः सक्रिय करने के लिए OTP भेज रहा हूँ — कृपया पढ़कर बताएँ।'"
+        "en": "Sir, I'm calling from your bank's security cell. Your debit card is BLOCKED due to suspicious activity. To reactivate, I'll send an OTP — please read it back to me.",
+        "hi": "सर, मैं आपके बैंक की सुरक्षा सेल से बोल रहा हूँ। संदिग्ध गतिविधि के कारण आपका डेबिट कार्ड ब्लॉक है। पुनः सक्रिय करने के लिए OTP भेज रहा हूँ — कृपया पढ़कर बताएँ।"
       },
       "next": "n2"
     },
