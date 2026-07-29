@@ -15,7 +15,8 @@
   ],
   "nodes": {
     "n1": {
-      "type": "narration", "channel": "chat", "anim": "sms-slide-in",
+      "type": "narration", "channel": "videocall", "anim": "videocall-connect",
+      "media": { "clip": "fake-customer-care-n1" },
       "content": {
         "en": "A food order failed and ₹450 is stuck. You search 'Zomato refund helpline', call the first number, and the 'agent' says: 'To process your refund, install AnyDesk and share the 9-digit code so I can guide you.'",
         "hi": "एक फ़ूड ऑर्डर विफल हुआ और ₹450 अटक गए। आप 'Zomato रिफंड हेल्पलाइन' सर्च करके पहले नंबर पर कॉल करते हैं, और 'एजेंट' कहता है: 'रिफंड के लिए AnyDesk इंस्टॉल करें और 9-अंकों का कोड बताएँ ताकि मैं मार्गदर्शन करूँ।'"

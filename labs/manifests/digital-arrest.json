@@ -50,6 +50,7 @@
     },
     "n3": {
       "type": "decision",
+      "media": { "clip": "digital-arrest-n3" },
       "prompt": { "en": "\"To prove your account is clean, transfer ₹50,000 to this verification account. It will be refunded.\" What do you do?", "hi": "\"खाता साफ़ साबित करने के लिए ₹50,000 इस सत्यापन खाते में भेजें। वापस कर दिया जाएगा।\" आप क्या करेंगे?" },
       "choices": [
         { "label": { "en": "Transfer the money to clear my name", "hi": "नाम साफ़ करने के लिए पैसे भेजें" }, "goto": "trap1" },
