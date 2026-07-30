@@ -73,6 +73,20 @@ else
   log ".env already exists — leaving it untouched"
 fi
 
+# ── 2.5 Build the Tier-3 lab target images (id → nielit/<id>:latest) ───────────
+# The lab-manager spawns these on demand for Tier-3 labs (command-injection, ssrf,
+# xxe, deserialization, path-traversal). They're Debian-based and apt-install a few
+# tools at BUILD time, so --network=host gives the build egress.
+log "Building Tier-3 lab target images"
+for pair in cmdi-python:command-injection ssrf:ssrf xxe:xxe \
+            deserialization:deserialization path-traversal:path-traversal; do
+  dir="lab-images/${pair%%:*}"; img="nielit/${pair##*:}:latest"
+  if [ -f "$dir/Dockerfile" ]; then
+    log "  → $img (from $dir)"
+    docker build --network=host -t "$img" "$dir" || log "  ! $img build failed (Tier-3 lab '${pair##*:}' will be unavailable)"
+  fi
+done
+
 # ── 3. Bring the stack up ─────────────────────────────────────────────────────
 # --profile local-llm is added only if the .env selects the in-VM Ollama (C).
 COMPOSE_PROFILES=""
