@@ -33,20 +33,22 @@ RUN_USER="${SUDO_USER:-${USER:-root}}"
 if ! command -v docker >/dev/null 2>&1; then
   log "Installing Docker Engine + Compose plugin"
   export DEBIAN_FRONTEND=noninteractive
+  # shellcheck disable=SC1091
+  . /etc/os-release
+  DISTRO="${ID:-ubuntu}"          # debian | ubuntu — Docker publishes an apt repo for both
+  case "$DISTRO" in debian|ubuntu) ;; *) DISTRO=ubuntu ;; esac
   apt-get update -qq
   apt-get install -y -qq ca-certificates curl git rsync openssl >/dev/null
   install -m 0755 -d /etc/apt/keyrings
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+  curl -fsSL "https://download.docker.com/linux/${DISTRO}/gpg" -o /etc/apt/keyrings/docker.asc
   chmod a+r /etc/apt/keyrings/docker.asc
-  # shellcheck disable=SC1091
-  . /etc/os-release
   echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
-https://download.docker.com/linux/ubuntu ${VERSION_CODENAME} stable" \
+https://download.docker.com/linux/${DISTRO} ${VERSION_CODENAME} stable" \
     > /etc/apt/sources.list.d/docker.list
   apt-get update -qq
   apt-get install -y -qq docker-ce docker-ce-cli containerd.io \
     docker-buildx-plugin docker-compose-plugin >/dev/null
-  log "Docker installed: $(docker --version)"
+  log "Docker installed on ${DISTRO}: $(docker --version)"
 else
   log "Docker already present: $(docker --version)"
   command -v git   >/dev/null || apt-get install -y -qq git   >/dev/null || true

@@ -1,14 +1,39 @@
-# Running the platform in a VirtualBox VM (out of the box)
+# Running the platform (out of the box)
 
 The whole stack — frontend, backend, Postgres, Redis, the apt-proxy, and (optionally) the
-local LLM — runs inside one Ubuntu VM via Docker Compose. Two ways to get there.
+local LLM — runs via Docker Compose. Pick the option that matches your machine.
 
 ---
 
-## Option 1 — Vagrant (fully automated, recommended)
+## Option 0 — Already on Linux? You probably DON'T need a VM
 
-**On your host you need:** [VirtualBox](https://www.virtualbox.org/) and
-[Vagrant](https://www.vagrantup.com/).
+The VM exists so Windows/Mac users can get a Linux + Docker environment. **If your machine
+is already Linux (Debian, Ubuntu, …), skip Vagrant/VirtualBox/libvirt entirely** and run the
+stack directly:
+
+```bash
+git clone https://github.com/udayydogra/nielit-appsec-cyber-awareness.git
+cd nielit-appsec-cyber-awareness
+sudo bash scripts/provision-vm.sh        # installs Docker (Debian- & Ubuntu-aware), builds, runs
+```
+
+Then browse <http://localhost:8080>. No VM, no nested virtualization, no libvirt — this is the
+simplest path and avoids the whole provider question below. The script detects Debian vs Ubuntu
+and installs the right Docker repo automatically.
+
+---
+
+## Option 1 — Vagrant (auto-creates the VM; VirtualBox **or** libvirt/KVM)
+
+**On your host you need** [Vagrant](https://www.vagrantup.com/) plus **one** provider —
+[VirtualBox](https://www.virtualbox.org/) *or* libvirt/KVM. The Vagrantfile uses a
+`generic/debian12` box that supports both; tell Vagrant which one to use:
+
+```bash
+vagrant up --provider=libvirt        # Linux/KVM host  (Debian default — see setup below)
+# or
+vagrant up --provider=virtualbox     # VirtualBox host
+```
 
 ```bash
 git clone https://github.com/udayydogra/nielit-appsec-cyber-awareness.git
@@ -16,10 +41,41 @@ cd nielit-appsec-cyber-awareness
 vagrant up            # boots Ubuntu 22.04, installs Docker, builds + starts everything
 ```
 
-That's it. `vagrant up` runs [`scripts/provision-vm.sh`](scripts/provision-vm.sh), which
-installs Docker + the Compose plugin, generates real secrets into `.env`, and does
-`docker compose up -d --build`. First run takes a while (it pulls images and compiles the
-`node-pty` native addon).
+`vagrant up` runs [`scripts/provision-vm.sh`](scripts/provision-vm.sh), which installs
+Docker + the Compose plugin, generates real secrets into `.env`, builds the Tier-3 lab
+images, and does `docker compose up -d --build`. First run takes a while (it pulls images
+and compiles the `node-pty` native addon).
+
+### libvirt/KVM one-time host setup (Debian/Fedora/…)
+
+If `vagrant up` errors with **"error while connecting to libvirt"**, the libvirt provider
+isn't ready yet. On Debian:
+
+```bash
+# 1. Install KVM + libvirt + the Vagrant plugin
+sudo apt update
+sudo apt install -y qemu-kvm libvirt-daemon-system libvirt-clients \
+                    ebtables dnsmasq-base rsync build-essential libvirt-dev
+vagrant plugin install vagrant-libvirt
+
+# 2. Start the daemon and add yourself to the groups (then LOG OUT and back in)
+sudo systemctl enable --now libvirtd
+sudo usermod -aG libvirt,kvm "$USER"
+
+# 3. Verify the socket is reachable (should list, not error)
+virsh -c qemu:///system list --all
+
+# 4. Now:
+vagrant up --provider=libvirt
+```
+
+Common causes of that exact error: (a) `libvirtd` not running → step 2; (b) you're not in the
+`libvirt` group / didn't re-login → step 2 + logout; (c) the `vagrant-libvirt` plugin isn't
+installed → step 1; (d) KVM isn't available because you're **inside** a VM without nested
+virtualization enabled → use Option 0 (run Docker directly) or `--provider=virtualbox`.
+
+> Prefer not to deal with any of this? **Option 0** (run Docker directly on your Linux host)
+> skips Vagrant and every provider entirely.
 
 When it finishes, from **your host machine**:
 

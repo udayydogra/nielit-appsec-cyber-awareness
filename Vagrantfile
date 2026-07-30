@@ -1,35 +1,41 @@
-# NIELIT AppSec + Cyber-Awareness Platform — VirtualBox VM, works out of the box.
+# NIELIT AppSec + Cyber-Awareness Platform — one-command VM, works out of the box.
 #
-#   vagrant up          # boots Ubuntu, installs Docker, brings the whole stack up
+#   vagrant up --provider=libvirt      # Linux/KVM host (Debian, Fedora, …)  ← needs vagrant-libvirt
+#   vagrant up --provider=virtualbox   # VirtualBox host (Windows/Mac/Linux)
 #   → Web  http://localhost:8080   ·   API  http://localhost:4000/health
-#   vagrant halt        # stop     ·   vagrant destroy   # remove
 #
-# Requires: VirtualBox + Vagrant on the host. No other setup.
+# The `generic/*` box supports BOTH providers, so pick whichever you have.
+#   libvirt one-time setup:  vagrant plugin install vagrant-libvirt
+#   (and on the host:  sudo apt install -y qemu-kvm libvirt-daemon-system rsync
+#                      sudo usermod -aG libvirt,kvm $USER   # then log out/in
+#                      sudo systemctl enable --now libvirtd)
 Vagrant.configure("2") do |config|
-  config.vm.box = "ubuntu/jammy64"          # Ubuntu 22.04 LTS
+  config.vm.box = "generic/debian12"       # multi-provider (libvirt, virtualbox, hyperv, …)
   config.vm.hostname = "nielit-platform"
 
   # Forward the app ports host → guest so you browse from your own machine.
-  config.vm.network "forwarded_port", guest: 8080, host: 8080, id: "web"   # frontend
-  config.vm.network "forwarded_port", guest: 4000, host: 4000, id: "api"   # backend
+  config.vm.network "forwarded_port", guest: 8080, host: 8080, id: "web"
+  config.vm.network "forwarded_port", guest: 4000, host: 4000, id: "api"
 
-  # The repo is auto-synced to /vagrant; the provision script copies it to
-  # /opt/nielit (a native dir) before building so Docker isn't fighting the
-  # VirtualBox shared folder.
-  config.vm.synced_folder ".", "/vagrant"
+  # rsync works on EVERY provider with no host NFS/9p setup. The provision script
+  # then copies /vagrant → /opt/nielit (a native dir) before building.
+  config.vm.synced_folder ".", "/vagrant", type: "rsync",
+    rsync__exclude: [".git/", "node_modules/", "dist/", ".env"]
 
+  # libvirt / KVM (native + fast on a Linux host)
+  config.vm.provider "libvirt" do |lv|
+    lv.memory = 6144   # stack targets ~5 GB; headroom for lab containers
+    lv.cpus   = 2
+  end
+
+  # VirtualBox
   config.vm.provider "virtualbox" do |vb|
     vb.name   = "nielit-appsec-cyber-awareness"
-    vb.memory = 6144    # the stack is sized for ~5 GB; 6 GB leaves headroom for lab containers
+    vb.memory = 6144
     vb.cpus   = 2
   end
 
-  # Grow the disk if the vagrant-disksize plugin is installed (Docker images need room).
-  #   vagrant plugin install vagrant-disksize
-  if Vagrant.has_plugin?("vagrant-disksize")
-    config.disksize.size = "30GB"
-  end
-
-  # One-shot provisioning: installs Docker + Compose, generates secrets, `up -d --build`.
+  # One-shot provisioning: installs Docker + Compose (Debian/Ubuntu aware),
+  # generates secrets, builds Tier-3 lab images, `docker compose up -d`.
   config.vm.provision "shell", path: "scripts/provision-vm.sh"
 end
