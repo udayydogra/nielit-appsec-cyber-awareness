@@ -32,10 +32,17 @@ lab-images/   Minimal Tier-3 target images (~30-40 MB)
 | 2 – Shared multi-tenant app | ONE hardened vulnerable app; per-user = a DB row + reset | ~150-300 MB total |
 | 3 – Ephemeral per-user container | real isolated Linux, capped + reaped | ~80-200 MB per active user |
 
-## Quick start (Docker)
+## Quick start
+
+**In a VirtualBox VM, out of the box** → `vagrant up` (or `sudo bash scripts/provision-vm.sh`
+on any fresh Ubuntu VM). It installs Docker, generates secrets, and brings the whole stack
+up on host ports 8080/4000. Full guide incl. running the mentor on a **Jetson Nano**:
+[`VM-SETUP.md`](VM-SETUP.md).
+
+**With Docker directly:**
 
 ```bash
-cp .env.example .env                 # pick Profile A (api) / B (off-VM ollama) / C (in-VM)
+cp .env.example .env                 # pick Profile A (api) / B (off-VM ollama) / C (in-VM) / D (jetson)
 # generate real secrets:
 #   openssl rand -hex 32   → JWT_SECRET, CERT_SIGNING_SECRET
 # build the Tier-3 target images the lab-manager spawns (id → nielit/<id>:latest).

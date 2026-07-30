@@ -1,19 +1,37 @@
-// Ollama provider (Profile B off-VM / C in-VM). ONE shared instance — never
-// per-user. The widget talks to YOUR backend, never localhost:11434 directly.
+// Ollama-protocol provider. ONE shared instance — never per-user. The widget talks
+// to YOUR backend, never the model host directly. Reused for both a local/LAN Ollama
+// (Profile B/C) and a Jetson Nano running Ollama (Profile D) — same wire protocol,
+// different endpoint, chosen by MentorService at construction.
 import { config } from '../../config.js';
 import type { MentorProvider } from './types.js';
 
 export class OllamaProvider implements MentorProvider {
-  readonly name = 'ollama';
+  readonly name: string;
+  private readonly base: string;
+  private readonly model: string;
+  private readonly envHint: string;
+
+  // Defaults to the local/LAN Ollama config; MentorService passes the Jetson config
+  // (base + model + name 'jetson') for Profile D.
+  constructor(
+    base: string = config.mentor.ollama.base,
+    model: string = config.mentor.ollama.model,
+    name = 'ollama',
+  ) {
+    this.base = base;
+    this.model = model;
+    this.name = name;
+    this.envHint = name === 'jetson' ? 'MENTOR_JETSON_BASE (is the Nano reachable?)' : 'MENTOR_OLLAMA_BASE / the local-llm profile';
+  }
 
   async *stream(systemPrompt: string, userMessage: string): AsyncIterable<string> {
     let res: Response;
     try {
-      res = await fetch(`${config.mentor.ollama.base}/api/chat`, {
+      res = await fetch(`${this.base}/api/chat`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          model: config.mentor.ollama.model,
+          model: this.model,
           stream: true,
           messages: [
             { role: 'system', content: systemPrompt },
@@ -22,7 +40,7 @@ export class OllamaProvider implements MentorProvider {
         }),
       });
     } catch {
-      yield '[mentor] cannot reach Ollama — check MENTOR_OLLAMA_BASE / the local-llm profile.';
+      yield `[mentor] cannot reach ${this.name} — check ${this.envHint}.`;
       return;
     }
     if (!res.ok || !res.body) {

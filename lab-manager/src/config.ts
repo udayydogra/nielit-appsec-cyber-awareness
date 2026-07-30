@@ -68,7 +68,7 @@ export const config = {
   },
 
   mentor: {
-    provider: str('MENTOR_PROVIDER', 'api'), // api | ollama
+    provider: str('MENTOR_PROVIDER', 'api'), // api | ollama | jetson
     maxConcurrent: num('MENTOR_MAX_CONCURRENT', 2),
     api: {
       base: str('MENTOR_API_BASE', 'https://api.anthropic.com'),
@@ -78,6 +78,13 @@ export const config = {
     ollama: {
       base: str('MENTOR_OLLAMA_BASE', 'http://localhost:11434'),
       model: str('MENTOR_OLLAMA_MODEL', 'qwen2.5:3b'),
+    },
+    // Profile D: a Jetson Nano (or any LAN device) running Ollama. Same wire
+    // protocol as `ollama`, just a different endpoint — offloads the LLM off the VM
+    // onto edge hardware. `.local` needs mDNS; prefer the Nano's static IP in prod.
+    jetson: {
+      base: str('MENTOR_JETSON_BASE', 'http://jetson-nano.local:11434'),
+      model: str('MENTOR_JETSON_MODEL', 'qwen2.5:3b'),
     },
   },
 };

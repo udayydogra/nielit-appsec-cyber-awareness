@@ -27,10 +27,14 @@ class Semaphore {
   }
 }
 
-// Provider selection: an explicit MENTOR_PROVIDER=ollama always uses Ollama.
-// Otherwise use the hosted API only when an API key is present; if there is no
-// key, fall back to a local Ollama so the mentor works out-of-the-box.
+// Provider selection: MENTOR_PROVIDER=jetson points the Ollama-protocol client at
+// the Jetson Nano endpoint; =ollama uses the local/LAN Ollama. Otherwise use the
+// hosted API only when an API key is present; with no key, fall back to a local
+// Ollama so the mentor works out-of-the-box.
 function pickProvider(): MentorProvider {
+  if (config.mentor.provider === 'jetson') {
+    return new OllamaProvider(config.mentor.jetson.base, config.mentor.jetson.model, 'jetson');
+  }
   if (config.mentor.provider === 'ollama') return new OllamaProvider();
   if (config.mentor.api.key) return new ApiProvider();
   return new OllamaProvider();
