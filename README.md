@@ -117,4 +117,6 @@ cd web         && npm install && npm run dev      # vite on :5173 (proxies /api 
 - Telemetry events are **server-emitted from verified actions**; certificates are **HMAC-signed** —
   completion cannot be forged.
 
-See [`PROJECT_SPEC.md`](../Downloads/PROJECT_SPEC.md) for the full build brief.
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for architecture + design decisions,
+[`THREAT-MODEL.md`](THREAT-MODEL.md) for the STRIDE analysis, and
+[`VM-SETUP.md`](VM-SETUP.md) to run it.
