@@ -1,0 +1,76 @@
+# Custom Semgrep rules tuned to THIS codebase's security invariants.
+# Run locally:  semgrep scan --config .semgrep/rules  lab-manager/src web/src
+# Also wired into .github/workflows/security.yml (SARIF → GitHub Security tab).
+rules:
+  # ── 1. SQL built by string interpolation. The deliberately-injectable SQLi lab
+  #       under vulnapp/ is the only sanctioned exception (runs on nielit_lab role). ─
+  - id: nielit-interpolated-sql
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      SQL assembled with template-string interpolation. Use parameterized queries
+      ($1, $2, …). The deliberately-injectable SQLi lab under vulnapp/ is the only
+      sanctioned exception (it runs on the locked-down nielit_lab role).
+    metadata:
+      cwe: "CWE-89: SQL Injection"
+      owasp: "A03:2021 - Injection"
+      references: ["https://owasp.org/Top10/A03_2021-Injection/"]
+    patterns:
+      - pattern-either:
+          - pattern: "$C.query(`...${...}...`, ...)"
+          - pattern: "$C.query(`...${...}...`)"
+          - pattern: "query(`...${...}...`, ...)"
+    paths:
+      exclude:
+        - "lab-manager/src/vulnapp/**"
+
+  # ── 2. A dev-default signing secret must never reach a real deployment. ─────────
+  - id: nielit-dev-default-secret
+    languages: [typescript, javascript]
+    severity: WARNING
+    message: >-
+      Dev-default secret literal present. Production must set a real value
+      (config.ts already fails fast on this in NODE_ENV=production).
+    metadata:
+      cwe: "CWE-798: Hard-coded Credentials"
+      owasp: "A07:2021 - Identification and Authentication Failures"
+    pattern-regex: "dev-only-change-me"
+
+  # ── 3. Session cookies must be HttpOnly (JS can't read them → XSS can't steal). ─
+  - id: nielit-cookie-without-httponly
+    languages: [typescript, javascript]
+    severity: WARNING
+    message: >-
+      Cookie set without httpOnly:true. Session cookies must be HttpOnly so an XSS
+      payload cannot exfiltrate them.
+    metadata:
+      cwe: "CWE-1004: Sensitive Cookie Without HttpOnly Flag"
+      owasp: "A05:2021 - Security Misconfiguration"
+    patterns:
+      - pattern: "$RES.cookie($NAME, $VAL, {...})"
+      - pattern-not: "$RES.cookie($NAME, $VAL, {..., httpOnly: true, ...})"
+
+  # ── 4. Advisory: an Express route with no requireAuth/requirePermission in its
+  #       chain. Deny-by-default means every protected route flows through
+  #       requirePermission — flag any that don't, for a human to confirm. ──────────
+  - id: nielit-route-without-authz
+    languages: [typescript, javascript]
+    severity: INFO
+    message: >-
+      Express route registered without requireAuth/requirePermission in its
+      middleware chain. Confirm this endpoint is intentionally public.
+    metadata:
+      cwe: "CWE-862: Missing Authorization"
+      owasp: "A01:2021 - Broken Access Control"
+    patterns:
+      - pattern-either:
+          - pattern: "$R.get($PATH, ...)"
+          - pattern: "$R.post($PATH, ...)"
+          - pattern: "$R.put($PATH, ...)"
+          - pattern: "$R.patch($PATH, ...)"
+          - pattern: "$R.delete($PATH, ...)"
+      - pattern-not: "$R.$M($PATH, ..., requirePermission(...), ...)"
+      - pattern-not: "$R.$M($PATH, ..., requireAuth, ...)"
+    paths:
+      include:
+        - "lab-manager/src/routes/**"

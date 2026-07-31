@@ -1,0 +1,69 @@
+name: security
+
+# Secure SDLC gate: SAST (Semgrep, incl. custom rules), dependency + IaC + secret
+# scanning (Trivy), and git-history secret scanning (Gitleaks). Every tool emits
+# SARIF that lands in the repo's Security tab.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1" # weekly Monday sweep
+
+permissions:
+  contents: read
+  security-events: write # required to upload SARIF
+
+jobs:
+  semgrep:
+    name: SAST — Semgrep (custom + registry rules)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install semgrep
+      - name: run semgrep → SARIF
+        run: |
+          semgrep scan \
+            --config .semgrep/rules \
+            --config p/typescript \
+            --config p/nodejs \
+            --config p/security-audit \
+            --sarif --output semgrep.sarif || true
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
+
+  trivy:
+    name: deps + IaC + secrets — Trivy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: trivy filesystem scan → SARIF
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scanners: vuln,secret,misconfig
+          format: sarif
+          output: trivy.sarif
+          severity: CRITICAL,HIGH,MEDIUM
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy.sarif
+          category: trivy
+
+  gitleaks:
+    name: git-history secrets — Gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

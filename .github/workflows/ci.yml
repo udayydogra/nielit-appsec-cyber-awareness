@@ -1,0 +1,39 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    name: typecheck + build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: lab-manager — install + typecheck
+        working-directory: lab-manager
+        run: |
+          npm ci || npm install
+          npm run typecheck
+
+      - name: web — install + typecheck + build
+        working-directory: web
+        run: |
+          npm ci || npm install
+          npm run build
+
+  compose-validate:
+    name: docker compose config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: validate compose + provisioning script
+        run: |
+          cp .env.example .env
+          docker compose config >/dev/null
+          bash -n scripts/provision-vm.sh

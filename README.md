@@ -1,5 +1,11 @@
 # NIELIT AppSec + Cyber-Awareness Training Platform
 
+[![ci](https://github.com/udayydogra/nielit-appsec-cyber-awareness/actions/workflows/ci.yml/badge.svg)](https://github.com/udayydogra/nielit-appsec-cyber-awareness/actions/workflows/ci.yml)
+[![security](https://github.com/udayydogra/nielit-appsec-cyber-awareness/actions/workflows/security.yml/badge.svg)](https://github.com/udayydogra/nielit-appsec-cyber-awareness/actions/workflows/security.yml)
+[![codeql](https://github.com/udayydogra/nielit-appsec-cyber-awareness/actions/workflows/codeql.yml/badge.svg)](https://github.com/udayydogra/nielit-appsec-cyber-awareness/actions/workflows/codeql.yml)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
+
 A bilingual (Hindi/English) security-training platform built to run on a **single ~5 GB VM**.
 Two modules share one content schema, one telemetry spine, and one AI-mentor pipeline:
 
@@ -8,10 +14,34 @@ Two modules share one content schema, one telemetry spine, and one AI-mentor pip
 - **Cyber-Awareness module** — scenario-based fraud training (UPI scams, digital arrest,
   phishing …) as branching decision trees. All Tier 0, memory-free.
 
-> This repo ships the **Phase 1 vertical slice**: one AppSec lab (**SQL Injection**, Tier 2)
-> and one awareness lab (**Digital Arrest**, Tier 0), each working end-to-end —
-> content → engine → telemetry → server-side scoring → HMAC certificate → RBAC → mentor →
-> bilingual. Adding a lab = dropping a validated JSON file into `labs/manifests/`.
+Adding a lab = dropping a validated JSON file into `labs/manifests/` — never writing code.
+
+## By the numbers (extracted from the code)
+
+| | | | |
+|---|---|---|---|
+| **38** labs (22 AppSec · 16 awareness) | **~7,400** LOC TypeScript | **70** API routes | **65** `requirePermission` enforcement points |
+| **4** roles · **20** permissions (RBAC as data) | **4** execution tiers | **10** Docker services | **14** talking-head videos · **92** audio clips |
+
+## Security (evidence, not adjectives)
+
+This is a security product, so it's built and reviewed like one — and the artifacts are here
+to read:
+
+- **[`docs/writeups/sqli-sandbox-escape.md`](docs/writeups/sqli-sandbox-escape.md)** — a real
+  sandbox escape I found by red-teaming my own platform (the SQLi lab leaked live bcrypt hashes
+  + quiz answer keys) and the least-privilege fix.
+- **[`THREAT-MODEL.md`](THREAT-MODEL.md)** — full **STRIDE** model with trust boundaries.
+- **[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)** — architecture diagrams + design decisions.
+- **[`SECURITY.md`](SECURITY.md)** — disclosure policy + what's in/out of scope.
+- **CI security gate** — every push runs **Semgrep** (incl. [custom rules](.semgrep/rules/nielit.yml)),
+  **Trivy** (deps/IaC/secrets), **Gitleaks**, and **CodeQL**; findings land as SARIF in the
+  Security tab (badges above).
+
+Access control is **deny-by-default**: JWT sessions in HttpOnly/SameSite cookies, permission
+checks (not role checks) at 65 call sites, **anti-BOLA scope resolvers** (`selfScope` takes the
+target id from the session — structurally removing IDOR — plus `cohortScope` and
+`containerOwnerScope`), and audit logging on every denial and cross-user access.
 
 ## Architecture at a glance
 
