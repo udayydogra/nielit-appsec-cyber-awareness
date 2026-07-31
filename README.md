@@ -23,6 +23,15 @@ Adding a lab = dropping a validated JSON file into `labs/manifests/` — never w
 | **38** labs (22 AppSec · 16 awareness) | **~7,400** LOC TypeScript | **70** API routes | **65** `requirePermission` enforcement points |
 | **4** roles · **20** permissions (RBAC as data) | **4** execution tiers | **10** Docker services | **14** talking-head videos · **92** audio clips |
 
+## Screenshots
+
+| | |
+|---|---|
+| ![Dashboard](docs/screenshots/01-dashboard.png) | ![AppSec labs](docs/screenshots/02-appsec-labs.png) |
+| **Dashboard** — 38 labs, 22 AppSec / 16 awareness, live-container count; bilingual (EN/हिं) | **AppSec catalogue** — OWASP-mapped labs across tiers |
+| ![SQL Injection lab](docs/screenshots/03-sqli-lab.png) | ![Digital Arrest scenario](docs/screenshots/05-scenario-digital-arrest.png) |
+| **SQL Injection lab** — Tier 2, OWASP A03 + MITRE T1190, attack-surface diagram, real injectable endpoint | **Awareness scenario** — a realistic phone mockup drives the "digital arrest" scam simulation |
+
 ## Security (evidence, not adjectives)
 
 This is a security product, so it's built and reviewed like one — and the artifacts are here
